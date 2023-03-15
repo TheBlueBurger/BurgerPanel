@@ -10,7 +10,8 @@ Developed with ♥ by:
 - TheBlueBurger \[Founder of the project, worked on most of the features and functionality\]
 - TheRedXD \[Designer (CSS), did part of UX\]
 
-⇱ PRs are very appreciated, as they help development! ⇱
+PRs are very appreciated, as they help development!
+
 ★ Star the project if you like it! ★
 
 ## Docs
