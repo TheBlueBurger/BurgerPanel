@@ -34,7 +34,7 @@
 
 body {
     color: white;
-    background-color: #1C222E;
+    background-color: #151516;
     font-family: 'Ubuntu Mono Regular', monospace;
 }
 
@@ -46,7 +46,7 @@ button {
     padding: 4px 10px;
     border: none;
     border-radius: 10px;
-    background-color: #9BBCFF;
+    background-color: #ececec;
     color: black;
     font-size: 15px;
     font-family: 'Ubuntu Mono Regular', monospace;
@@ -55,7 +55,7 @@ button {
 }
 
 button:hover {
-    background-color: #cddcff;
+    background-color: #ffffff;
     border-radius: 5px;
 }
 
@@ -65,7 +65,7 @@ input[type=text], input[type=password], input[type=number] {
     padding: 4px 10px;
     border: none;
     border-radius: 10px;
-    background-color: #9BBCFF;
+    background-color: #ececec;
     color: black;
     font-size: 15px;
     font-family: 'Ubuntu Mono Regular', monospace;
@@ -78,7 +78,7 @@ input[type=text], input[type=password], input[type=number] {
     padding: 10px;
     z-index: 1000;
     border-radius: 10px;
-    background-color: #9BBCFF;
+    background-color: #ececec;
     color: black;
     font-size: 15px;
     font-family: 'Ubuntu Mono Regular', monospace;

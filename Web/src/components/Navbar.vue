@@ -26,7 +26,7 @@ function logout() {
         display: none;
     }
     #navbar {
-        background-color: #252D3D;
+        background-color: #181717;
         width: 100%;
         margin-top: 0;
         height: 50px;

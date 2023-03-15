@@ -26,7 +26,9 @@ onMounted(async () => {
       logs.value = resp.lastLogs;
       attached.value = true;
       // Scroll to bottom
-      serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
+      setTimeout(() => { // there has to be a better way to do this, but this is what ill do and it works
+        serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
+      }, 50);
     } else {
       alert("Failed to attach to server: " + resp.message);
       router.push("/manage")
@@ -149,7 +151,7 @@ textarea {
   margin-right: auto;
   display: block;
   /* Color */
-  background-color: #0c0c0c;
+  background-color: #000000;
   color: white;
 }
 .console-input {
@@ -162,6 +164,7 @@ textarea {
   display: flex;
   /* Color */
   color: white;
+  background-color: black;
 }
 .console-input-input {
   height: 30px;
@@ -173,7 +176,8 @@ textarea {
   /* Center */
   display: block;
   /* Color */
-  color: black;
+  background-color: rgb(3, 3, 3);
+  color: white;
 }
 .console-input-button {
   padding: 19px;
@@ -184,6 +188,8 @@ textarea {
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
   border-top-right-radius: 0px;
+  background-color: rgb(15, 15, 15);
+  color: white;
 }
 .console-input-button-span {
   /* Center the text in the button */
