@@ -18,3 +18,6 @@ PRs are very appreciated, as they help development!
 [Development guide](https://github.com/TheBlueBurger/BurgerPanel/wiki/Development)
 
 [Usage guide](https://github.com/TheBlueBurger/BurgerPanel/wiki/Usage)
+
+## Support
+Get support by [starting a new discussion](https://github.com/TheBlueBurger/BurgerPanel/discussions/new?category=support)
