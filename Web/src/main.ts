@@ -1,0 +1,42 @@
+// if vscode is screaming here, it's fine. its just vscode being stupid
+import { createApp } from 'vue'
+import './style.css'
+import { createRouter, createWebHistory } from 'vue-router';
+import App from './App.vue';
+
+const router = createRouter({
+    history: createWebHistory(),
+    routes: [
+        {
+            path: '/',
+            component: () => import('./pages/Home.vue')
+        },
+        {
+            path: '/manage/server/:server',
+            component: () => import('./pages/Management/ManageServer.vue'),
+            props: true,
+            name: 'manageServer'
+        },
+        {
+            path: '/manage/server/:server/edit',
+            component: () => import('./pages/Management/Edit.vue'),
+            props: true,
+            name: 'editServer'
+        },
+        {
+            path: '/manage/server/import',
+            component: () => import('./pages/Management/Import.vue'),
+            name: 'importServer'
+        },
+        {
+            path: '/manage',
+            component: () => import('./pages/ManageServers.vue'),
+        },
+        {
+            path: '/settings',
+            component: () => import('./pages/Settings.vue'),
+        },
+    ],
+})
+let app = createApp(App).use(router);
+app.mount('#app');

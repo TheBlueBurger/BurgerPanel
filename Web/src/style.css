@@ -1,0 +1,97 @@
+@font-face {
+    font-family: "Ubuntu Mono Regular";
+    src: url("@assets/UbuntuMono-Regular.ttf");
+    font-display: swap;
+}
+
+@keyframes notif-slidein {
+    0% {
+        bottom: -200%;
+    }
+    7.5% {
+        bottom: 10px;
+    }
+    90% {
+        bottom: 10px;
+    }
+    100% {
+        bottom: -200%;
+    }
+}
+
+#toggle-server-creator-btn {
+    cursor: pointer;
+}
+
+#logoutbtn {
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+#title-txt {
+    cursor: pointer;
+}
+
+body {
+    color: white;
+    background-color: #1C222E;
+    font-family: 'Ubuntu Mono Regular', monospace;
+}
+
+* {
+    margin: 0;
+}
+
+button {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 10px;
+    background-color: #9BBCFF;
+    color: black;
+    font-size: 15px;
+    font-family: 'Ubuntu Mono Regular', monospace;
+    cursor: pointer;
+    transition: all .1s ease-in-out;
+}
+
+button:hover {
+    background-color: #cddcff;
+    border-radius: 5px;
+}
+
+/* text input */
+
+input[type=text], input[type=password], input[type=number] {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 10px;
+    background-color: #9BBCFF;
+    color: black;
+    font-size: 15px;
+    font-family: 'Ubuntu Mono Regular', monospace;
+    transition: all .1s ease-in-out;
+}
+.notification {
+    display:block;
+    position:fixed;
+    bottom: 10px;
+    padding: 10px;
+    z-index: 1000;
+    border-radius: 10px;
+    background-color: #9BBCFF;
+    color: black;
+    font-size: 15px;
+    font-family: 'Ubuntu Mono Regular', monospace;
+    animation-duration: 5s;
+    animation-name: notif-slidein;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: forwards;
+    left: 50%;
+    transform: translateX(-50%);
+    -webkit-transform: translateX(-50%);
+}
+
+.login-token-input {
+    width: calc(min(100%, 725px) - 20px);
+}

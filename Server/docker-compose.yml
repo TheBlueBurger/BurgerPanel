@@ -1,0 +1,17 @@
+services:
+  db:
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=uhNUohnUihnuiOHBNUJhnuIJBNujiB
+      - MONGO_INITDB_DATABASE=burgerpanel
+    volumes:
+      - data:/data/db
+      - ./init-mongo-user.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+    command: --wiredTigerCacheSizeGB 0.5
+
+volumes:
+  data:
+    
