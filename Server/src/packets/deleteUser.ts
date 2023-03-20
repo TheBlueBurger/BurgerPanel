@@ -36,6 +36,7 @@ export default class DeleteUser extends Packet {
                 c.close();
             }
         });
+        console.log(client.data.auth?.user?.username + " (" + client.data.auth?.user?._id + ") is deleting the user " + userToDelete.username + " (" + userToDelete._id + ").")
         client.json({
             type: "deleteUser",
             success: true,

@@ -146,7 +146,8 @@ enforce-secure-profile=false
                 console.log("Server " + server._id + " stopped in " + (Date.now() - startTimestamp) + "ms");
                 resolve();
             });
-            serverEntry.childProcess.kill("SIGTERM");
+            if(process.platform != "win32") serverEntry.childProcess.kill("SIGTERM");
+            else serverEntry.childProcess.stdin?.write("stop\nend\n");
             console.log(`Waiting for ${server.name} (${server._id}) to stop...`);
         })
     }

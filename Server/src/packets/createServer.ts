@@ -65,7 +65,8 @@ export default class Auth extends Packet {
                 success: false,
                 message: "Server path is not set. Please set it in the config.",
                 emitEvent: true
-            })
+            });
+            return;
         }
         if(await getSetting("serverPathIsRelative")) {
             if(path.isAbsolute(await getSetting("serverPath") as string)) {

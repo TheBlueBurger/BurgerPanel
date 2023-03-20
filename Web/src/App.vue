@@ -169,7 +169,10 @@ router.beforeEach(async guard => {
     token.value = guard.query.useToken as string;
     login();
     console.log("Token used, removing from query.");
-    router.push({ query: {...guard.query, useToken: undefined} });
+    router.push({ 
+      path: guard.path,
+      hash: guard.hash,
+      query: {...guard.query, useToken: undefined} });
     console.log("DONE");
 }});
 </script>

@@ -18,7 +18,7 @@ onMounted(async () => {
         server.value = await getServerByID(servers.value, props.server);
         ourAllowedUsers.value = server.value?.allowedUsers || [];
         if(ourAllowedUsers.value.length == 0) {
-            events.emit("createNotification", "This server has no allowed users. This should never happen. Redirecting to console page. If this issue persists, please contact the developer.");
+            events.emit("createNotification", "This server has no allowed users. This should never happen. You should add a user.");
         }
     } catch(err) {
         alert("Failed to get server details. " + (err as any)?.message || "No error message provided.");
@@ -41,7 +41,7 @@ async function renameServer() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server name changed to '${newName}'`);
-            server.value = await getServerByID(null, props.server);
+            server.value = await getServerByID(null, props.server, true);
         } else {
             alert("Failed to change server name: " + resp.message);
         }
@@ -58,7 +58,7 @@ async function changeMemory() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server memory changed to '${newMem}'`);
-            server.value = await getServerByID(null, props.server);
+            server.value = await getServerByID(null, props.server, true);
         } else {
             alert("Failed to change server memory: " + resp.message);
         }
@@ -75,7 +75,7 @@ async function changeVersion() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server version changed to '${newVersion}'`);
-            server.value = await getServerByID(null, props.server);
+            server.value = await getServerByID(null, props.server, true);
         } else {
             alert("Failed to change server version: " + resp.message);
         }
@@ -92,7 +92,7 @@ async function changeSoftware() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server software changed to '${newSoftware}'`);
-            server.value = await getServerByID(null, props.server);
+            server.value = await getServerByID(null, props.server, true);
         } else {
             alert("Failed to change server software: " + resp.message);
         }
@@ -109,7 +109,7 @@ async function changePort() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server port changed to '${newPort}'`);
-            server.value = await getServerByID(null, props.server);
+            server.value = await getServerByID(null, props.server, true);
         } else {
             alert("Failed to change server port: " + resp.message);
         }
@@ -151,7 +151,7 @@ async function saveAllowedUsers() {
     let resp = await events.awaitEvent("setServerOption-" + props.server);
     if(resp?.success) {
         events.emit("createNotification", `Allowed users changed`);
-        server.value = await getServerByID(null, props.server);
+        server.value = await getServerByID(null, props.server, true);
     } else {
         alert("Failed to change allowed users: " + resp.message);
     }
@@ -187,6 +187,7 @@ async function deleteServer() {
   }
 }
 async function changeAutoStart() {
+    console.log(server.value?.autoStart);
     events.emit("sendPacket", {
         type: "setServerOption",
         id: props.server,
@@ -195,7 +196,7 @@ async function changeAutoStart() {
     let resp = await events.awaitEvent("setServerOption-" + props.server);
     if (resp?.success) {
         events.emit("createNotification", `Server auto start changed to '${!server.value?.autoStart}'`);
-        server.value = await getServerByID(null, props.server);
+        server.value = await getServerByID(null, props.server, true);
     } else {
         alert("Failed to change server auto start: " + resp.message);
     }
@@ -224,6 +225,7 @@ async function changeAutoStart() {
         <hr />
         <h3>Allowed users</h3>
         <button @click="addUser">Add user</button>
+        <button v-if="loginStatus.admin && !ourAllowedUsers.includes(loginStatus._id)" @click="loginStatus?._id ? ourAllowedUsers.push(loginStatus?._id) : 0">Add yourself</button>
         <br/>
         <div v-for="user in ourAllowedUsers" :key="user">
             {{ getUserInfo(user)?.username || "<Unknown>" }} {{ getUserInfo(user)?.admin ? "(Admin)" : "(User)" }} [{{ user }}] <button @click="removeUser(user)">Remove</button>

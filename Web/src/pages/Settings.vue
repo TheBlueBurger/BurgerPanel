@@ -18,6 +18,7 @@ let knownSettings = inject("knownSettings") as Ref<{ [key in keyof Config]: any 
 async function changeOption(option: keyof typeof defaultConfig) {
     let newValue = prompt("New value for " + option + "\n" + descriptions[option], knownSettings.value[option] ?? "");
     try {
+        if(!newValue) return;
         await setSetting(option, newValue);
         knownSettings.value[option] = newValue; // I KNOW THIS ISNT NEEDED BUT THIS IS BEING STUPID
         events.value.emit("createNotification", "Successfully changed option")

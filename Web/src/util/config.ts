@@ -2,6 +2,8 @@ import type { Config } from "../../../Share/Config";
 import events from "./event";
 export let _knownSettings = {} as { [key in keyof Config]: any };
 export async function setSetting(key: keyof Config, value: any) {
+    if(!key) throw new Error("Missing key");
+    if(!value) throw new Error("Missing value");
     events.emit("sendPacket", {
         type: "setSetting",
         key,

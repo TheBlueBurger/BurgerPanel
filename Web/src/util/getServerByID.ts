@@ -1,7 +1,7 @@
 import type { Server } from '../../../Share/Server';
 import events from './event';
-export default async function getServerByID(cachedServers: Server[] | null, id: string) {
-    if(cachedServers) {
+export default async function getServerByID(cachedServers: Server[] | null, id: string, ignoreCache: boolean = false) {
+    if(cachedServers && !ignoreCache) {
         const server = cachedServers.find(s => s._id === id);
         if (server) return server;
     }

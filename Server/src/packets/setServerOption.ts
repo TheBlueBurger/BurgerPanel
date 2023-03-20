@@ -44,8 +44,19 @@ export default class SetServerOption extends Packet {
             if(data.allowedUsers.length < 1) return;
             console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the allowed users of ${server.name} (${server._id}) to ${data.allowedUsers}`);
             if (data.allowedUsers.length > 20) return;
+            let alreadyDoneUsers: string[] = [];
             for await (const userID of data.allowedUsers) {
                 if (typeof userID != "string") return;
+                if(alreadyDoneUsers.includes(userID)) {
+                    client.json({
+                        type: "setServerOption",
+                        success: false,
+                        message: "Duplicate user: " + userID,
+                        emitEvent: true,
+                        emits: ["setServerOption-" + data.id]
+                    });
+                    return;
+                }
                 let userData = await users.findById(userID).exec();
                 if (!userData) {
                     client.json({
@@ -57,13 +68,14 @@ export default class SetServerOption extends Packet {
                     });
                     return;
                 }
+                alreadyDoneUsers.push(userID);
             }
             server.allowedUsers = data.allowedUsers;
         }
         if(data.port && client.data.auth.user?.admin) {
             server.port = data.port;
         }
-        if(data.autoStart && client.data.auth.user?.admin && typeof data.autoStart == "boolean") {
+        if(typeof data.autoStart == "boolean" && client.data.auth.user?.admin) {
             console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto start of ${server.name} (${server._id}) to ${data.autoStart}`);
             server.autoStart = data.autoStart;
         }

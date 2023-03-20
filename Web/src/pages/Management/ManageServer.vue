@@ -13,6 +13,7 @@ let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);
 let attached = ref(false);
 onMounted(async () => {
+  loadingServerFromAPI.value = true;
   // Attach to server
   if (!attached.value) {
     events.emit("sendPacket", {
@@ -94,18 +95,14 @@ let serverTextArea = ref(null as any as HTMLTextAreaElement);
 function onScrolled() {
   if(lastScroll.value > (serverTextArea.value?.scrollTop || 0)) {
     autoScrollInterrupted.value = true;
-    console.log("Autoscroll interrupted (v2)")
   }
   lastScroll.value = serverTextArea.value?.scrollTop;
-  console.log("Real Scroll", ignoreNextScroll.value, autoScrollInterrupted.value)
   if(!autoScrollInterrupted.value) serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
   if(ignoreNextScroll.value) return;
   if(serverTextArea.value?.scrollTop + serverTextArea.value?.clientHeight >= serverTextArea.value?.scrollHeight - 10) {
     autoScrollInterrupted.value = false;
-    console.log("Autoscroll no longer interrupted")
   } else {
     autoScrollInterrupted.value = true;
-    console.log("Autoscroll interrupted")
   }
 }
 function editServer() {

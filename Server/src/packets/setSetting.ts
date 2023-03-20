@@ -19,6 +19,16 @@ export default class SetSetting extends Packet {
             return;
         }
         let val;
+        if(!data.key || !data.value) {
+            client.json({
+                type: "setSetting",
+                success: false,
+                message: "Missing required key",
+                emits: ["setSetting-" + data.key],
+                emitEvent: true
+            });
+            return;
+        }
         try {
             val = await setSetting(data.key, data.value);
         } catch (err) {

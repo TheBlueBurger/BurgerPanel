@@ -146,7 +146,6 @@ process.on("SIGINT", async () => {
     await serverManager.stopAllServers();
     process.exit();
 })
-
 packetHandler.init().then(async () => {
     let port: number | undefined;
     try {
@@ -194,6 +193,7 @@ packetHandler.init().then(async () => {
                     username: "gen-admin-" + Date.now(),
                 });
                 console.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token);
+                break;
             case "servers":
                 for(let server of await (await servers.find({}, {}, {limit: 256})).values()) {
                     console.log("Server ID: " + server._id);
@@ -220,6 +220,7 @@ packetHandler.init().then(async () => {
             case "packetLog":
                 logging = !logging;
                 console.log("Packet logging " + (logging ? "enabled" : "disabled"));
+                break;
             case "help":
                 console.log("users: List all users");
                 console.log("packetLog: Toggle packet logging");
