@@ -1,7 +1,7 @@
 import type { Server } from '../../../Share/Server';
 import events from './event';
-export default async function getServerByID(cachedServers: Server[] | null, id: string, ignoreCache: boolean = false) {
-    if(cachedServers && !ignoreCache) {
+export default async function getServerByID(cachedServers: Server[] | null, id: string) {
+    if (cachedServers) {
         const server = cachedServers.find(s => s._id === id);
         if (server) return server;
     }
@@ -10,6 +10,6 @@ export default async function getServerByID(cachedServers: Server[] | null, id: 
         id
     })
     let resp = await events.awaitEvent("getServer-" + id);
-    if(!resp.success) throw new Error("Unable to get server: " + resp.message);
+    if (!resp.success) throw new Error("Unable to get server: " + resp.message);
     return resp.server;
 }

@@ -15,7 +15,7 @@ export default class GetAllServers extends Packet {
             });
             return;
         }
-        let serverList = await servers.find({}, {}, {limit: Infinity}).exec();
+        let serverList = await servers.find({}, {}, { limit: Infinity }).exec();
         client.json({
             type: "getAllServers",
             success: true,

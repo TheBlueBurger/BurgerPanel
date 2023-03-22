@@ -33,7 +33,7 @@ class PacketHandler {
         this.packets = {};
         let files = fs.readdirSync(__dirname + "/packets");
         for (let file of files) {
-            if(!file.endsWith(".js")) continue;
+            if (!file.endsWith(".js")) continue;
             let packetClass = await import("./packets/" + file);
             let packet = new packetClass.default();
             this.packets[packet.name] = packet;
@@ -64,7 +64,7 @@ class PacketHandler {
         }
         try {
             await packet.handle(client, data);
-        } catch(err) {
+        } catch (err) {
             console.log("Packet errored.", data.type, data.data, err);
             // If admin, send error
             if (client.data.auth.user?.admin) {
@@ -152,10 +152,10 @@ packetHandler.init().then(async () => {
         port = await getSetting("webServerPort", true, true) as number;
     } catch {
         console.log("Port not set. Please enter a port to listen on and press enter: ");
-        while(!port) {
+        while (!port) {
             let data = await (await once(process.stdin, "data")).toString().trim();
             let dataNum = parseInt(data);
-            if(isNaN(dataNum) || dataNum < 1 || dataNum > 65535) {
+            if (isNaN(dataNum) || dataNum < 1 || dataNum > 65535) {
                 console.log("Invalid port. Please enter a port to listen on and press enter: ");
             } else {
                 port = dataNum;
@@ -172,13 +172,14 @@ packetHandler.init().then(async () => {
         let dataStr = data.toString().trim();
         switch (dataStr) {
             case "users-table":
-                var userlist = await users.find({}, {}, {limit: 256});
+                var userlist = await users.find({}, {}, { limit: 256 });
                 console.table(userlist.map(u => u.toJSON()));
                 break;
             case "users":
             case "users-list":
-                var userlist = await users.find({}, {}, {limit: 256});
-                for(let user of userlist.values()) {
+                var userlist = await users.find({}, {}, { limit: 256 });
+                console.log("---------");
+                for (let user of userlist.values()) {
                     console.log("Username: " + user.username);
                     console.log("ID: " + user._id);
                     console.log("Token: " + user.token);
@@ -195,7 +196,8 @@ packetHandler.init().then(async () => {
                 console.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token);
                 break;
             case "servers":
-                for(let server of await (await servers.find({}, {}, {limit: 256})).values()) {
+                console.log("---------");
+                for (let server of await (await servers.find({}, {}, { limit: 256 })).values()) {
                     console.log("Server ID: " + server._id);
                     console.log("Server name: " + server.name);
                     console.log("Server port: " + server.port);
@@ -223,6 +225,8 @@ packetHandler.init().then(async () => {
                 break;
             case "help":
                 console.log("users: List all users");
+                console.log("gen-admin-user: Generate a admin user");
+                console.log("servers: List all servers")
                 console.log("packetLog: Toggle packet logging");
                 console.log("stop: Stop all servers and exit");
                 break;

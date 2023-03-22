@@ -8,7 +8,7 @@ import { useRouter } from "vue-router";
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User>;
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
-if(!loginStatus.value?.admin) {
+if (!loginStatus.value?.admin) {
     events.value.emit("createNotification", "You are not an admin! Get out of here!");
     router.push({
         path: "/"
@@ -18,7 +18,7 @@ let knownSettings = inject("knownSettings") as Ref<{ [key in keyof Config]: any 
 async function changeOption(option: keyof typeof defaultConfig) {
     let newValue = prompt("New value for " + option + "\n" + descriptions[option], knownSettings.value[option] ?? "");
     try {
-        if(!newValue) return;
+        if (!newValue) return;
         await setSetting(option, newValue);
         knownSettings.value[option] = newValue; // I KNOW THIS ISNT NEEDED BUT THIS IS BEING STUPID
         events.value.emit("createNotification", "Successfully changed option")
@@ -98,14 +98,33 @@ function copyToClip(text: string) {
 function showHelpForSetting(setting: string) {
     alert("Help for " + setting + ":\n" + descriptions[setting as keyof typeof defaultConfig]);
 }
+let tokens = ref({} as {
+    [user: string]: string
+});
+async function viewToken(userID: string, copy: boolean = false) {
+    await events.value.emit("sendPacket", {
+        type: "getUserToken",
+        id: userID
+    });
+    let resp = await events.value.awaitEvent("getUserToken-" + userID);
+    if (resp?.success) {
+        tokens.value[userID] = resp?.token;
+        if(!copy) viewingToken.value = userID;
+        else copyToClip(resp?.token);
+    } else {
+        alert("Failed to get user token: " + resp.message);
+    }
+}
 </script>
 <template>
     <h2>Settings</h2>
     <!-- Do not touch this mess -->
     <div v-for="option of Object.keys(defaultConfig)">
-        <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>{{ typeof knownSettings[option as keyof typeof defaultConfig] != "undefined" ? ": "
-        + (knownSettings[option as keyof typeof defaultConfig] === "" ? "<Empty string> " : knownSettings[option as keyof typeof defaultConfig]) : ": <Unknown>" }}
-        <button @click="() => changeOption(option as keyof typeof defaultConfig)">Edit</button>
+        <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>{{ typeof knownSettings[option as
+            keyof typeof defaultConfig] != "undefined" ? ": "
+        + (knownSettings[option as keyof typeof defaultConfig] === "" ? "<Empty string> " : knownSettings[option as keyof
+            typeof defaultConfig]) : ": <Unknown>" }}
+                <button @click="() => changeOption(option as keyof typeof defaultConfig)">Edit</button>
     </div>
     <!-- User list part -->
     <hr />
@@ -131,8 +150,8 @@ function showHelpForSetting(setting: string) {
         <br>
         Created at: {{ new Date(user.createdAt).toLocaleString() }}
         <br>
-        Token: {{ viewingToken == user._id ? user.token : "<Hidden>" }} <button @click="viewingToken = user._id">View
-                token</button> <button @click="copyToClip(user.token)">Copy to clipboard</button>
+        Token: {{ viewingToken == user._id ? tokens[user._id] : "<Hidden>" }} <button @click="viewToken(user._id)">View
+                token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button>
     </div>
 </template>
 <style>

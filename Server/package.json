@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/Server/src/index.js",
-    "dev": "pnpm build && pnpm start"
+    "dev": "pnpm build && pnpm startInspect",
+    "startInspect": "NODE_OPTIONS=\"--inspect\" node dist/Server/src/index.js"
   },
   "type": "module",
   "keywords": [],

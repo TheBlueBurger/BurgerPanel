@@ -28,14 +28,13 @@ export default class ToggleAdmin extends Packet {
         client.json({
             type: "toggleAdmin",
             success: true,
-            user,
             emitEvent: true,
             emits: ["toggleadmin-" + user._id]
         });
-        if(user.id == client.data.auth.user._id) {
+        if (user.id == client.data.auth.user._id) {
             client.data.auth.user = user.toJSON();
         } else clients.forEach(c => {
-            if(c.data.auth.user?._id.toString() === user?._id.toString()) {
+            if (c.data.auth.user?._id.toString() === user?._id.toString()) {
                 c.data.auth.user = user?.toJSON();
             }
         })

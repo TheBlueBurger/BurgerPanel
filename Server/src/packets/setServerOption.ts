@@ -41,13 +41,13 @@ export default class SetServerOption extends Packet {
         }
         if (data.allowedUsers) {
             if (!Array.isArray(data.allowedUsers)) return;
-            if(data.allowedUsers.length < 1) return;
+            if (data.allowedUsers.length < 1) return;
             console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the allowed users of ${server.name} (${server._id}) to ${data.allowedUsers}`);
             if (data.allowedUsers.length > 20) return;
             let alreadyDoneUsers: string[] = [];
             for await (const userID of data.allowedUsers) {
                 if (typeof userID != "string") return;
-                if(alreadyDoneUsers.includes(userID)) {
+                if (alreadyDoneUsers.includes(userID)) {
                     client.json({
                         type: "setServerOption",
                         success: false,
@@ -72,23 +72,23 @@ export default class SetServerOption extends Packet {
             }
             server.allowedUsers = data.allowedUsers;
         }
-        if(data.port && client.data.auth.user?.admin) {
+        if (data.port && client.data.auth.user?.admin) {
             server.port = data.port;
         }
-        if(typeof data.autoStart == "boolean" && client.data.auth.user?.admin) {
+        if (typeof data.autoStart == "boolean" && client.data.auth.user?.admin) {
             console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto start of ${server.name} (${server._id}) to ${data.autoStart}`);
             server.autoStart = data.autoStart;
         }
         await server.save(); // DO NOT MOVE THIS LINE DOWN. FUNCTIONS BELOW WILL AUTOMATICALLY SAVE THE SERVER AND WILL CAUSE CHAOS
-        if(data.port && client.data.auth.user?.admin) {
+        if (data.port && client.data.auth.user?.admin) {
             console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the port of ${server.name} (${server._id}) to ${data.port}`);
             await serverManager.changePort(server.toJSON(), data.port);
         }
-        if(data.software) {
+        if (data.software) {
             console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the software of ${server.name} (${server._id}) to ${data.software}`);
             await serverManager.editSoftware(server.toJSON(), data.software);
         }
-        if(data.version) {
+        if (data.version) {
             console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the version of ${server.name} (${server._id}) to ${data.version}`);
             await serverManager.editVersion(server.toJSON(), data.version);
         }

@@ -20,6 +20,12 @@ let updateServerPath = async () => {
     let resp = await event.awaitEvent("importServer");
     if (!resp.success) {
         event.emit("createNotification", "Failed to import server: " + resp.message);
+        router.push({
+            query: {
+                serverPath: undefined
+            }
+        });
+        serverPath.value = "";
         return;
     }
     if (resp.autodetect.version) version.value = resp.autodetect.version;

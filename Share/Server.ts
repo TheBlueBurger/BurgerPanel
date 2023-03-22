@@ -5,7 +5,7 @@ export interface Server {
     mem: number;
     allowedUsers: string[];
     version: string;
-    software: string;
+    software: "vanilla" | "purpur" | "paper";
     port: number;
     autoStart: boolean;
 }

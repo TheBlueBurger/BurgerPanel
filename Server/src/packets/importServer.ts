@@ -2,17 +2,27 @@ import { OurClient, Packet } from "../index.js";
 import fs from "node:fs/promises";
 import { servers } from "../db.js";
 import serverManager from "../serverManager.js";
+import path from "node:path";
 
 export default class ImportServer extends Packet {
     name: string = "importServer";
     requiresAuth: boolean = true;
     requiresAdmin: boolean = true;
     async handle(client: OurClient, data: any) {
-        if(!data.path) {
+        if (!data.path || typeof data.path != "string") {
             client.json({
                 type: "importServer",
                 success: false,
                 message: "No path provided",
+                emitEvent: true,
+            });
+            return;
+        }
+        if (!path.isAbsolute(data.path)) {
+            client.json({
+                type: "importServer",
+                success: false,
+                message: "Invalid path: Not absolute",
                 emitEvent: true,
             });
             return;
@@ -30,7 +40,7 @@ export default class ImportServer extends Packet {
             return;
         }
         let requiredFiles = ["server.jar"]; // can change later
-        if(requiredFiles.some(file => !files.includes(file))) {
+        if (requiredFiles.some(file => !files.includes(file))) {
             client.json({
                 type: "importServer",
                 success: false,
@@ -39,7 +49,7 @@ export default class ImportServer extends Packet {
             });
             return;
         }
-        if(data.requestConfirmation) {
+        if (data.requestConfirmation) {
             // Get some useful info
             let version;
             let software;
@@ -48,12 +58,12 @@ export default class ImportServer extends Packet {
                 let versionHistoryTxt = await fs.readFile(data.path + "/version_history.json", "utf8");
                 let versionHistory = JSON.parse(versionHistoryTxt);
                 let currentVersion = versionHistory.currentVersion.match(/^.+ \(MC: (.+)\)$/);
-                if(currentVersion) version = currentVersion[1];
+                if (currentVersion) version = currentVersion[1];
                 software = versionHistory.currentVersion.match(/^git-(Paper|Purpur).*$/)[1];
                 let serverPropertiesTxt = await fs.readFile(data.path + "/server.properties", "utf8");
                 let serverPropertiesPort = serverPropertiesTxt.match(/server-port=([0-9]+)/);
-                if(serverPropertiesPort) port = serverPropertiesPort[1];
-            } catch {}
+                if (serverPropertiesPort) port = serverPropertiesPort[1];
+            } catch { }
             client.json({
                 type: "importServer",
                 success: true,
@@ -66,8 +76,8 @@ export default class ImportServer extends Packet {
             });
             return;
         }
-        for(let requiredOption of ["name", "version", "mem", "software", "port"]) {
-            if(!data[requiredOption]) {
+        for (let requiredOption of ["name", "version", "mem", "software", "port"]) {
+            if (!data[requiredOption]) {
                 client.json({
                     type: "importServer",
                     success: false,

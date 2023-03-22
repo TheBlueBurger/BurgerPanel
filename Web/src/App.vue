@@ -13,11 +13,20 @@ let router = useRouter();
 let events = ref(EventEmitter);
 let knownSettings = ref(_knownSettings) as Ref<{ [key in keyof Config]: any }>
 let notifications = ref([] as string[]);
+let notificationQueue: string[] = [];
 function createNotification(text: string) {
-    notifications.value.push(text) // why.
-    setTimeout(() => {
-      notifications.value.shift(); // y e s
-    }, 5000);
+  console.log("Creating notification", text);
+  if (notifications.value.length != 0) return notificationQueue.push(text);
+  console.log("Pushing", text, "to", notifications.value)
+  notifications.value.push(text);
+  setTimeout(() => {
+    notifications.value = [];
+    let nextNotification = notificationQueue.shift();
+    console.log("next notification", nextNotification)
+    if (nextNotification && nextNotification != text) {
+      setTimeout(createNotification, 250, nextNotification);
+    }
+  }, 5000);
 }
 events.value.on("createNotification", createNotification);
 events.value.on("knownSettingsUpdated", (settings: any) => {
@@ -25,8 +34,12 @@ events.value.on("knownSettingsUpdated", (settings: any) => {
 });
 provide("knownSettings", knownSettings);
 provide("events", events);
+let queuedPackets: any[] = [];
 events.value.on("sendPacket", (data: any) => {
-  if(!connected.value) return; // TODO: Queue packets
+  if (!connected.value) {
+    queuedPackets.push(data);
+    return;
+  }
   ws.value.send(JSON.stringify(data));
 });
 let API_URL: string;
@@ -46,7 +59,7 @@ let lastID = ref(null) as Ref<string | null>;
 let pingInterval: number;
 onMounted(() => {
   pingInterval = setInterval(() => { // if we're using cloudflare, we need to ping in order to make cloudflare not explode
-    if(connected.value) {
+    if (connected.value) {
       events.value.emit("sendPacket", {
         type: "ping"
       });
@@ -94,12 +107,15 @@ function initWS() {
           console.log("User doesn't exist, but login was successful. Probably already authenticated.");
           return;
         }
+        queuedPackets.forEach(queuedPacket => {
+          ws.value.send(JSON.stringify(queuedPacket));
+        });
         loginStatus.value = authPacket.user;
         console.log("Logged in as " + authPacket.user.username);
         localStorage.setItem("token", token.value);
         servers.value = authPacket.servers as any;
         debugMessage.value = authPacket;
-        if(lastID.value != authPacket.user._id) createNotification("Welcome, " + authPacket.user.username + "!");
+        if (lastID.value != authPacket.user._id) createNotification("Welcome, " + authPacket.user.username + "!");
         lastID.value = authPacket.user._id;
       }
     } else if (data.type == "error") {
@@ -154,27 +170,29 @@ events.value.on("loginFailed", (data: AuthS2C) => {
 });
 let showLoginScreen = ref(false);
 router.beforeEach(async guard => {
-  if(guard.query.useToken) {
+  if (guard.query.useToken) {
     console.log("Using token from query.");
-    if(loginStatus.value?.username) {
+    if (loginStatus.value?.username) {
       console.log("Already logged in, ignoring token.")
       return;
     }
     console.log("Checking if connected...")
     console.time();
-    if(!connected.value) await events.value.awaitEvent("connected");
+    if (!connected.value) await events.value.awaitEvent("connected");
     console.timeEnd();
     console.log("Readystate is", ws.value.readyState)
     console.log("Connected, logging in...");
     token.value = guard.query.useToken as string;
     login();
     console.log("Token used, removing from query.");
-    router.push({ 
+    router.push({
       path: guard.path,
       hash: guard.hash,
-      query: {...guard.query, useToken: undefined} });
+      query: { ...guard.query, useToken: undefined }
+    });
     console.log("DONE");
-}});
+  }
+});
 </script>
 
 <template>

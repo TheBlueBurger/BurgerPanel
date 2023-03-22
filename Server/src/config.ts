@@ -45,7 +45,7 @@ let validators: { [key: string]: (value: string) => Promise<boolean | string> } 
         } else {
             if (!value.match(/^[a-zA-Z0-9_\-\/\\:]+$/)) throw new Error("Server path is invalid.");
             newPath = path.normalize(value);
-            if(!path.isAbsolute(newPath)) throw new Error("Server path is not absolute.");
+            if (!path.isAbsolute(newPath)) throw new Error("Server path is not absolute.");
         }
         // Ensure the folder exists, but is empty
         if (!(await (await fs.stat(newPath)).isDirectory())) {

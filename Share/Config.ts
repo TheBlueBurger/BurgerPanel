@@ -16,7 +16,7 @@ export interface Config {
     defaultMCSoftware: "purpur" | "paper" | "vanilla";
     stopServerTimeout: number;
 }
-export let descriptions: {[key in keyof Config]: string} = {
+export let descriptions: { [key in keyof Config]: string } = {
     defaultMemory: "The default amount of memory to allocate to a server",
     webServerPort: "The port to run the web server on.\nNote: If you change this, you need to restart the web server.",
     serverPath: "The path to store servers in",

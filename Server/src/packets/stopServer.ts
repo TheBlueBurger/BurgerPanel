@@ -7,7 +7,7 @@ export default class StopServer extends Packet {
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any) {
         let server = await servers.findById(data.id).exec();
-        if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
+        if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
             client.json({
                 type: "stopServer",
                 success: false,

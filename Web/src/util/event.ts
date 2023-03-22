@@ -1,6 +1,6 @@
 export default new class EventEmitter {
-    listeners: {[key: string]: ((...args: any[]) => void)[]};
-    onceListeners: {[key: string]: ((...args: any[]) => void)[]};
+    listeners: { [key: string]: ((...args: any[]) => void)[] };
+    onceListeners: { [key: string]: ((...args: any[]) => void)[] };
     // You might think "oh why arent these private?" but if they're private, vscode will scream at me because apparently its being used but not used at the same time?!?!?
     constructor() {
         this.listeners = {};
@@ -13,10 +13,10 @@ export default new class EventEmitter {
         this.listeners[event].push(callback);
     }
     emit(event: string, ...args: any[]) {
-        if(typeof this.listeners[event] != "undefined") for (const callback of this.listeners[event]) {
+        if (typeof this.listeners[event] != "undefined") for (const callback of this.listeners[event]) {
             callback(...args);
         }
-        if(typeof this.onceListeners[event] != "undefined") for (const callback of this.onceListeners[event]) {
+        if (typeof this.onceListeners[event] != "undefined") for (const callback of this.onceListeners[event]) {
             callback(...args);
         }
         this.onceListeners[event] = [];

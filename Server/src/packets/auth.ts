@@ -14,7 +14,7 @@ export default class Auth extends Packet {
             });
             return;
         } else {
-            if(!data.token) {
+            if (!data.token) {
                 this.respond(client, {
                     type: "auth",
                     success: false,
@@ -26,7 +26,7 @@ export default class Auth extends Packet {
             }
             // TODO: Actual database stuff
             try {
-                client.data.auth.user = (await users.findOne({token: data.token}).exec())?.toJSON();
+                client.data.auth.user = (await users.findOne({ token: data.token }).exec())?.toJSON();
             } catch {
                 this.respond(client, {
                     type: "auth",

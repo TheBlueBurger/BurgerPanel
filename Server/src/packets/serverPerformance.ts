@@ -1,6 +1,6 @@
 import { OurClient, Packet } from "../index.js";
 import type { ServerPerformancePacketS2C } from "../../../Share/Perf.js";
-import { cpuUsage,getMemoryUsage } from "../util/cpu.js"
+import { cpuUsage, getMemoryUsage } from "../util/cpu.js"
 
 export default class ServerPerformance extends Packet {
     name: string = "serverPerformance";

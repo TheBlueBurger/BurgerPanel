@@ -1,5 +1,6 @@
 import { OurClient, Packet } from "../index.js";
 import { users } from "../db.js";
+import filterUserData from "../util/filterUserData.js";
 
 export default class CreateUser extends Packet {
     name: string = "createUser";
@@ -14,7 +15,7 @@ export default class CreateUser extends Packet {
             });
             return;
         }
-        if(typeof data.username == "undefined" || typeof data.admin == "undefined") {
+        if (typeof data.username == "undefined" || typeof data.admin == "undefined") {
             client.json({
                 type: "createUser",
                 success: false,
@@ -22,7 +23,7 @@ export default class CreateUser extends Packet {
             });
             return;
         }
-        let existingUser = await users.findOne({username: data.username}).exec();
+        let existingUser = await users.findOne({ username: data.username }).exec();
         if (existingUser) {
             client.json({
                 type: "createUser",
@@ -40,7 +41,7 @@ export default class CreateUser extends Packet {
         client.json({
             type: "createUser",
             success: true,
-            user,
+            user: filterUserData(user.toJSON()),
             emitEvent: true
         });
     }

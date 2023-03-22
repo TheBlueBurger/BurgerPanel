@@ -28,7 +28,7 @@ export default class Auth extends Packet {
             return;
         }
         // Ensure the server name is unique
-        if((await servers.countDocuments({
+        if ((await servers.countDocuments({
             name: data.name
         }).exec()) > 0) {
             this.respond(client, {
@@ -39,7 +39,7 @@ export default class Auth extends Packet {
             });
             return;
         }
-        if(data.name.length > 16) {
+        if (data.name.length > 16) {
             this.respond(client, {
                 type: "createServer",
                 success: false,
@@ -49,7 +49,7 @@ export default class Auth extends Packet {
             return;
         }
         // Ensure the server name is valid
-        if(!data.name.match(/^[a-zA-Z0-9_]+$/)) {
+        if (!data.name.match(/^[a-zA-Z0-9_]+$/)) {
             this.respond(client, {
                 type: "createServer",
                 success: false,
@@ -59,7 +59,7 @@ export default class Auth extends Packet {
             return;
         }
         let serverPath;
-        if(await getSetting("serverPath") == "") {
+        if (await getSetting("serverPath") == "") {
             this.respond(client, {
                 type: "createServer",
                 success: false,
@@ -68,8 +68,8 @@ export default class Auth extends Packet {
             });
             return;
         }
-        if(await getSetting("serverPathIsRelative")) {
-            if(path.isAbsolute(await getSetting("serverPath") as string)) {
+        if (await getSetting("serverPathIsRelative")) {
+            if (path.isAbsolute(await getSetting("serverPath") as string)) {
                 await setSetting("serverPath", "");
                 this.respond(client, {
                     type: "createServer",
@@ -84,15 +84,15 @@ export default class Auth extends Packet {
             serverPath = path.join(await getSetting("serverPath") as string, data.name);
         }
         let version = data.version;
-        if(!version) {
+        if (!version) {
             version = await getSetting("defaultMCVersion");
         }
         let software = data.software;
-        if(!software) {
+        if (!software) {
             software = await getSetting("defaultMCSoftware");
         }
         let port = data.port;
-        if(!port || typeof port !== "number" || port > 65535) {
+        if (!port || typeof port !== "number" || port > 65535) {
             this.respond(client, {
                 type: "createServer",
                 success: false,
@@ -101,7 +101,7 @@ export default class Auth extends Packet {
             });
             return;
         }
-        if(!allowedSoftwares.includes(software)) {
+        if (!allowedSoftwares.includes(software)) {
             this.respond(client, {
                 type: "createServer",
                 success: false,

@@ -24,8 +24,7 @@ function showAllServers() {
 async function checkIfAllServers(currentRoute: RouteLocationNormalized) {
     if (currentRoute.query.all == "true") {
         events.value.emit("sendPacket", {
-            type: "getAllServers",
-            all: true
+            type: "getAllServers"
         });
         let resp = await events.value.awaitEvent("getAllServers");
         if (resp?.success) {

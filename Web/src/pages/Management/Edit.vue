@@ -10,12 +10,11 @@ let props = defineProps<{
   server: string;
 }>();
 let router = useRouter();
-let servers: Ref<Server[]> = inject('servers') as Ref<Server[]>;
 let loginStatus = inject("loginStatus") as Ref<User | null>
 let users: Ref<User[]> = inject("users") as Ref<User[]>;
 onMounted(async () => {
     try {
-        server.value = await getServerByID(servers.value, props.server);
+        server.value = await getServerByID(null, props.server);
         ourAllowedUsers.value = server.value?.allowedUsers || [];
         if(ourAllowedUsers.value.length == 0) {
             events.emit("createNotification", "This server has no allowed users. This should never happen. You should add a user.");
@@ -41,7 +40,7 @@ async function renameServer() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server name changed to '${newName}'`);
-            server.value = await getServerByID(null, props.server, true);
+            server.value = await getServerByID(null, props.server);
         } else {
             alert("Failed to change server name: " + resp.message);
         }
@@ -58,7 +57,7 @@ async function changeMemory() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server memory changed to '${newMem}'`);
-            server.value = await getServerByID(null, props.server, true);
+            server.value = await getServerByID(null, props.server);
         } else {
             alert("Failed to change server memory: " + resp.message);
         }
@@ -75,7 +74,7 @@ async function changeVersion() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server version changed to '${newVersion}'`);
-            server.value = await getServerByID(null, props.server, true);
+            server.value = await getServerByID(null, props.server);
         } else {
             alert("Failed to change server version: " + resp.message);
         }
@@ -92,7 +91,7 @@ async function changeSoftware() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server software changed to '${newSoftware}'`);
-            server.value = await getServerByID(null, props.server, true);
+            server.value = await getServerByID(null, props.server);
         } else {
             alert("Failed to change server software: " + resp.message);
         }
@@ -109,7 +108,7 @@ async function changePort() {
         let resp = await events.awaitEvent("setServerOption-" + props.server);
         if(resp?.success) {
             events.emit("createNotification", `Server port changed to '${newPort}'`);
-            server.value = await getServerByID(null, props.server, true);
+            server.value = await getServerByID(null, props.server);
         } else {
             alert("Failed to change server port: " + resp.message);
         }
@@ -151,7 +150,7 @@ async function saveAllowedUsers() {
     let resp = await events.awaitEvent("setServerOption-" + props.server);
     if(resp?.success) {
         events.emit("createNotification", `Allowed users changed`);
-        server.value = await getServerByID(null, props.server, true);
+        server.value = await getServerByID(null, props.server);
     } else {
         alert("Failed to change allowed users: " + resp.message);
     }
@@ -196,7 +195,7 @@ async function changeAutoStart() {
     let resp = await events.awaitEvent("setServerOption-" + props.server);
     if (resp?.success) {
         events.emit("createNotification", `Server auto start changed to '${!server.value?.autoStart}'`);
-        server.value = await getServerByID(null, props.server, true);
+        server.value = await getServerByID(null, props.server);
     } else {
         alert("Failed to change server auto start: " + resp.message);
     }

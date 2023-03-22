@@ -14,7 +14,7 @@ export let users = db.model("User", new mongoose.Schema({
         required: true
     },
     admin: Boolean,
-    createdAt: {type: Date, default: Date.now},
+    createdAt: { type: Date, default: Date.now },
     token: {
         type: String,
         default: () => nodeCrypto.randomBytes(64).toString("base64url")
@@ -47,7 +47,10 @@ export let servers = db.model("Server", new mongoose.Schema({
         type: Number,
         unique: true
     },
-    autoStart: Boolean
+    autoStart: {
+        type: Boolean,
+        default: false
+    }
 }));
 export let settings = db.model("Setting", new mongoose.Schema({
     key: {

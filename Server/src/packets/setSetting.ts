@@ -19,7 +19,7 @@ export default class SetSetting extends Packet {
             return;
         }
         let val;
-        if(!data.key || !data.value) {
+        if (!data.key || !data.value) {
             client.json({
                 type: "setSetting",
                 success: false,
@@ -41,6 +41,7 @@ export default class SetSetting extends Packet {
             });
             return;
         }
+        console.log(`${client.data.auth.user.username} (${client.data.auth.user._id}) changed the value of ${data.key} to ${val}`);
         client.json({
             type: "setSetting",
             success: true,

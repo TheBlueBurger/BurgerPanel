@@ -28,11 +28,11 @@ export default class DeleteUser extends Packet {
             return;
         }
         await userToDelete.deleteOne();
-        if(data.id === client.data.auth.user._id) {
+        if (data.id === client.data.auth.user._id) {
             client.close();
         }
         clients.forEach(c => {
-            if(c.data.auth.user?._id.toString() === data.id) {
+            if (c.data.auth.user?._id.toString() === data.id) {
                 c.close();
             }
         });
