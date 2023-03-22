@@ -17,7 +17,7 @@ export default class GetUserToken extends Packet {
             client.json({
                 type: "getUserToken",
                 success: false,
-                error: "Not found",
+                message: "Not found",
                 emitEvent: true,
                 emits: ["getUserToken-" + userID]
             });

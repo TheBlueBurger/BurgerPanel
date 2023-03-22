@@ -211,5 +211,6 @@ enforce-secure-profile=false
 }
 export function userHasAccessToServer(user: User | undefined, server: Server) {
     if (!user) return false;
+    if(typeof user._id != "string") user._id = (user._id as string).toString(); // mongodb stupidness
     return server.allowedUsers.includes(user._id) || user.admin;
 }

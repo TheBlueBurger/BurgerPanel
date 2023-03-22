@@ -24,7 +24,6 @@ export default class Auth extends Packet {
                 });
                 return;
             }
-            // TODO: Actual database stuff
             try {
                 client.data.auth.user = (await users.findOne({ token: data.token }).exec())?.toJSON();
             } catch {

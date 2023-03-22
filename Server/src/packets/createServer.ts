@@ -110,23 +110,33 @@ export default class Auth extends Packet {
             });
             return;
         }
-        console.log(`${client.data.auth.user.username} (${client.data.auth.user.username}) is creating server ${data.name} at port ${port}`)
-        let server = await servers.create({
-            name: data.name,
-            allowedUsers: [client.data.auth.user._id],
-            mem: parseInt(data.mem) || await getSetting("defaultMemory"),
-            path: serverPath,
-            software,
-            version,
-            port
-        });
-        await serverManager.setupServer(server.toJSON());
-        this.respond(client, {
-            type: "createServer",
-            success: true,
-            server: server.toJSON(),
-            emitEvent: true
-        });
+        console.log(`${client.data.auth.user.username} (${client.data.auth.user.username}) is creating server ${data.name} at port ${port}`);
+        try {
+            let server = await servers.create({
+                name: data.name,
+                allowedUsers: [client.data.auth.user._id],
+                mem: parseInt(data.mem) || await getSetting("defaultMemory"),
+                path: serverPath,
+                software,
+                version,
+                port
+            });
+            await serverManager.setupServer(server.toJSON());
+            this.respond(client, {
+                type: "createServer",
+                success: true,
+                server: server.toJSON(),
+                emitEvent: true
+            });
+        } catch(err) {
+            this.respond(client, {
+                type: "createServer",
+                success: false,
+                message: `Error: ${err}`,
+                emitEvent: true
+            });
+            return;
+        }
     }
     respond(client: OurClient, data: CreateServerS2C) {
         client.json(data);

@@ -59,7 +59,7 @@ class PacketHandler {
                 type: data.type,
                 success: false,
                 message: "Not authenticated. Admin required.",
-            })
+            });
             return;
         }
         try {
