@@ -10,7 +10,7 @@ export let users = db.model("User", new mongoose.Schema({
     username: {
         type: String,
         unique: true,
-        maxlength: 20,
+        maxlength: 24,
         required: true
     },
     admin: Boolean,
@@ -18,6 +18,10 @@ export let users = db.model("User", new mongoose.Schema({
     token: {
         type: String,
         default: () => nodeCrypto.randomBytes(64).toString("base64url")
+    },
+    permissions: {
+        type: [String],
+        default: []
     }
 }));
 export let servers = db.model("Server", new mongoose.Schema({

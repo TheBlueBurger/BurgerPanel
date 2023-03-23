@@ -170,6 +170,7 @@ events.value.on("loginFailed", (data: AuthS2C) => {
 });
 let showLoginScreen = ref(false);
 router.beforeEach(async guard => {
+  // Logs in with the token provided in the ?useToken= query
   if (guard.query.useToken) {
     console.log("Using token from query.");
     if (loginStatus.value?.username) {

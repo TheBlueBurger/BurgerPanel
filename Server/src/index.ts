@@ -9,6 +9,8 @@ import { getSetting, setSetting } from './config.js';
 import { once } from "node:events";
 import serverManager from './serverManager.js';
 import { servers, users } from './db.js';
+import { Permission } from '../../Share/Permission.js';
+import hasPermission from './util/permission.js';
 let app = express();
 let httpServer = http.createServer(app);
 let wss = new WebSocketServer({ server: httpServer });
@@ -62,6 +64,14 @@ class PacketHandler {
             });
             return;
         }
+        if(packet.permission && !hasPermission(client.data.auth?.user, packet.permission)) {
+            client.json({
+                type: data.type,
+                success: false,
+                message: "No permission",
+            });
+            return;
+        }
         try {
             await packet.handle(client, data);
         } catch (err) {
@@ -80,6 +90,7 @@ export class Packet {
     name: string = "EXAMPLE_DONT_USE";
     requiresAuth: boolean = true;
     requiresAdmin: boolean = false;
+    permission: Permission = [];
     constructor() {
     }
     handle(client: OurClient, data: any) {
