@@ -1,4 +1,4 @@
-import { User } from "../../../Share/User";
+import { User } from "../../../Share/User.js";
 
 export default function filterUserData(user: User) {
     return {

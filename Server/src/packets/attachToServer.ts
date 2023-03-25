@@ -1,6 +1,5 @@
 import { OurClient, Packet } from "../index.js";
 import { servers } from "../db.js";
-import { Server } from "../../../Share/Server.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 
 export default class AttachToServer extends Packet {

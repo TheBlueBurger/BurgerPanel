@@ -7,8 +7,8 @@ export interface MemoryUsage {
 
 export interface ServerPerformancePacketS2C {
   type: "serverPerformance";
-  cpu: number[];
-  mem: MemoryUsage;
+  load?: number[];
+  mem?: MemoryUsage;
   emitEvent: boolean;
-  platform: string;
+  platform?: string;
 }

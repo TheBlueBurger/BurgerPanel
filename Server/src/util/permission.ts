@@ -1,18 +1,12 @@
-import { User } from "../../../Share/User";
-import type { Permission } from "../../../Share/Permission";
+import { User } from "../../../Share/User.js";
+import type { Permission, ServerPermissions } from "../../../Share/Permission.js";
+import { hasPermission } from "../../../Share/Permission.js";
+import { Server } from "../../../Share/Server.js";
 
-export default function hasPermission(user: User | undefined, permission: Permission): boolean {
-    if(!user) return false;
-    if(user.permissions.includes("full")) return true;
-    if(Array.isArray(permission) && !permission.some(p => typeof p == "string")) {
-        // Check if one of the permissions match
-        return permission.some(p => hasPermission(user, p));
-    }
-    if(typeof permission == "string" && user.permissions.includes(permission)) return true;
-    // It has to be the object
-    if(typeof permission == "object" && !Array.isArray(permission) && Array.isArray(permission.all)) { // Just in case
-        if(permission.all.length == 0) return false;
-        return !permission.all.some(p => !hasPermission(user, p)); 
-    }
-    return false;
+export default function _hasPermission(user: User | undefined, permission: Permission): boolean {
+    return hasPermission(user, permission)
+}
+export function hasServerPermission(user: User, server: Server, permission: ServerPermissions) {
+    return hasPermission(user, `servers.all.${permission}`);
+    // TODO: Permissions for each server
 }

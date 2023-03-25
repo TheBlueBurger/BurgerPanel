@@ -1,7 +1,7 @@
 import { Server } from "../../Share/Server.js"
-import { OurClient } from "."
+import { OurClient } from "./index.js"
 import { ChildProcess, spawn } from "node:child_process"
-import { User } from "../../Share/User";
+import { User } from "../../Share/User.js";
 import fs from "node:fs/promises";
 import { getSetting } from "./config.js";
 import { servers } from "./db.js";

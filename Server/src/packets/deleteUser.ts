@@ -1,22 +1,13 @@
 import { clients, OurClient, Packet } from "../index.js";
 import { users } from "../db.js";
+import { Permission } from "../../../Share/Permission.js";
 
 export default class DeleteUser extends Packet {
     name: string = "deleteUser";
     requiresAuth: boolean = true;
+    permission: Permission = "users.delete";
     async handle(client: OurClient, data: any) {
-        // Ensure the user is an admin
-        if (!client.data.auth.user?.admin) {
-            client.json({
-                type: "setSetting",
-                success: false,
-                message: "Not authenticated",
-                emitEvent: true
-            });
-            // Probably bad actor. Disconnect them.
-            client.close();
-            return;
-        }
+        if(!client.data.auth.user) return;
         let userToDelete = await users.findById(data.id).exec();
         if (!userToDelete) {
             client.json({

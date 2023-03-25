@@ -2,6 +2,7 @@ import { settings } from './db.js';
 import { defaultConfig, Config } from "../../Share/Config.js";
 import path from "node:path";
 import fs from "node:fs/promises";
+import { isValidPermissionString } from '../../Share/Permission.js';
 
 let forcedChangeConfig: (keyof Config)[] = ["serverPath"];
 let cachedSettings: { [key in keyof Config]?: string | number | null } = {};
@@ -35,7 +36,7 @@ If it returns true, it succeeds.
 If it returns a string, it will be changed to that string.
 If it returns an error, it will fail.
 */
-let validators: { [key: string]: (value: string) => Promise<boolean | string> } = {
+let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | string> } = {
     serverPath: async (value) => {
         if (!value) throw new Error("Server path cannot be empty");
         let newPath = path.normalize(value);
@@ -57,14 +58,22 @@ let validators: { [key: string]: (value: string) => Promise<boolean | string> } 
         return path.normalize(newPath);
     },
     serverPathIsRelative: boolValidator,
+    defaultPermissions: async(value) => {
+        let permissions = value.split(",");
+        permissions.forEach(p => {
+            if(!isValidPermissionString(p)) throw new Error("Invalid permission: " + p);
+        })
+        return true;
+    }
 }
 export async function setSetting<K extends keyof Config>(key: K, value: Config[K] extends number ? number : string) {
     // Ensure the key is valid
     if (!(key in defaultConfig)) throw new Error("Invalid config key");
     // Ensure the value is valid
     try {
-        if (validators[key as string]) {
-            let result = await validators[key as string](value as string);
+        let validator = validators[key as keyof Config];
+        if (validator) {
+            let result = await validator(value as string);
             if (typeof result == "string") value = result as any;
             else if (typeof result == "boolean" && !result) throw new Error("Invalid value");
         }

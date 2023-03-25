@@ -90,7 +90,7 @@ export class Packet {
     name: string = "EXAMPLE_DONT_USE";
     requiresAuth: boolean = true;
     requiresAdmin: boolean = false;
-    permission: Permission = [];
+    permission: Permission | null = null;
     constructor() {
     }
     handle(client: OurClient, data: any) {
