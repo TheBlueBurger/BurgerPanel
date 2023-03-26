@@ -17,16 +17,12 @@ let users = inject("users") as Ref<Map<string, User>>;
 onMounted(async () => {
     try {
         server.value = await getServerByID(null, props.server);
-        ourAllowedUsers.value = server.value?.allowedUsers || [];
-        if(ourAllowedUsers.value.length == 0) {
-            events.emit("createNotification", "This server has no allowed users. This should never happen. You should add a user.");
-        }
     } catch(err) {
         alert("Failed to get server details. " + (err as any)?.message || "No error message provided.");
         router.push("/manage");
     }
     if(!hasPermission(loginStatus.value, "users.view")) {
-        events.emit("createNotification", "You are not an admin. You will not be able to change some settings.");
+        events.emit("createNotification", "You do not have user view permissions. User management has been disabled.");
     } else {
         getUserlist();
     }
@@ -124,13 +120,23 @@ function gotoConsole() {
         }
     })
 }
-let ourAllowedUsers = ref<{permissions: ServerPermissions[], user: string}[]>([]);
-function removeUser(user: string) {
-    if(ourAllowedUsers.value.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
-    if(!confirm("Are you sure you want to remove this user?")) return;
-    ourAllowedUsers.value = ourAllowedUsers.value.filter(u => u.user != user);
+async function removeUser(user: string) {
+    if(server?.value?.allowedUsers?.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
+    if(!confirm("Are you sure you want to remove this user from the server?")) return;
+    events.emit("sendPacket", {
+        type: "setServerOption",
+        id: props.server,
+        allowedUsers: {
+            action: "remove",
+            user: user
+        }
+    });
+    let resp = await events.awaitEvent("setServerOption-" + props.server);
+    if(!resp.success) events.emit("createNotification", resp.message);
+    server.value = await getServerByID(null, props.server);
+    console.log(server.value)
 }
-function addUser() {
+async function addUser() {
     let newUserID: string | null | undefined = prompt("Enter the ID or username of the user you want to add.");
     if(newUserID) {
         if(newUserID.match(/^[a-fA-F0-9]{24}$/)) {
@@ -139,26 +145,19 @@ function addUser() {
             newUserID = [...users.value.values()].find(u => u.username.toLowerCase() == newUserID?.toLowerCase())?._id
             if(!newUserID) return events.emit("createNotification", "User with that username not found.");
         }
-        if(ourAllowedUsers.value.find(u => u.user == newUserID)) return events.emit("createNotification", "This user is already allowed to access this server.");
-        ourAllowedUsers.value.push({
-            user: newUserID,
-            permissions: ["view", "console.read", "console.write", "stop", "start"]
-        });
+        if(server.value?.allowedUsers.find(u => u.user == newUserID)) return events.emit("createNotification", "This user is already allowed to access this server.");
     }
-}
-async function saveAllowedUsers() {
     events.emit("sendPacket", {
         type: "setServerOption",
         id: props.server,
-        allowedUsers: ourAllowedUsers.value
+        allowedUsers: {
+            action: "add",
+            user: newUserID
+        }
     });
     let resp = await events.awaitEvent("setServerOption-" + props.server);
-    if(resp?.success) {
-        events.emit("createNotification", `Allowed users changed`);
-        server.value = await getServerByID(null, props.server);
-    } else {
-        alert("Failed to change allowed users: " + resp.message);
-    }
+    if(!resp.success) events.emit("createNotification", resp.message);
+    server.value = await getServerByID(null, props.server);
 }
 
 async function getUserlist() {
@@ -206,8 +205,19 @@ async function changeAutoStart() {
 <template>
 <div v-if="server">
     <h2>Editing {{ server.name }}</h2>
-    <button @click="deleteServer()">Delete</button>
-    <button @click="gotoConsole">Go to console</button> <br/><hr/>
+    <button @click="deleteServer()" v-if="hasServerPermission(loginStatus, server, 'delete')" class="button-red">Delete</button>
+    <RouterLink :to="{
+        name: 'manageServer',
+        params: {
+            server: props.server
+        }
+    }"><button>Go to console</button></RouterLink>
+    <RouterLink :to="{
+        name: 'viewLogs',
+        params: {
+            server: props.server
+        }
+    }"><button>View logs</button></RouterLink> <br/><hr/>
     Server name: {{ server.name }} <button @click="renameServer">Rename</button>
     <br />
     Server path: {{ server.path }} (Read only)
@@ -221,19 +231,29 @@ async function changeAutoStart() {
     Port: {{ server.port }} <button @click="changePort">Change</button>
     <br />
     Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart">Change</button>
-    <div v-if="hasServerPermission(loginStatus, server, 'set.allowedUsers.add')">
+    <div v-if="hasPermission(loginStatus, 'users.view')">
         <hr />
         <h3>Allowed users</h3>
-        <button @click="addUser">Add user</button>
-        <button v-if="!ourAllowedUsers.find(u => u.user == loginStatus?._id)" @click="loginStatus?._id ? ourAllowedUsers.push({user: loginStatus._id, permissions: ['full']}) : 0 && hasPermission(loginStatus, 'server.all.set.allowedUsers.add')">Add yourself</button>
+        <button @click="addUser" v-if="hasServerPermission(loginStatus, server, 'set.allowedUsers.add')">Add user</button>
+        <button v-if="!server.allowedUsers.find(u => u.user == loginStatus?._id)" @click="loginStatus?._id ? server.allowedUsers.push({user: loginStatus._id, permissions: ['full']}) : 0 && hasPermission(loginStatus, 'server.all.set.allowedUsers.add')">Add yourself</button>
         <br/>
-        <div v-for="user in ourAllowedUsers" :key="user.user">
-            {{ getUserInfo(user.user)?.username || "<Unknown>" }} [{{ user }}] <button @click="removeUser(user.user)">Remove</button>
+        <div v-for="user in server.allowedUsers" :key="user.user">
+            {{ getUserInfo(user.user)?.username || "<Unknown>" }} [{{ user.permissions.join(", ") }}] <button @click="removeUser(user.user)" v-if="hasServerPermission(loginStatus, server, 'set.allowedUsers.remove')">Remove</button> <RouterLink :to="{
+                name: 'editServerAccess',
+                params: {
+                    server: props.server,
+                    user: user.user
+                }
+            }"><button>Edit</button></RouterLink>
         </div>
-        <button @click="saveAllowedUsers">Save Userlist</button>
     </div>
 </div>
 <div v-else>
     Loading server data...
 </div>
 </template>
+<style>
+.button-red {
+    background-color: #b13737;
+}
+</style>

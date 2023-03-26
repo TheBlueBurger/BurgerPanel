@@ -7,6 +7,8 @@ import { getSetting } from "./config.js";
 import { servers } from "./db.js";
 import { exists } from "./util/exists.js";
 import { hasServerPermission } from "./util/permission.js";
+import { userHasAccessToServer as _userHasAccessToServer } from "../../Share/Permission.js";
+
 export let allowedSoftwares = ["purpur", "paper", "vanilla"];
 export default new class ServerManager {
     servers: {
@@ -211,7 +213,5 @@ enforce-secure-profile=false
     }
 }
 export function userHasAccessToServer(user: User | undefined, server: Server) {
-    if (!user) return false;
-    if(typeof user._id != "string") user._id = (user._id as string).toString(); // mongodb stupidness
-    return hasServerPermission(user, server, "view");
+    return _userHasAccessToServer(user, server);
 }

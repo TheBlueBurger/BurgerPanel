@@ -3,6 +3,8 @@ import { Ref, inject, onMounted, ref, onUnmounted } from 'vue';
 import { Server } from '../../../../Share/Server';
 import events from '../../util/event';
 import { useRouter } from 'vue-router';
+import { hasServerPermission } from '../../../../Share/Permission';
+import { User } from '../../../../Share/User';
 let router = useRouter();
 let props = defineProps<{
   server: string;
@@ -12,6 +14,7 @@ let server = ref(null as Server | null);
 let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);
 let attached = ref(false);
+let loginStatus = inject("loginStatus") as Ref<User | null>;
 onMounted(async () => {
   loadingServerFromAPI.value = true;
   // Attach to server
@@ -31,8 +34,13 @@ onMounted(async () => {
         serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
       }, 50);
     } else {
-      alert("Failed to attach to server: " + resp.message);
-      router.push("/manage")
+      if(resp.stay) {
+        server.value = resp.server;
+        logs.value = ["You do not have permission to attach to this server."];
+      } else {
+        alert("Failed to attach to server: " + resp.message);
+        router.push("/manage")
+      }
     }
     loadingServerFromAPI.value = false;
   }

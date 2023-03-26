@@ -19,7 +19,6 @@ export default class AttachToServer extends Packet {
             return;
         }
         if(hasServerPermission(client.data.auth.user, server.toJSON(), "console.read")) {
-
             let resp = serverManager.attachClientToServer(client, server.toJSON());
             client.json({
                 type: "attachToServer",
@@ -36,6 +35,8 @@ export default class AttachToServer extends Packet {
                 message: "You do not have permission to attach (read logs) from this server!",
                 emitEvent: true,
                 emits: ["server-attached-" + data._id],
+                stay: true,
+                server: userHasAccessToServer(client.data.auth.user, server.toJSON()) ? server : undefined
             });
         }
     }

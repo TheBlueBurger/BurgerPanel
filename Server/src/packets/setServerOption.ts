@@ -2,7 +2,7 @@ import { OurClient, Packet } from "../index.js";
 import { servers, users } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
-import { hasPermission } from "../../../Share/Permission.js";
+import { hasPermission, ServerPermissions, ServerProfiles, _ServerPermissions } from "../../../Share/Permission.js";
 
 export default class SetServerOption extends Packet {
     name: string = "setServerOption";
@@ -41,53 +41,95 @@ export default class SetServerOption extends Packet {
             server.mem = data.mem;
         }
         if (data.allowedUsers) {
-            if (!Array.isArray(data.allowedUsers)) return;
-            if (data.allowedUsers.length < 1) return;
-            console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the allowed users of ${server.name} (${server._id}) to ${data.allowedUsers}`);
-            if (data.allowedUsers.length > 20) return;
-            let alreadyDoneUsers: string[] = [];
-            for await (const user of data.allowedUsers) {
-                if (typeof user.user != "string") return;
-                if (alreadyDoneUsers.includes(user.user)) {
-                    client.json({
-                        type: "setServerOption",
-                        success: false,
-                        message: "Duplicate user: " + user.user,
-                        emitEvent: true,
-                        emits: ["setServerOption-" + data.id]
-                    });
-                    return;
-                }
-                let userData = await users.findById(user.user).exec();
-                if (!userData) {
-                    client.json({
-                        type: "setServerOption",
-                        success: false,
-                        message: "User not found",
-                        emitEvent: true,
-                        emits: ["setServerOption-" + data.id]
-                    });
-                    return;
-                }
-                alreadyDoneUsers.push(user.user);
-                for(let permission of user.permissions) {
-                    if(!hasServerPermission(client.data.auth.user, server.toJSON(), permission)) {
-                        client.json({
-                            type: "setServerOption",
-                            success: false,
-                            message: "You are attempting to give " + user.user + " the permission " + permission + " which you dont have!",
-                            emitEvent: true,
-                            emits: ["setServerOption-" + data.id]
-                        });
-                        return;
+            switch (data?.allowedUsers?.action) {
+                case "add":
+                    if (hasServerPermission(client.data.auth.user, server.toJSON(), "set.allowedUsers.add")) {
+                        // Ensure it's a valid user and not already added
+                        if(!data?.allowedUsers?.user) return;
+                        if(server.allowedUsers.some(au => au.user == data?.allowedUsers?.user)) {
+                            client.json({
+                                type: "setServerOption",
+                                success: false,
+                                message: "Already added",
+                                emitEvent: true,
+                                emits: ["setServerOption-" + data.id]
+                            });
+                            return;
+                        }
+                        let newUser = await users.findById(data.allowedUsers.user).exec();
+                        if(!newUser) return;
+                        server.allowedUsers.push({permissions: [], user: data?.allowedUsers?.user});
                     }
-                }
-                // Ensure the user isn't giving permission to do something they can't
+                    break;
+                case "remove":
+                    if (hasServerPermission(client.data.auth.user, server.toJSON(), "set.allowedUsers.add")) {
+                        let userToRemove = data?.allowedUsers?.user;
+                        if(!userToRemove) return;
+                        let permissions = server.allowedUsers.find(au => au.user == userToRemove)?.permissions;
+                        if(permissions?.some(perm => {
+                            if(!server) return true; // i got no idea why, but without this typescript explodes
+                            return !hasServerPermission(client.data.auth.user, server.toJSON(), perm as ServerPermissions);
+                        })) {
+                            // user to remove has perms which the user trying to remove does not have, deny them
+                            client.json({
+                                type: "setServerOption",
+                                success: false,
+                                message: "Cannot remove user with higher perms than you",
+                                emitEvent: true,
+                                emits: ["setServerOption-" + data.id]
+                            });
+                            return;
+                        }
+                        server.allowedUsers = server.allowedUsers.filter(au => au.user != userToRemove);
+                    }
+                    break;
+                case "changePerm":
+                    let newValue = data?.allowedUsers?.value;
+                    let permission = data?.allowedUsers?.permission;
+                    let user = data?.allowedUsers?.user;
+                    if(!user) return;
+                    let userData = await users.findById(user).exec();
+                    if(!userData) return;
+                    if(!userHasAccessToServer(userData.toJSON(), server.toJSON())) return;
+                    if(!_ServerPermissions.includes(permission)) return;
+                    if(typeof newValue != "boolean") return;
+                    if(!hasServerPermission(client.data.auth.user, server.toJSON(), "set.allowedUsers.permissions.write")) return;
+                    if(!hasServerPermission(client.data.auth.user, server.toJSON(), permission)) return;
+                    if(newValue && server.allowedUsers.some(au => {
+                        return au.user == user && au.permissions.includes(permission)
+                    })) return;
+                    server.allowedUsers = server.allowedUsers.map(au => {
+                        if(au.user == user) {
+                            if(newValue) au.permissions.push(permission);
+                            else au.permissions = au.permissions.filter(perm => perm != permission); 
+                        }
+                        return au;
+                    });
+                    break;
+                case "applyProfile":
+                    if(!hasServerPermission(client.data.auth.user, server.toJSON(), "set.allowedUsers.permissions.write")) return;
+                    let profileName = data.allowedUsers.profile;
+                    let userToApplyProfileID = data?.allowedUsers?.user;
+                    let profile = ServerProfiles[profileName];
+                    if(!profile) return;
+                    if(profile.some(p => {
+                        if(!server) return true;
+                        return !hasServerPermission(client.data.auth.user, server.toJSON(), p)
+                    })) return;
+                    let userToApplyProfile = await users.findById(userToApplyProfileID).exec();
+                    if(!userToApplyProfile || !userHasAccessToServer(userToApplyProfile.toJSON(), server.toJSON())) return;
+                    server.allowedUsers = server.allowedUsers.map(au => {
+                        if(au.user == userToApplyProfileID) {
+                            au.permissions = profile;
+                        }
+                        return au;
+                    });
+                    client.json({
+                        type: "setServerOption",
+                        success: true,
+                        server: server.toJSON()
+                    });
             }
-            if(!hasServerPermission(client.data.auth.user, server.toJSON(), "set.allowedUsers.remove")) {
-                // Ensure nobody has been removed
-            }
-            server.allowedUsers = data.allowedUsers;
         }
         if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port")) {
             server.port = data.port;

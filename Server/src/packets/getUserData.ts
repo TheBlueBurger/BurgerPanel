@@ -13,7 +13,7 @@ export default class GetUserData extends Packet {
             client.json({
                 type: "getUserData",
                 success: false,
-                reason: "User not provided!",
+                message: "User not provided!",
                 emitEvent: true,
                 emits: ["getUserData-" + data.id]
             });
@@ -30,7 +30,7 @@ export default class GetUserData extends Packet {
         else client.json({
             type: "getUserData",
             success: false,
-            reason: "Invalid user!",
+            message: "Invalid user!",
             emitEvent: true,
             emits: ["getUserData-" + data.id]
         });

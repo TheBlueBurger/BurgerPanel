@@ -89,7 +89,7 @@ function importServer() {
 </script>
 <template>
     <h1>Servers</h1>
-        <button @click="showAllServers" v-if="!(router.currentRoute.value.query.all == 'true') && hasPermission(loginStatus, 'server.all.view')">Show all servers</button>
+        <button @click="showAllServers" v-if="!(router.currentRoute.value.query.all == 'true') && hasPermission(loginStatus, 'servers.all.view')">Show all servers</button>
         <button @click="serverCreatorOpen = !serverCreatorOpen" v-if="hasPermission(loginStatus, 'servers.create')">Create server {{ serverCreatorOpen ? "∧" : "V" }}</button>
         <button @click="importServer" v-if="hasPermission(loginStatus, 'servers.import')">Import server</button>
     <div id="create-server" v-if="serverCreatorOpen && hasPermission(loginStatus, 'servers.create')">

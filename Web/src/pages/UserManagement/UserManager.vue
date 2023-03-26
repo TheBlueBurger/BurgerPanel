@@ -66,7 +66,12 @@ function deleteUser() {
         Token: {{ viewingToken ? token : "<Hidden>" }} <button @click="viewToken(user._id)">View
                 token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button>
             <br>
-            <button @click="editPermissions">Edit permissions</button>
+            <RouterLink :to="{
+                name: 'editUserPermissions',
+                params: {
+                    user: props.user
+                }
+            }"><button>Edit permissions</button></RouterLink>
     </div>
     <div v-else>
         Loading...

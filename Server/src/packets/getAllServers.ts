@@ -6,7 +6,7 @@ export default class GetAllServers extends Packet {
     name: string = "getAllServers";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any) {
-        if(!hasPermission(client.data.auth.user, "server.all.view")) return;
+        if(!hasPermission(client.data.auth.user, "servers.all.view")) return;
         let serverList = await servers.find({}, {}, { limit: Infinity }).exec();
         client.json({
             type: "getAllServers",
