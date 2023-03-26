@@ -1,6 +1,7 @@
 import { OurClient, Packet } from "../index.js";
 import { servers } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
+import { hasServerPermission } from "../../../Share/Permission.js";
 
 export default class KillServer extends Packet {
     name: string = "killServer";
@@ -12,6 +13,16 @@ export default class KillServer extends Packet {
                 type: "killServer",
                 success: false,
                 message: "Server not found"
+            });
+            return;
+        }
+        if(!hasServerPermission(client.data.auth.user, server.toJSON(), "kill")) {
+            client.json({
+                type: "stopServer",
+                success: false,
+                message: "You cannot kill this server.",
+                emitEvent: true,
+                emits: ["server-killed-" + data.id]
             });
             return;
         }

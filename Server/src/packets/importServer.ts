@@ -3,11 +3,12 @@ import fs from "node:fs/promises";
 import { servers } from "../db.js";
 import serverManager from "../serverManager.js";
 import path from "node:path";
+import { Permission } from "../../../Share/Permission.js";
 
 export default class ImportServer extends Packet {
     name: string = "importServer";
     requiresAuth: boolean = true;
-    requiresAdmin: boolean = true;
+    permission: Permission = "servers.import";
     async handle(client: OurClient, data: any) {
         if (!data.path || typeof data.path != "string") {
             client.json({

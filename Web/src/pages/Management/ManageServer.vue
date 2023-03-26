@@ -62,12 +62,16 @@ events.on("serverExited-" + props.server, data => {
 });
 events.on("serverErrored-" + props.server, data => {
   logs.value.push("Server errored: " + data.error + "\n");
-})
-function stopServer() {
+});
+async function stopServer() {
   if(confirm("Are you sure you want to stop the server? Unsaved data will be saved.")) events.emit("sendPacket", {
     type: "stopServer",
     id: props.server
   });
+  let resp = await events.awaitEvent("server-stopping-" + props.server);
+  if(!resp.success) {
+    events.emit("createNotification", "Cannot stop server: " + resp.message)
+  }
 }
 function killServer() {
   if(confirm("Are you sure you want to KILL this server? All unsaved data will be GONE.")) events.emit("sendPacket", {
@@ -122,7 +126,7 @@ function editServer() {
     <button @click="startServer()">Start</button>
     <button @click="stopServer()">Stop</button>
     <button @click="killServer()">Kill</button>
-    <button @click="editServer()">Edit</button>
+    <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
     <br />
     Logs:
     <textarea readonly ref="serverTextArea" @scroll="onScrolled">{{ logs.join("") }}</textarea>

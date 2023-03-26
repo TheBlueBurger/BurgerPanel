@@ -1,6 +1,7 @@
 import { OurClient, Packet } from "../index.js";
 import { servers } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
+import { hasServerPermission } from "../util/permission.js";
 
 export default class StartServer extends Packet {
     name: string = "startServer";
@@ -12,6 +13,16 @@ export default class StartServer extends Packet {
                 type: "startServer",
                 success: false,
                 message: "Server not found",
+                emitEvent: true,
+                emits: ["server-started-" + data.id]
+            });
+            return;
+        }
+        if(!hasServerPermission(client.data.auth.user, server.toJSON(), "start")) {
+            client.json({
+                type: "startServer",
+                success: false,
+                message: "Not allowed",
                 emitEvent: true,
                 emits: ["server-started-" + data.id]
             });

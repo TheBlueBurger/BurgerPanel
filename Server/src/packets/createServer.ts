@@ -4,20 +4,13 @@ import path from "path";
 import type { CreateServerS2C } from "../../../Share/CreateServer.js"
 import { getSetting, setSetting } from "../config.js";
 import serverManager, { allowedSoftwares } from "../serverManager.js";
+import { Permission } from "../../../Share/Permission.js";
 
 export default class Auth extends Packet {
     name: string = "createServer";
     requiresAuth: boolean = true;
+    permission: Permission = "servers.create";
     async handle(client: OurClient, data: any) {
-        if (!client.data.auth.user?.admin) {
-            this.respond(client, {
-                type: "createServer",
-                success: false,
-                message: "Not authenticated",
-                emitEvent: true
-            });
-            return;
-        }
         if (!data.name || data.name === "") {
             this.respond(client, {
                 type: "createServer",
@@ -110,11 +103,14 @@ export default class Auth extends Packet {
             });
             return;
         }
-        console.log(`${client.data.auth.user.username} (${client.data.auth.user.username}) is creating server ${data.name} at port ${port}`);
+        console.log(`${client.data.auth.user?.username} (${client.data.auth.user?.username}) is creating server ${data.name} at port ${port}`);
         try {
             let server = await servers.create({
                 name: data.name,
-                allowedUsers: [client.data.auth.user._id],
+                allowedUsers: [{
+                    user: client.data.auth.user?._id,
+                    permissions: ["full"]
+                }],
                 mem: parseInt(data.mem) || await getSetting("defaultMemory"),
                 path: serverPath,
                 software,

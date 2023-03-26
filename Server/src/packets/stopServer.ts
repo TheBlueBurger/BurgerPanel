@@ -1,6 +1,7 @@
 import { OurClient, Packet } from "../index.js";
 import { servers } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
+import { hasServerPermission } from "../../../Share/Permission.js";
 
 export default class StopServer extends Packet {
     name: string = "stopServer";
@@ -12,6 +13,16 @@ export default class StopServer extends Packet {
                 type: "stopServer",
                 success: false,
                 message: "Server not found",
+                emitEvent: true,
+                emits: ["server-stopping-" + data.id]
+            });
+            return;
+        }
+        if(!hasServerPermission(client.data.auth.user, server.toJSON(), "stop")) {
+            client.json({
+                type: "stopServer",
+                success: false,
+                message: "You cannot stop this server.",
                 emitEvent: true,
                 emits: ["server-stopping-" + data.id]
             });

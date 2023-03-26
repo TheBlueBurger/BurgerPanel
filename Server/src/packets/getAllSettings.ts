@@ -1,22 +1,12 @@
 import { OurClient, Packet } from "../index.js";
 import { getAllSettings } from "../config.js";
+import { Permission } from "../../../Share/Permission.js";
 
 export default class GetAllSettings extends Packet {
     name: string = "getAllSettings";
     requiresAuth: boolean = true;
+    permission: Permission = "settings.read";
     async handle(client: OurClient, data: any) {
-        // Ensure the user is an admin
-        if (!client.data.auth.user?.admin) {
-            client.json({
-                type: "getAllSettings",
-                success: false,
-                message: "Not authenticated",
-                emitEvent: true
-            });
-            // Probably bad actor. Disconnect them.
-            client.close();
-            return;
-        }
         let val;
         try {
             val = await getAllSettings();

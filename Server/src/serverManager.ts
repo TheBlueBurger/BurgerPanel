@@ -6,6 +6,7 @@ import fs from "node:fs/promises";
 import { getSetting } from "./config.js";
 import { servers } from "./db.js";
 import { exists } from "./util/exists.js";
+import { hasServerPermission } from "./util/permission.js";
 export let allowedSoftwares = ["purpur", "paper", "vanilla"];
 export default new class ServerManager {
     servers: {
@@ -212,5 +213,5 @@ enforce-secure-profile=false
 export function userHasAccessToServer(user: User | undefined, server: Server) {
     if (!user) return false;
     if(typeof user._id != "string") user._id = (user._id as string).toString(); // mongodb stupidness
-    return server.allowedUsers.includes(user._id) || user.admin;
+    return hasServerPermission(user, server, "view");
 }

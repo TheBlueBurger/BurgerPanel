@@ -1,21 +1,16 @@
 import { OurClient, Packet } from "../index.js";
 import { users } from "../db.js";
 import filterUserData from "../util/filterUserData.js";
+import { Permission } from "../../../Share/Permission.js";
+import { getSetting } from "../config.js";
 
 export default class CreateUser extends Packet {
     name: string = "createUser";
     requiresAuth: boolean = true;
+    permission: Permission = "users.create";
     async handle(client: OurClient, data: any) {
-        // Ensure the user is an admin
-        if (!client.data.auth.user?.admin) {
-            client.json({
-                type: "createUser",
-                success: false,
-                message: "Not authenticated",
-            });
-            return;
-        }
-        if (typeof data.username == "undefined" || typeof data.admin == "undefined") {
+        if(!client.data.auth.user) return;
+        if (typeof data.username == "undefined") {
             client.json({
                 type: "createUser",
                 success: false,
@@ -33,10 +28,10 @@ export default class CreateUser extends Packet {
             return;
         }
         let user = await users.create({
-            admin: data.admin,
             username: data.username,
+            permissions: (await getSetting("defaultPermissions"))?.toString().split(",")
         });
-        console.log(`${client.data.auth.user.username} (${client.data.auth.user._id}) created user '${user.username}' with admin status: ${user.admin}`)
+        console.log(`${client.data.auth.user.username} (${client.data.auth.user._id}) created user '${user.username}'`)
         await user.save();
         client.json({
             type: "createUser",

@@ -5,11 +5,12 @@ import { User } from "../../../Share/User.js";
 import { setSetting, getAllSettings } from "../util/config";
 import EventEmitter from "../util/event";
 import { useRouter } from "vue-router";
+import { hasPermission } from "../../../Share/Permission";
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User>;
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
-if (!loginStatus.value?.admin) {
-    events.value.emit("createNotification", "You are not an admin! Get out of here!");
+if (!hasPermission(loginStatus.value, "settings.read") && !hasPermission(loginStatus.value, "users.view")) {
+    events.value.emit("createNotification", "You do not have permission! Get out of here!");
     router.push({
         path: "/"
     });
@@ -27,6 +28,7 @@ async function changeOption(option: keyof typeof defaultConfig) {
     }
 }
 getAllSettings();
+let cachedUsers = inject("users") as Ref<Map<string, User>>
 async function getUserlist() {
     events.value.emit("sendPacket", { type: "getUsers" });
     let serverProvidedUserList = await events.value.awaitEvent("getUsers");
@@ -35,28 +37,16 @@ async function getUserlist() {
         return;
     }
     if (serverProvidedUserList?.userList) {
-        users.value = serverProvidedUserList.userList;
-    }
-}
-async function toggleAdmin(user: User) {
-    events.value.emit("sendPacket", {
-        type: "toggleAdmin",
-        id: user._id
-    })
-    let resp = await events.value.awaitEvent("toggleadmin-" + user._id);
-    if (resp?.success) {
-        events.value.emit("createNotification", "User " + user.username + " is now " + (resp.user.admin ? "an admin" : "not an admin"));
-        // Set the user to the new user
-        users.value.find(u => u._id == user._id)!.admin = resp.user.admin;
-    } else {
-        alert("Failed to toggle admin: " + resp.message);
+        serverProvidedUserList.userList.forEach((user: User) => {
+            cachedUsers.value.set(user._id, user);
+        });
+        // legal? lets make a util function for this that gets user list and caches go in util folder
     }
 }
 
 let creatingUser = ref(false);
 let newUsername = ref("");
 let newAdmin = ref(false);
-let users: Ref<User[]> = inject("users") as Ref<User[]>;
 async function createUser() {
     events.value.emit("sendPacket", {
         type: "createUser",
@@ -74,62 +64,26 @@ async function createUser() {
         events.value.emit("createNotification", "Failed to create user: " + resp.message);
     }
 }
-async function deleteUser(user: User) {
-    if (confirm("Are you sure you want to delete this user?")) {
-        await events.value.emit("sendPacket", {
-            type: "deleteUser",
-            id: user._id
-        });
-        let resp = await events.value.awaitEvent("deleteUser");
-        if (resp?.success) {
-            events.value.emit("createNotification", "User " + user.username + " deleted");
-            getUserlist();
-        } else {
-            alert("Failed to delete user: " + resp.message);
-        }
-    }
-}
 getUserlist();
-let viewingToken = ref("");
-function copyToClip(text: string) {
-    navigator.clipboard.writeText(text);
-    events.value.emit("createNotification", "Copied to clipboard");
-}
 function showHelpForSetting(setting: string) {
     alert("Help for " + setting + ":\n" + descriptions[setting as keyof typeof defaultConfig]);
 }
-let tokens = ref({} as {
-    [user: string]: string
-});
-async function viewToken(userID: string, copy: boolean = false) {
-    await events.value.emit("sendPacket", {
-        type: "getUserToken",
-        id: userID
-    });
-    let resp = await events.value.awaitEvent("getUserToken-" + userID);
-    if (resp?.success) {
-        tokens.value[userID] = resp?.token;
-        if(!copy) viewingToken.value = userID;
-        else copyToClip(resp?.token);
-    } else {
-        alert("Failed to get user token: " + resp.message);
-    }
-}
 </script>
 <template>
-    <h2>Settings</h2>
-    <!-- Do not touch this mess -->
-    <div v-for="option of Object.keys(defaultConfig)">
-        <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>{{ typeof knownSettings[option as
+    <div v-if="hasPermission(loginStatus, 'settings.read')">
+        <h2>Settings</h2>
+        <!-- Do not touch this mess -->
+        <div v-for="option of Object.keys(defaultConfig)">
+            <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>{{ typeof knownSettings[option as
             keyof typeof defaultConfig] != "undefined" ? ": "
-        + (knownSettings[option as keyof typeof defaultConfig] === "" ? "<Empty string> " : knownSettings[option as keyof
-            typeof defaultConfig]) : ": <Unknown>" }}
+            + (knownSettings[option as keyof typeof defaultConfig] === "" ? "<Empty string> " : knownSettings[option as keyof
+                typeof defaultConfig]) : ": <Unknown>" }}
                 <button @click="() => changeOption(option as keyof typeof defaultConfig)">Edit</button>
+        </div>
+        <hr v-if="hasPermission(loginStatus, 'users.view')" />
     </div>
-    <!-- User list part -->
-    <hr />
     <h3>Users</h3>
-    <div v-if="users.length == 0">
+    <div v-if="cachedUsers.size == 0">
         <button @click="getUserlist()">Request users</button>
     </div>
     <div>
@@ -140,18 +94,8 @@ async function viewToken(userID: string, copy: boolean = false) {
         Admin: <input type="checkbox" v-model="newAdmin" /><br />
         <button @click="createUser()">Create user</button>
     </div>
-    <div v-for="user of users">
-        <hr>
-        ID: {{ user._id }} <button @click="deleteUser(user)">Delete</button>
-        <br>
-        Username: {{ user.username }}
-        <br>
-        Admin: {{ user.admin ? "Yes" : "No" }} <button @click="toggleAdmin(user)">Toggle admin status</button>
-        <br>
-        Created at: {{ new Date(user.createdAt).toLocaleString() }}
-        <br>
-        Token: {{ viewingToken == user._id ? tokens[user._id] : "<Hidden>" }} <button @click="viewToken(user._id)">View
-                token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button>
+    <div v-for="user of cachedUsers.values()">
+        {{ user.username}} <RouterLink :to="{name: 'manageUser', params: {user: user._id}}"><button>ig manage</button></RouterLink>
     </div>
 </template>
 <style>

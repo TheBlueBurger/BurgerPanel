@@ -5,6 +5,7 @@ import { User } from '../../../Share/User';
 import EventEmitter from '../util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
 import { getSetting } from '../util/config';
+import { hasPermission } from '../../../Share/Permission';
 let router = useRouter();
 let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
 let servers: Ref<Server[]> = inject('servers') as Ref<Server[]>;
@@ -71,7 +72,7 @@ function manageServer(id: string) {
     });
 }
 (async() => {
-    if(loginStatus.value.admin) {
+    if(hasPermission(loginStatus.value, "settings.read")) {
         newServerMem.value = await getSetting("defaultMemory");
         newMCServerVersion.value = await getSetting("defaultMCVersion");
         newMCServerSoftware.value = await getSetting("defaultMCSoftware");
@@ -88,14 +89,10 @@ function importServer() {
 </script>
 <template>
     <h1>Servers</h1>
-    <div v-if="loginStatus?.admin">
-            <h2>Admin</h2>
-            <p>Admins can create servers and manage all servers.</p>
-            <button @click="showAllServers" v-if="!(router.currentRoute.value.query.all == 'true')">Show all servers</button>
-            <button @click="serverCreatorOpen = !serverCreatorOpen">Create server {{ serverCreatorOpen ? "∧" : "V" }}</button>
-            <button @click="importServer">Import server</button>
-    </div>
-    <div id="create-server" v-if="serverCreatorOpen">
+        <button @click="showAllServers" v-if="!(router.currentRoute.value.query.all == 'true') && hasPermission(loginStatus, 'server.all.view')">Show all servers</button>
+        <button @click="serverCreatorOpen = !serverCreatorOpen" v-if="hasPermission(loginStatus, 'servers.create')">Create server {{ serverCreatorOpen ? "∧" : "V" }}</button>
+        <button @click="importServer" v-if="hasPermission(loginStatus, 'servers.import')">Import server</button>
+    <div id="create-server" v-if="serverCreatorOpen && hasPermission(loginStatus, 'servers.create')">
         <h2>Create server</h2>
         <form>
             Name: <input type="text" v-model="newServerName" /> <br/>
@@ -121,7 +118,7 @@ function importServer() {
                 <td>{{ server.mem }} MB</td>
                 <td>{{ server.path }}</td>
                 <td>{{ server.port }}</td>
-                <td><button @click="manageServer(server._id)">Manage</button></td>
+                <td><RouterLink :to="{name: 'manageServer', params: {server: server._id}}"><button>Manage</button></RouterLink></td>
             </tr>
         </table>
     </div>

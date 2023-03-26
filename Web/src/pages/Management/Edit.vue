@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { hasPermission, hasServerPermission, Permission, ServerPermissions } from '../../../../Share/Permission';
 import { Server } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import events from '../../util/event';
 import getServerByID from '../../util/getServerByID';
+import getUsers from '../../util/getUsers';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
 }>();
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User | null>
-let users: Ref<User[]> = inject("users") as Ref<User[]>;
+let users = inject("users") as Ref<Map<string, User>>;
 onMounted(async () => {
     try {
         server.value = await getServerByID(null, props.server);
@@ -23,7 +25,7 @@ onMounted(async () => {
         alert("Failed to get server details. " + (err as any)?.message || "No error message provided.");
         router.push("/manage");
     }
-    if(!loginStatus.value?.admin) {
+    if(!hasPermission(loginStatus.value, "users.view")) {
         events.emit("createNotification", "You are not an admin. You will not be able to change some settings.");
     } else {
         getUserlist();
@@ -122,23 +124,26 @@ function gotoConsole() {
         }
     })
 }
-let ourAllowedUsers = ref<string[]>([]);
+let ourAllowedUsers = ref<{permissions: ServerPermissions[], user: string}[]>([]);
 function removeUser(user: string) {
     if(ourAllowedUsers.value.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
     if(!confirm("Are you sure you want to remove this user?")) return;
-    ourAllowedUsers.value = ourAllowedUsers.value.filter(u => u != user);
+    ourAllowedUsers.value = ourAllowedUsers.value.filter(u => u.user != user);
 }
 function addUser() {
     let newUserID: string | null | undefined = prompt("Enter the ID or username of the user you want to add.");
     if(newUserID) {
-        if(ourAllowedUsers.value.includes(newUserID)) return events.emit("createNotification", "This user is already allowed to access this server.");
         if(newUserID.match(/^[a-fA-F0-9]{24}$/)) {
-            if(!users.value.find(u => u._id == newUserID)) return events.emit("createNotification", "User with that ID not found.");
+            if(!users.value.get(newUserID)) return events.emit("createNotification", "User with that ID not found.");
         } else {
-            newUserID = users.value.find(u => u.username.toLowerCase() == newUserID?.toLowerCase())?._id;
+            newUserID = [...users.value.values()].find(u => u.username.toLowerCase() == newUserID?.toLowerCase())?._id
             if(!newUserID) return events.emit("createNotification", "User with that username not found.");
         }
-        ourAllowedUsers.value.push(newUserID);
+        if(ourAllowedUsers.value.find(u => u.user == newUserID)) return events.emit("createNotification", "This user is already allowed to access this server.");
+        ourAllowedUsers.value.push({
+            user: newUserID,
+            permissions: ["view", "console.read", "console.write", "stop", "start"]
+        });
     }
 }
 async function saveAllowedUsers() {
@@ -155,20 +160,15 @@ async function saveAllowedUsers() {
         alert("Failed to change allowed users: " + resp.message);
     }
 }
+
 async function getUserlist() {
-    events.emit("sendPacket", { type: "getUsers" });
-    let serverProvidedUserList = await events.awaitEvent("getUsers");
-    if (!serverProvidedUserList?.success) {
-        alert("Failed to get user list: " + serverProvidedUserList?.message);
-        return;
-    }
-    if (serverProvidedUserList?.userList) {
-        users.value = serverProvidedUserList.userList;
-    }
+    return [...((await getUsers(users.value, false)).values())];
 }
+
 function getUserInfo(id: string) {
-    return users.value.find(u => u._id == id);
+    return users.value.get(id);
 }
+
 async function deleteServer() {
   if (prompt("Are you sure you want to delete this server and ALL files? This cannot be undone. Type 'DELETE' to delete.") == "DELETE") {
     events.emit("sendPacket", {
@@ -185,6 +185,7 @@ async function deleteServer() {
     }
   }
 }
+
 async function changeAutoStart() {
     console.log(server.value?.autoStart);
     events.emit("sendPacket", {
@@ -220,14 +221,14 @@ async function changeAutoStart() {
     Port: {{ server.port }} <button @click="changePort">Change</button>
     <br />
     Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart">Change</button>
-    <div v-if="loginStatus?.admin">
+    <div v-if="hasServerPermission(loginStatus, server, 'set.allowedUsers.add')">
         <hr />
         <h3>Allowed users</h3>
         <button @click="addUser">Add user</button>
-        <button v-if="loginStatus.admin && !ourAllowedUsers.includes(loginStatus._id)" @click="loginStatus?._id ? ourAllowedUsers.push(loginStatus?._id) : 0">Add yourself</button>
+        <button v-if="!ourAllowedUsers.find(u => u.user == loginStatus?._id)" @click="loginStatus?._id ? ourAllowedUsers.push({user: loginStatus._id, permissions: ['full']}) : 0 && hasPermission(loginStatus, 'server.all.set.allowedUsers.add')">Add yourself</button>
         <br/>
-        <div v-for="user in ourAllowedUsers" :key="user">
-            {{ getUserInfo(user)?.username || "<Unknown>" }} {{ getUserInfo(user)?.admin ? "(Admin)" : "(User)" }} [{{ user }}] <button @click="removeUser(user)">Remove</button>
+        <div v-for="user in ourAllowedUsers" :key="user.user">
+            {{ getUserInfo(user.user)?.username || "<Unknown>" }} [{{ user }}] <button @click="removeUser(user.user)">Remove</button>
         </div>
         <button @click="saveAllowedUsers">Save Userlist</button>
     </div>

@@ -6,7 +6,7 @@ export let defaultConfig: Config = {
     defaultMCVersion: "1.19.3",
     defaultMCSoftware: "paper",
     stopServerTimeout: 120_000, // 2 mins
-    defaultPermissions: ""
+    defaultPermissions: "performance.view,performance.mem,performance.load,performance.platform" // thats how the database works and im too lazy to change
 }
 export interface Config {
     defaultMemory: number;
@@ -17,6 +17,7 @@ export interface Config {
     defaultMCSoftware: "purpur" | "paper" | "vanilla";
     stopServerTimeout: number;
     defaultPermissions: string;
+    
 }
 export let descriptions: { [key in keyof Config]: string } = {
     defaultMemory: "The default amount of memory to allocate to a server",

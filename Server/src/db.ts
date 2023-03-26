@@ -13,7 +13,6 @@ export let users = db.model("User", new mongoose.Schema({
         maxlength: 24,
         required: true
     },
-    admin: Boolean,
     createdAt: { type: Date, default: Date.now },
     token: {
         type: String,
@@ -36,7 +35,10 @@ export let servers = db.model("Server", new mongoose.Schema({
         maxlength: 255
     },
     mem: Number,
-    allowedUsers: [String],
+    allowedUsers: [{
+        user: String,
+        permissions: [String]
+    }],
     version: {
         type: String,
         maxlength: 16,
@@ -67,16 +69,3 @@ export let settings = db.model("Setting", new mongoose.Schema({
         maxlength: 255,
     },
 }));
-
-// Ensure that a admin user exists
-let admin = await users.findOne({ admin: true }).exec();
-if (!admin) {
-    console.log("No admin user found. Creating one.");
-    admin = new users({
-        username: "admin_" + Date.now(),
-        admin: true
-    });
-    admin.isNew = true;
-    await admin.save();
-    console.log("Admin user created with token: " + admin.token);
-}

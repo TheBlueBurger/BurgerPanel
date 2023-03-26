@@ -1,18 +1,25 @@
+import { Server } from "./Server.js";
 import { User } from "./User.js";
-export const _ServerPermissions = ["set.autostart", "set.port", "set.software", "set.mem", "set.name", "console.read", "console.write", "stop", "start", "delete"] as const;
-export const _UserPermissions = ["create", "set.admin", "token.read", "delete", "permissions.read", "permissions.write"] as const;
-export const _SettingPermissions = [`set.all`, `set`, "read"] as const;
+export const _ServerPermissions = ["set.autostart", "set.port", "set.software", "set.mem", "set.name", "set.allowedUsers.add", "set.allowedUsers.remove", "console.read", "console.write", "stop", "start", "kill", "delete", "full", "view"] as const;
+export const _ServersPermissions = [
+    "create",
+    "import"
+] as const;
+export const _UserPermissions = ["create", "view", "set.admin", "token.read", "delete", "permissions.read", "permissions.write"] as const;
+export const _SettingPermissions = [`set`, "read"] as const;
 export const _ServerPerformance = ["view", "mem", "load", "platform"] as const;
 export type ServerPermissions = typeof _ServerPermissions[number];
+export type ServersPermissions = typeof _ServersPermissions[number];
 export type UserPermissions = typeof _UserPermissions[number];
 export type SettingPermissions = typeof _SettingPermissions[number];
 export type ServerPerformance = typeof _ServerPerformance[number];
-export type PermissionString = `servers.all.${ServerPermissions}` | `users.${UserPermissions}` | `settings.${SettingPermissions}` | `performance.${ServerPerformance}` | "full";
+export type PermissionString = `server.all.${ServerPermissions}` | `servers.${ServersPermissions}` | `users.${UserPermissions}` | `settings.${SettingPermissions}` | `performance.${ServerPerformance}` | "full";
 export const validPermissions: PermissionString[] = [
-    ..._ServerPermissions.map(l => "servers.all." + l),
+    ..._ServerPermissions.map(l => "server.all." + l),
     ..._UserPermissions.map(l => "users." + l),
     ..._SettingPermissions.map(l => "settings." + l),
     ..._ServerPerformance.map(l => "performance." + l),
+    ..._ServersPermissions.map(l => "servers." + l),
     "full"
 ] as PermissionString[];
 // this is a mess.
@@ -39,4 +46,11 @@ export function hasPermission(user: User | undefined | null, permission: Permiss
 
 export function isValidPermissionString(permissionString: string | PermissionString): permissionString is PermissionString {
     return validPermissions.includes(permissionString as any);
+}
+
+export function hasServerPermission(user: User | undefined | null, server: Server, permission: ServerPermissions) {
+    if(!user) return false;
+    let userEntry = server.allowedUsers.find(u => u.user == user._id.toString()); // toString just in case
+    if(userEntry && (userEntry.permissions.includes(permission) || userEntry.permissions.includes("full"))) return true;
+    return hasPermission(user, `server.all.${permission}`);
 }

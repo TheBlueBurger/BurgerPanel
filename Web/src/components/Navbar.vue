@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, Ref } from 'vue';
+import { hasPermission } from '../../../Share/Permission';
 import { User } from '../../../Share/User';
 import EventEmitter from '../util/event';
 let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
@@ -13,10 +14,10 @@ function logout() {
         <span id="title"><RouterLink to="/" class="no-text-dec">Burgerpanel</RouterLink></span>
         <div v-if="loginStatus?.username" class="loggedin-only">
             <span class="item link"><RouterLink to="/manage">Servers</RouterLink></span>
-          <span class="item link" v-if="loginStatus?.admin"><RouterLink to="/settings">Settings</RouterLink></span>
+          <span class="item link" v-if="hasPermission(loginStatus, 'settings.read') || hasPermission(loginStatus, 'users.view')"><RouterLink to="/settings">Settings</RouterLink></span>
           <span class="item link"><RouterLink to="/about">About</RouterLink></span>
           <!-- Top left -->
-         <span id="user" class="item" v-if="loginStatus?.username">{{ loginStatus?.username + (loginStatus.admin ? " (Admin)" : " (User)")}} <button @click="logout">Log out</button></span>
+         <span id="user" class="item" v-if="loginStatus?.username">{{ loginStatus?.username}} <button @click="logout">Log out</button></span>
         </div>
     </div>
 </template>

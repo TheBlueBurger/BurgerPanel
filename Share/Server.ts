@@ -1,9 +1,16 @@
+import { ServerPermissions } from "./Permission";
+
 export interface Server {
     _id: string;
     name: string;
     path: string;
     mem: number;
-    allowedUsers: string[];
+    allowedUsers: [
+        {
+            user: string,
+            permissions: ServerPermissions[]
+        }
+    ]
     version: string;
     software: "vanilla" | "purpur" | "paper";
     port: number;

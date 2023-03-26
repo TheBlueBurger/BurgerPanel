@@ -43,7 +43,7 @@ class PacketHandler {
         console.table(Object.values(this.packets).map(c => ({
             name: c.name,
             requiresAuth: c.requiresAuth,
-            requiresAdmin: c.requiresAdmin,
+            permission: c.permission
         })));
     }
     async handle(client: OurClient, data: any) {
@@ -54,14 +54,6 @@ class PacketHandler {
         }
         if (packet.requiresAuth && !client.data.auth.authenticated) {
             console.log("Packet requires auth: " + packet.name);
-            return;
-        }
-        if (packet.requiresAdmin && !client.data.auth.user?.admin) {
-            client.json({
-                type: data.type,
-                success: false,
-                message: "Not authenticated. Admin required.",
-            });
             return;
         }
         if(packet.permission && !hasPermission(client.data.auth?.user, packet.permission)) {
@@ -76,13 +68,6 @@ class PacketHandler {
             await packet.handle(client, data);
         } catch (err) {
             console.log("Packet errored.", data.type, data.data, err);
-            // If admin, send error
-            if (client.data.auth.user?.admin) {
-                client.json({
-                    type: "error",
-                    message: "Error while handing " + data.type + ": " + (err as Error)?.message,
-                });
-            }
         }
     }
 }
@@ -184,7 +169,11 @@ packetHandler.init().then(async () => {
         switch (dataStr) {
             case "users-table":
                 var userlist = await users.find({}, {}, { limit: 256 });
-                console.table(userlist.map(u => u.toJSON()));
+                console.table(userlist.map(u => u.toJSON()).map(u => ({
+                    _id: u._id.toString(),
+                    name: u.username,
+                    permissions: u.permissions
+                })));
                 break;
             case "users":
             case "users-list":
@@ -194,14 +183,14 @@ packetHandler.init().then(async () => {
                     console.log("Username: " + user.username);
                     console.log("ID: " + user._id);
                     console.log("Token: " + user.token);
-                    console.log("Admin: " + user.admin);
+                    console.log("Permissions: " + user.permissions);
                     console.log("Created at: " + user.createdAt);
                     console.log("---------");
                 }
                 break;
             case "gen-admin-user":
                 let adminUser = await users.create({
-                    admin: true,
+                    permissions: ["full"],
                     username: "gen-admin-" + Date.now(),
                 });
                 console.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token);

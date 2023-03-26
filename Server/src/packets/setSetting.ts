@@ -1,23 +1,13 @@
 import { OurClient, Packet } from "../index.js";
 import { setSetting } from "../config.js";
+import { Permission } from "../../../Share/Permission.js";
 
 export default class SetSetting extends Packet {
     name: string = "setSetting";
     requiresAuth: boolean = true;
+    permission: Permission = "settings.set";
     async handle(client: OurClient, data: any) {
-        // Ensure the user is an admin
-        if (!client.data.auth.user?.admin) {
-            client.json({
-                type: "setSetting",
-                success: false,
-                message: "Not authenticated",
-                emits: ["setSetting-" + data.key],
-                emitEvent: true
-            });
-            // Probably bad actor. Disconnect them.
-            client.close();
-            return;
-        }
+        if(!client.data.auth.user) return;
         let val;
         if (!data.key || !data.value) {
             client.json({

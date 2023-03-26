@@ -22,9 +22,13 @@ async function getAndSetPerf() {
 getAndSetPerf();
 onMounted(() => {
     intervalID = setInterval(async () => {
+        if(!hasPermission(loginStatus.value, "performance.view")) {
+            perf.value = null;
+            return;
+        }
         await getAndSetPerf();
     }, 2000);
-})
+});
 </script>
 <template>
     <div>

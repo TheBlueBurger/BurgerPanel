@@ -12,3 +12,4 @@ export interface ServerPerformancePacketS2C {
   emitEvent: boolean;
   platform?: string;
 }
+// yup

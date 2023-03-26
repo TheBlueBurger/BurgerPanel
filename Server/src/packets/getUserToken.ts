@@ -1,11 +1,12 @@
 import { OurClient, Packet } from "../index.js";
 import { users } from "../db.js";
 import { User } from "../../../Share/User.js";
+import { Permission } from "../../../Share/Permission.js";
 
 export default class GetUserToken extends Packet {
     name: string = "getUserToken";
     requiresAuth: boolean = true;
-    requiresAdmin: boolean = true;
+    permission: Permission = "users.token.read";
     async handle(client: OurClient, data: any) {
         let userID = data.id;
         if (!userID) return;

@@ -123,9 +123,7 @@ function initWS() {
     }
   });
 }
-events.value.on("deleteUser", () => {
-  getUserlist();
-});
+
 initWS();
 function login() {
   ws.value.send(
@@ -153,20 +151,21 @@ function logout() {
 }
 events.value.on("requestLogout", () => {
   logout();
-});
-let users = ref([] as User[]);
+});// i dont know wdym so mabe
+let users = ref(new Map<string, User>());
 provide("users", users);
-function getUserlist() {
-  ws.value.send(JSON.stringify({
-    type: "getUsers"
-  }))
-}
 
 let loginMsg = ref("");
 events.value.on("loginFailed", (data: AuthS2C) => {
   console.log("Login failed: " + data.message)
   loginMsg.value = data.message as string;
   showLoginScreen.value = true;
+});
+events.value.on("getLoginStatus", () => {
+  events.value.emit("getLoginStatus-resp", loginStatus.value)
+});
+events.value.on("yourUserEdited", newUser => {
+  loginStatus.value = newUser.user;
 });
 let showLoginScreen = ref(false);
 router.beforeEach(async guard => {

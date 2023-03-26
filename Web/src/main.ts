@@ -12,6 +12,18 @@ const router = createRouter({
             component: () => import('./pages/Home.vue')
         },
         {
+            path: "/manage/user/:user",
+            component: () => import("./pages/UserManagement/UserManager.vue"),
+            props: true,
+            name: "manageUser"
+        },
+        {
+            path: "/manage/user/:user/permissions",
+            component: () => import("./pages/UserManagement/Permissions.vue"),
+            props: true,
+            name: "editUserPermissions"
+        },
+        {
             path: '/manage/server/:server',
             component: () => import('./pages/Management/ManageServer.vue'),
             props: true,

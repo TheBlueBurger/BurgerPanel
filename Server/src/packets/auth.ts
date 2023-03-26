@@ -1,6 +1,7 @@
 import { OurClient, Packet } from "../index.js";
 import { servers, users } from "../db.js";
 import type { AuthS2C } from "../../../Share/Auth.js"
+import { userHasAccessToServer } from "../serverManager.js";
 
 export default class Auth extends Packet {
     name: string = "auth";
@@ -52,10 +53,11 @@ export default class Auth extends Packet {
             console.log(`User ${client.data.auth.user.username} (${client.data.auth.user._id}) logged in`);
             // Get the server list for the user
             let allowedServers = await servers.find({
-                allowedUsers: {
-                    $in: [client.data.auth.user._id]
-                }
+                "allowedUsers.user": "641b67a229524c7c807620a1"
             }).exec();
+            allowedServers.filter(server => {
+                return userHasAccessToServer(client.data.auth.user, server.toJSON())
+            });
             this.respond(client, {
                 type: "auth",
                 success: true,
