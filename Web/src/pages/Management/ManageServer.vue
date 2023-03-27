@@ -5,6 +5,7 @@ import events from '../../util/event';
 import { useRouter } from 'vue-router';
 import { hasServerPermission } from '../../../../Share/Permission';
 import { User } from '../../../../Share/User';
+import ServerStatus from '../../components/ServerStatus.vue';
 let router = useRouter();
 let props = defineProps<{
   server: string;
@@ -15,6 +16,7 @@ let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);
 let attached = ref(false);
 let loginStatus = inject("loginStatus") as Ref<User | null>;
+
 onMounted(async () => {
   loadingServerFromAPI.value = true;
   // Attach to server
@@ -129,12 +131,12 @@ function editServer() {
 
 <template>
   <div v-if="server">
-    Managing '{{ server.name }}'<br />
-    <br />
+    <h2>{{ server.name }}</h2>
     <button @click="startServer()">Start</button>
     <button @click="stopServer()">Stop</button>
     <button @click="killServer()">Kill</button>
     <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
+    <span class="server-status"><ServerStatus :server="server" /></span>
     <br />
     Logs:
     <textarea readonly ref="serverTextArea" @scroll="onScrolled">{{ logs.join("") }}</textarea>
@@ -205,5 +207,17 @@ textarea {
   display: inline-block;
   vertical-align: middle;
   margin-top: -1em;
+}
+.server-status {
+  display: inline-flex;
+  margin-top: -50px;
+  position: relative;
+  top: 5px;
+  margin-left: 3px;
+}
+h2 {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  font-size: xx-large;
 }
 </style>

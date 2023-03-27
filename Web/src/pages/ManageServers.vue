@@ -6,6 +6,8 @@ import EventEmitter from '../util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
 import { getSetting } from '../util/config';
 import { hasPermission } from '../../../Share/Permission';
+import ServerStatus from "../components/ServerStatus.vue";
+
 let router = useRouter();
 let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
 let servers: Ref<Server[]> = inject('servers') as Ref<Server[]>;
@@ -89,9 +91,9 @@ function importServer() {
 </script>
 <template>
     <h1>Servers</h1>
-        <button @click="showAllServers" v-if="!(router.currentRoute.value.query.all == 'true') && hasPermission(loginStatus, 'servers.all.view')">Show all servers</button>
+        <RouterLink :to="{query: {all: 'true'}}"><button v-if="!(router.currentRoute.value.query.all == 'true') && hasPermission(loginStatus, 'servers.all.view')">Show all servers</button></RouterLink>
         <button @click="serverCreatorOpen = !serverCreatorOpen" v-if="hasPermission(loginStatus, 'servers.create')">Create server {{ serverCreatorOpen ? "∧" : "V" }}</button>
-        <button @click="importServer" v-if="hasPermission(loginStatus, 'servers.import')">Import server</button>
+        <RouterLink :to="{name: 'importServer'}"><button v-if="hasPermission(loginStatus, 'servers.import')">Import server</button></RouterLink>
     <div id="create-server" v-if="serverCreatorOpen && hasPermission(loginStatus, 'servers.create')">
         <h2>Create server</h2>
         <form>
@@ -111,6 +113,7 @@ function importServer() {
                 <th>Memory</th>
                 <th>Path</th>
                 <th>Port</th>
+                <th>Status</th>
                 <th>Manage</th>
             </tr>
             <tr v-for="server in servers">
@@ -118,6 +121,7 @@ function importServer() {
                 <td>{{ server.mem }} MB</td>
                 <td>{{ server.path }}</td>
                 <td>{{ server.port }}</td>
+                <td><ServerStatus :server="server"/></td>
                 <td><RouterLink :to="{name: 'manageServer', params: {server: server._id}}"><button>Manage</button></RouterLink></td>
             </tr>
         </table>

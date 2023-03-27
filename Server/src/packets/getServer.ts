@@ -1,6 +1,7 @@
 import { OurClient, Packet } from "../index.js";
 import { servers } from "../db.js";
-import { userHasAccessToServer } from "../serverManager.js";
+import serverManager, { userHasAccessToServer } from "../serverManager.js";
+import { hasServerPermission } from "../../../Share/Permission.js";
 
 export default class GetServer extends Packet {
     name: string = "getServer";
@@ -18,12 +19,24 @@ export default class GetServer extends Packet {
             });
             return;
         }
+        let status;
+        if(data.requestStatus && hasServerPermission(client.data.auth.user, server.toJSON(), "status")) {
+            if(serverManager.servers[server._id.toString()]?.childProcess) status = "running";
+            else status = "stopped";
+            client.json({
+                type: "serverStatusUpdate",
+                emitEvent: true,
+                emits: ["serverStatusUpdate-" + server._id.toString()],
+                status
+            });
+        }
         client.json({
             type: "getServer",
             success: true,
             server,
             emitEvent: true,
-            emits: ["getServer-" + data.id]
+            emits: ["getServer-" + data.id],
+            status
         });
     }
 }

@@ -30,4 +30,8 @@ export default new class EventEmitter {
         }
         this.onceListeners[event].push(callback);
     }
+    removeAllListeners(event: string, includeOnce: boolean = true) {
+        this.listeners[event] = [];
+        if(includeOnce) this.onceListeners[event] = [];
+    }
 }

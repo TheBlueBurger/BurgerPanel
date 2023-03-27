@@ -46,15 +46,12 @@ async function getUserlist() {
 
 let creatingUser = ref(false);
 let newUsername = ref("");
-let newAdmin = ref(false);
 async function createUser() {
     events.value.emit("sendPacket", {
         type: "createUser",
-        username: newUsername.value,
-        admin: newAdmin.value
+        username: newUsername.value
     });
     newUsername.value = "";
-    newAdmin.value = false;
     creatingUser.value = false;
     let resp = await events.value.awaitEvent("createUser");
     if (resp?.success) {
@@ -91,7 +88,6 @@ function showHelpForSetting(setting: string) {
     </div>
     <div v-if="creatingUser">
         Username: <input type="text" placeholder="Username" v-model="newUsername" /><br />
-        Admin: <input type="checkbox" v-model="newAdmin" /><br />
         <button @click="createUser()">Create user</button>
     </div>
     <div v-for="user of cachedUsers.values()">

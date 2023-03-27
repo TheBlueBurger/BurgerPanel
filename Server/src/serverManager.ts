@@ -1,5 +1,5 @@
 import { Server } from "../../Share/Server.js"
-import { OurClient } from "./index.js"
+import { clients, OurClient } from "./index.js"
 import { ChildProcess, spawn } from "node:child_process"
 import { User } from "../../Share/User.js";
 import fs from "node:fs/promises";
@@ -132,6 +132,7 @@ enforce-secure-profile=false
                 })
             });
         })
+        this.updateStatus(server);
     }
     stopServer(server: Server) {
         return new Promise<void>(async resolve => {
@@ -147,6 +148,7 @@ enforce-secure-profile=false
             serverEntry.childProcess.once("exit", () => {
                 clearTimeout(timeout);
                 console.log("Server " + server._id + " stopped in " + (Date.now() - startTimestamp) + "ms");
+                serverEntry.childProcess = undefined;
                 resolve();
             });
             if (process.platform != "win32") serverEntry.childProcess.kill("SIGTERM");
@@ -158,6 +160,8 @@ enforce-secure-profile=false
         let serverEntry = this.servers[server._id];
         if (!serverEntry.childProcess) throw new Error("Server is not running: " + server._id);
         serverEntry.childProcess.kill("SIGKILL");
+        serverEntry.childProcess = undefined;
+        this.updateStatus(server);
     }
     async stopAllServers() {
         await Promise.all(Object.values(this.servers).map(s => this.stopServer(s.server)));
@@ -210,6 +214,18 @@ enforce-secure-profile=false
             await this.setupServer(s.toJSON());
             this.startServer(s.toJSON())
         }));
+    }
+    private updateStatus(server: Server) {
+        let status = this.getStatus(server);
+        clients.filter(c => hasServerPermission(c.data.auth?.user, server, "status")).forEach(c => c.json({
+            type: "serverStatusUpdate",
+            emitEvent: true,
+            emits: ["serverStatusUpdate-" + server._id],
+            status
+        }))
+    }
+    getStatus(server: Server) {
+        return this.servers[server._id.toString()]?.childProcess ? "running" : "stopped";
     }
 }
 export function userHasAccessToServer(user: User | undefined, server: Server) {
