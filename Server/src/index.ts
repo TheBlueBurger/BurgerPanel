@@ -52,7 +52,7 @@ class PacketHandler {
             }
         } else {
             // @ts-expect-error
-            let packets = await import("../../../packets.js")
+            let packets = await import("../../../packets.mjs")
             packets.default.forEach((packetClass: any) => {
                 let packet = new packetClass();
                 this.packets[packet.name] = packet;
