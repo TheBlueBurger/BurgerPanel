@@ -65,6 +65,7 @@ console.time("Build Frontend");
 spawnSync("npm", ["run", "build"], {cwd: "../Web/"});
 fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
 console.timeEnd("Build Frontend");
+fs.writeFileSync("_build/mongodb_url.txt", "mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel");
 console.time("Zip");
 try {
     spawnSync("7z", ["a", `../BurgerPanel-${packageJSON.version}.zip`, "*"], {cwd: path.join(process.cwd(), "_build")})

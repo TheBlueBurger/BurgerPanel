@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "buildRelease": "node makeRelease.mjs",
     "start": "node dist/Server/src/index.js",
-    "dev": "pnpm build && pnpm startInspect",
+    "dev": "npm run build && npm run startInspect",
     "startInspect": "NODE_OPTIONS=\"--inspect\" node dist/Server/src/index.js"
   },
   "type": "module",

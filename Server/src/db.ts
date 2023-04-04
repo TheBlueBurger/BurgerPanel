@@ -1,9 +1,15 @@
 import mongoose from 'mongoose';
 import nodeCrypto from 'node:crypto';
 import logger, { LogLevel } from './logger.js';
+import url from "node:url";
+import fs from "node:fs/promises";
+import path from "node:path";
 // use mongoose unless u want to pain urself
 mongoose.set("strictQuery", false);
-let db = await mongoose.connect(process.env.BURGERPANEL_MONGODB || "mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel");
+let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+let mongoURL = process.env.BURGERPANEL_MONGODB;
+if(!mongoURL) mongoURL = (await fs.readFile(path.join(__dirname, "mongodb_url.txt"))).toString();
+let db = await mongoose.connect(mongoURL);
 
 db.connection.on('error', console.error.bind(console, 'connection error:'));
 logger.log("Connected to database", undefined, LogLevel.DEBUG, false);
