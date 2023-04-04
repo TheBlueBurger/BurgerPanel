@@ -52,9 +52,24 @@ if(!hasPermission(loginStatus.value, "users.permissions.read")) {
     <div v-if="user">
         <h1>Manging user permissions of {{ user.username }}</h1>
         <br>
-        <div v-for="perm of validPermissions" v-if="hasPermission(loginStatus, 'users.permissions.read')">
-            {{ perm }} - <span :class="(user.permissions.includes(perm) ? 'green' : 'red')">{{  user.permissions.includes(perm) ? "Yes" : "No" }}</span> <button v-if="hasPermission(loginStatus, perm) && hasPermission(loginStatus, 'users.permissions.write')" @click="togglePerm(perm)">Toggle</button>
-        </div>
+        <table>
+            <tr>
+                <th>Permission</th>
+                <th>Enabled</th>
+                <th>Toggle</th>
+            </tr>
+            <tr v-for="perm of validPermissions" v-if="hasPermission(loginStatus, 'users.permissions.read')" :key="perm">
+                <td>
+                    {{  perm  }}
+                </td> 
+                <td :class="(user.permissions.includes(perm) ? 'green' : 'red')">
+                    {{  user.permissions.includes(perm) ? "Yes" : "No" }}
+                </td>
+                <td>
+                    <button v-if="hasPermission(loginStatus, perm) && hasPermission(loginStatus, 'users.permissions.write')" @click="togglePerm(perm)">Toggle</button>
+                </td>
+            </tr>
+        </table>
     </div>
     <div v-else>
         Loading...
@@ -66,5 +81,18 @@ if(!hasPermission(loginStatus.value, "users.permissions.read")) {
 }
 .green {
     color: green;
+}
+
+table > tr > th {
+    /* Center */
+    text-align: left;
+    margin-left: 100;
+}
+td, th, .manage-btn {
+  border: 1px solid #dddddd;
+  text-align: left;
+}
+tr:nth-child(even) {
+  background-color: #383535;
 }
 </style>

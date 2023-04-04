@@ -130,9 +130,6 @@ function importServer() {
 </template>
 
 <style scoped>
-.server {
-    margin-top: 5px;
-}
 table {
     width: 100%;
 }

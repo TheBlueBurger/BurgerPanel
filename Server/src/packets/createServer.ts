@@ -5,6 +5,7 @@ import type { CreateServerS2C } from "../../../Share/CreateServer.js"
 import { getSetting, setSetting } from "../config.js";
 import serverManager, { allowedSoftwares } from "../serverManager.js";
 import { Permission } from "../../../Share/Permission.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class Auth extends Packet {
     name: string = "createServer";
@@ -103,7 +104,7 @@ export default class Auth extends Packet {
             });
             return;
         }
-        console.log(`${client.data.auth.user?.username} (${client.data.auth.user?.username}) is creating server ${data.name} at port ${port}`);
+        logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?.username}) is creating server ${data.name} at port ${port}`, "server.create", LogLevel.INFO);
         try {
             let server = await servers.create({
                 name: data.name,

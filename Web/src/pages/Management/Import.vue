@@ -31,6 +31,9 @@ let updateServerPath = async () => {
     if (resp.autodetect.version) version.value = resp.autodetect.version;
     if (resp.autodetect.software) software.value = resp.autodetect.software;
     if (resp.autodetect.port) port.value = resp.autodetect.port;
+    let splitString = _serverPath.toString().split("/");
+    let folderName = splitString[splitString.length-1];
+    name.value = folderName;
 }
 watch(router.currentRoute, updateServerPath);
 updateServerPath();

@@ -3,6 +3,7 @@ import { users } from "../db.js";
 import filterUserData from "../util/filterUserData.js";
 import { Permission } from "../../../Share/Permission.js";
 import { getSetting } from "../config.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class CreateUser extends Packet {
     name: string = "createUser";
@@ -31,7 +32,7 @@ export default class CreateUser extends Packet {
             username: data.username,
             permissions: (await getSetting("defaultPermissions"))?.toString().split(",")
         });
-        console.log(`${client.data.auth.user.username} (${client.data.auth.user._id}) created user '${user.username}'`)
+        logger.log(`${client.data.auth.user.username} (${client.data.auth.user._id}) created user '${user.username}'`, "user.create", LogLevel.INFO);
         await user.save();
         client.json({
             type: "createUser",

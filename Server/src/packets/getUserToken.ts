@@ -2,6 +2,7 @@ import { OurClient, Packet } from "../index.js";
 import { users } from "../db.js";
 import { User } from "../../../Share/User.js";
 import { Permission } from "../../../Share/Permission.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class GetUserToken extends Packet {
     name: string = "getUserToken";
@@ -24,7 +25,7 @@ export default class GetUserToken extends Packet {
             });
             return;
         }
-        console.log(`User ${client.data.auth.user?.username} (${client.data.auth.user?._id}) is getting the token of ${user.username} (${user._id})!!`);
+        logger.log(`User ${client.data.auth.user?.username} (${client.data.auth.user?._id}) is getting the token of ${user.username} (${user._id})!!`, "user.token.read", LogLevel.WARNING);
         client.json({
             type: "getUserToken",
             success: true,

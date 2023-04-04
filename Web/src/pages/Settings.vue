@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { inject, Ref, ref } from "vue";
+import { computed, inject, Ref, ref } from "vue";
 import { Config, defaultConfig, descriptions } from "../../../Share/Config.js";
 import { User } from "../../../Share/User.js";
 import { setSetting, getAllSettings } from "../util/config";
 import EventEmitter from "../util/event";
 import { useRouter } from "vue-router";
 import { hasPermission } from "../../../Share/Permission";
+import getUsers from "../util/getUsers";
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User>;
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
@@ -20,8 +21,8 @@ async function changeOption(option: keyof typeof defaultConfig) {
     let newValue = prompt("New value for " + option + "\n" + descriptions[option], knownSettings.value[option] ?? "");
     try {
         if (!newValue) return;
-        await setSetting(option, newValue);
-        knownSettings.value[option] = newValue; // I KNOW THIS ISNT NEEDED BUT THIS IS BEING STUPID
+        let val = await setSetting(option, newValue);
+        knownSettings.value = await getAllSettings(); // i cant bother with this breaking
         events.value.emit("createNotification", "Successfully changed option")
     } catch (e) {
         alert("Failed to set option: " + e);
@@ -29,20 +30,6 @@ async function changeOption(option: keyof typeof defaultConfig) {
 }
 getAllSettings();
 let cachedUsers = inject("users") as Ref<Map<string, User>>
-async function getUserlist() {
-    events.value.emit("sendPacket", { type: "getUsers" });
-    let serverProvidedUserList = await events.value.awaitEvent("getUsers");
-    if (!serverProvidedUserList?.success) {
-        alert("Failed to get user list: " + serverProvidedUserList?.message);
-        return;
-    }
-    if (serverProvidedUserList?.userList) {
-        serverProvidedUserList.userList.forEach((user: User) => {
-            cachedUsers.value.set(user._id, user);
-        });
-        // legal? lets make a util function for this that gets user list and caches go in util folder
-    }
-}
 
 let creatingUser = ref(false);
 let newUsername = ref("");
@@ -56,15 +43,60 @@ async function createUser() {
     let resp = await events.value.awaitEvent("createUser");
     if (resp?.success) {
         events.value.emit("createNotification", "User " + resp.user.username + " created");
-        getUserlist();
+        getUsers(cachedUsers.value, true);
     } else {
         events.value.emit("createNotification", "Failed to create user: " + resp.message);
     }
 }
-getUserlist();
+getUsers(cachedUsers.value, true);
 function showHelpForSetting(setting: string) {
     alert("Help for " + setting + ":\n" + descriptions[setting as keyof typeof defaultConfig]);
 }
+async function deleteUser(user: User) {
+    if(!confirm("Are you sure you want to remove the user" + user.username + "?")) return;
+    events.value.emit("sendPacket", {
+        type: "deleteUser",
+        id: user._id
+    });
+    let resp = await events.value.awaitEvent("deleteUser");
+    if(!resp.success) {
+        alert(resp.message);
+    } else {
+        events.value.emit("createNotification", "Successfully deleted user");
+        getUsers(cachedUsers.value, true);
+    }
+}
+
+let knownTokens: Ref<{[id: string]: string}> = ref({});
+let viewingToken = ref("");
+async function viewToken(userID: string, copy: boolean = false) {
+    if (viewingToken.value == userID) {
+        viewingToken.value = "";
+        return;
+    }
+    if (knownTokens.value[userID] && !copy) viewingToken.value == userID ? "" : userID;
+    await events.value.emit("sendPacket", {
+        type: "getUserToken",
+        id: userID
+    });
+    let resp = await events.value.awaitEvent("getUserToken-" + userID);
+    if (resp?.success) {
+        knownTokens.value[userID] = resp.token;
+        if (!copy) viewingToken.value = userID;
+        else copyToClip(resp?.token);
+    } else {
+        alert("Failed to get user token: " + resp.message);
+    }
+}
+function copyToClip(text: string) {
+    navigator.clipboard.writeText(text);
+    events.value.emit("createNotification", "Copied to clipboard");
+}
+let sortedUsers = computed(() => {
+    return [...cachedUsers.value.values()].sort((a,b) => {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    })
+});
 </script>
 <template>
     <div v-if="hasPermission(loginStatus, 'settings.read')">
@@ -80,22 +112,65 @@ function showHelpForSetting(setting: string) {
         <hr v-if="hasPermission(loginStatus, 'users.view')" />
     </div>
     <h3>Users</h3>
-    <div v-if="cachedUsers.size == 0">
-        <button @click="getUserlist()">Request users</button>
-    </div>
     <div>
-        <button @click="creatingUser = !creatingUser">Add user</button>
+        <button @click="creatingUser = !creatingUser">{{ !creatingUser ? "Add user" : "Close" }}</button>
     </div>
     <div v-if="creatingUser">
-        Username: <input type="text" placeholder="Username" v-model="newUsername" /><br />
-        <button @click="createUser()">Create user</button>
+        <form @submit.prevent="createUser()">
+            Username: <input type="text" placeholder="Username" v-model="newUsername" /><br />
+            <button type="submit">Create user</button>
+        </form>
     </div>
-    <div v-for="user of cachedUsers.values()">
-        {{ user.username}} <RouterLink :to="{name: 'manageUser', params: {user: user._id}}"><button>ig manage</button></RouterLink>
-    </div>
+    <br>
+    <hr>
+    <br>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Created At</th>
+            <th>Token</th>
+            <th>Permissions</th>
+            <th v-if="hasPermission(loginStatus, 'users.delete')">Delete</th>
+        </tr>
+        <tr v-for="user in sortedUsers" :key="user._id">
+            <td>{{ user._id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ new Date(user.createdAt).toLocaleString() }}</td>
+                <td>
+                    {{ viewingToken == user._id ? knownTokens[user._id] : "<Hidden>" }} <button @click="viewToken(user._id)">{{viewingToken == user._id ? "Hide" : "View" }}
+                token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button>
+                </td>
+                <td><RouterLink :to="{
+                name: 'editUserPermissions',
+                params: {
+                    user: user._id
+                }
+            }"><button>Edit permissions</button></RouterLink></td>
+            <td>
+                <button @click="deleteUser(user)" v-if="hasPermission(loginStatus, 'users.delete')">Delete</button>
+            </td>
+        </tr>
+    </table>
 </template>
 <style>
 .setting-span {
     cursor: help;
+}
+table {
+    width: 100%;
+}
+table > tr > th {
+    /* Center */
+    text-align: left;
+    margin-left: 100;
+}
+td, th, .manage-btn {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+tr:nth-child(even) {
+  background-color: #383535;
 }
 </style>

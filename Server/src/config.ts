@@ -3,6 +3,7 @@ import { defaultConfig, Config } from "../../Share/Config.js";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { isValidPermissionString } from '../../Share/Permission.js';
+import { allowedSoftwares } from './serverManager.js';
 
 let forcedChangeConfig: (keyof Config)[] = ["serverPath"];
 let cachedSettings: { [key in keyof Config]?: string | number | null } = {};
@@ -63,6 +64,10 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
         permissions.forEach(p => {
             if(!isValidPermissionString(p)) throw new Error("Invalid permission: " + p);
         })
+        return true;
+    },
+    defaultMCSoftware: async(val) => {
+        if(!allowedSoftwares.includes(val)) throw new Error("Invalid software");
         return true;
     }
 }

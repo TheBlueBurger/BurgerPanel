@@ -1,6 +1,7 @@
 import { clients, OurClient, Packet } from "../index.js";
 import { users } from "../db.js";
 import { Permission } from "../../../Share/Permission.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class DeleteUser extends Packet {
     name: string = "deleteUser";
@@ -27,7 +28,7 @@ export default class DeleteUser extends Packet {
                 c.close();
             }
         });
-        console.log(client.data.auth?.user?.username + " (" + client.data.auth?.user?._id + ") is deleting the user " + userToDelete.username + " (" + userToDelete._id + ").")
+        logger.log(client.data.auth?.user?.username + " (" + client.data.auth?.user?._id + ") is deleting the user " + userToDelete.username + " (" + userToDelete._id + ").", "user.delete", LogLevel.WARNING);
         client.json({
             type: "deleteUser",
             success: true,

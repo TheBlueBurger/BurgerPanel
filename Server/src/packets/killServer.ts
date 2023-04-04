@@ -2,6 +2,7 @@ import { OurClient, Packet } from "../index.js";
 import { servers } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../../../Share/Permission.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class KillServer extends Packet {
     name: string = "killServer";
@@ -26,7 +27,7 @@ export default class KillServer extends Packet {
             });
             return;
         }
-        console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is killing ${server.name} (${server._id})`);
+        logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is killing ${server.name} (${server._id})`, "server.kill", LogLevel.WARNING);
         await serverManager.killServer(server?.toJSON());
         client.json({
             type: "killServer",

@@ -2,6 +2,7 @@ import { OurClient, Packet } from "../index.js";
 import { servers } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class StartServer extends Packet {
     name: string = "startServer";
@@ -28,7 +29,7 @@ export default class StartServer extends Packet {
             });
             return;
         }
-        console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is starting ${server.name} (${server._id})`);
+        logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is starting ${server.name} (${server._id})`, "server.start", LogLevel.INFO);
         await serverManager.setupServer(server?.toJSON()); // set the server up if it isnt already set up
         await serverManager.startServer(server?.toJSON());
         client.json({

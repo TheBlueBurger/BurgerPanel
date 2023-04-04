@@ -8,6 +8,7 @@ import { servers } from "./db.js";
 import { exists } from "./util/exists.js";
 import { hasServerPermission } from "./util/permission.js";
 import { userHasAccessToServer as _userHasAccessToServer } from "../../Share/Permission.js";
+import logger, { LogLevel } from "./logger.js";
 
 export let allowedSoftwares = ["purpur", "paper", "vanilla"];
 export default new class ServerManager {
@@ -106,7 +107,7 @@ enforce-secure-profile=false
         childProcess.stdout.on("data", d => this.handleServerLog(server, d.toString()));
         childProcess.stderr.on("data", d => this.handleServerLog(server, d.toString()));
         childProcess.on("error", err => {
-            console.log("Server " + server._id + " errored: " + err);
+            logger.log("Server " + server._id + " had a error: " + err, undefined, LogLevel.ERROR);
             serverEntry.childProcess = undefined;
             serverEntry.clientsAttached.forEach(client => {
                 client.json({
@@ -115,11 +116,13 @@ enforce-secure-profile=false
                     emits: ["serverErrored-" + server._id],
                     server: server._id,
                     message: err?.message || "Unknown message?!?!?",
-                })
+                });
+                serverEntry.childProcess = undefined;
+                this.updateStatus(server);
             });
         })
         childProcess.once("exit", c => {
-            console.log("Server " + server._id + " exited with code " + c);
+            logger.log(`Server ${server.name} exited with code ${c}`, "server.stop", LogLevel.DEBUG);
             serverEntry.lastLogs.push("Server exited with code " + c + "\n");
             serverEntry.childProcess = undefined;
             serverEntry.clientsAttached.forEach(client => {
@@ -133,6 +136,7 @@ enforce-secure-profile=false
             });
         })
         this.updateStatus(server);
+        logger.log("Server " + server.name + " started.", "server.start", LogLevel.DEBUG);
     }
     stopServer(server: Server) {
         return new Promise<void>(async resolve => {
@@ -141,19 +145,20 @@ enforce-secure-profile=false
             if (!serverEntry.childProcess) return resolve();
             let timeToWait = await getSetting("stopServerTimeout");
             let timeout = setTimeout(() => {
-                console.log("Server " + server._id + " did not stop in time. Killing...");
+                logger.log("Server " + server._id + " did not stop in time. Killing...", "server.stop", LogLevel.DEBUG);
                 this.killServer(server);
                 resolve();
             }, timeToWait as number);
             serverEntry.childProcess.once("exit", () => {
                 clearTimeout(timeout);
-                console.log("Server " + server._id + " stopped in " + (Date.now() - startTimestamp) + "ms");
+                logger.log(`Server ${server._id} stopped in ${Date.now() - startTimestamp}ms`, "server.stop", LogLevel.DEBUG);
                 serverEntry.childProcess = undefined;
+                this.updateStatus(server);
                 resolve();
             });
             if (process.platform != "win32") serverEntry.childProcess.kill("SIGTERM");
             else serverEntry.childProcess.stdin?.write("stop\nend\n");
-            console.log(`Waiting for ${server.name} (${server._id}) to stop...`);
+            logger.log(`Waiting for ${server.name} (${server._id}) to stop...`, undefined, LogLevel.DEBUG, false);
         })
     }
     killServer(server: Server) {
@@ -172,6 +177,7 @@ enforce-secure-profile=false
         serverEntry.clientsAttached = serverEntry.clientsAttached.filter(c => c !== client);
     }
     writeToConsole(server: Server, command: string, user: User | undefined) {
+        if(typeof command != "string") throw new Error("Cannot write to server because it's not a string!");
         let serverEntry = this.servers[server._id];
         if (!serverEntry.childProcess) throw new Error("Server is not running: " + server._id);
         if (!serverEntry.childProcess.stdin) throw new Error("Stdin doesnt exist? This should NEVER HAPPEN: " + server._id);
@@ -208,7 +214,7 @@ enforce-secure-profile=false
         if (this.servers[server._id]) delete this.servers[server._id];
     }
     async autoStartServers() {
-        console.log("Autostarting servers...");
+        logger.log("Autostarting servers...", "server.autostart", LogLevel.DEBUG);
         let serversToStart = await servers.find({ autoStart: true }).exec();
         await Promise.all(serversToStart.map(async s => {
             await this.setupServer(s.toJSON());
@@ -226,6 +232,12 @@ enforce-secure-profile=false
     }
     getStatus(server: Server) {
         return this.servers[server._id.toString()]?.childProcess ? "running" : "stopped";
+    }
+    serverIsRunning(server: Server) {
+        return !!this.servers[server._id.toString()]?.childProcess
+    }
+    handleDisconnect(client: OurClient) {
+        Object.values(this.servers).filter(s => s.clientsAttached.includes(client)).forEach(s => this.detachFromServer(client, s.server._id.toString()));
     }
 }
 export function userHasAccessToServer(user: User | undefined, server: Server) {

@@ -4,6 +4,7 @@ import { servers } from "../db.js";
 import serverManager from "../serverManager.js";
 import path from "node:path";
 import { Permission } from "../../../Share/Permission.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class ImportServer extends Packet {
     name: string = "importServer";
@@ -88,12 +89,16 @@ export default class ImportServer extends Packet {
                 return;
             }
         }
+        logger.log("User" + client.data.auth.user?._id + " is importing " + data.path, "server.import", LogLevel.INFO)
         let server = await servers.create({
             name: data.name,
             version: data.version,
             mem: data.mem,
             software: data.software,
-            allowedUsers: [client.data.auth.user?._id],
+            allowedUsers: [{
+                user: client.data.auth.user?._id,
+                permissions: ["full"]
+            }],
             port: data.port,
             path: data.path,
         });

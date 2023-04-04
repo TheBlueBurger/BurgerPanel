@@ -43,5 +43,5 @@ export async function getAllSettings() {
     }
     _knownSettings = resp.settings;
     events.emit("knownSettingsUpdated", _knownSettings);
-    return resp.value;
+    return resp.settings;
 }

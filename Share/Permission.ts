@@ -71,5 +71,5 @@ export function hasServerPermission(user: User | undefined | null, server: Serve
 export function userHasAccessToServer(user: User | undefined, server: Server) {
     if (!user) return false;
     if(typeof user._id != "string") user._id = (user._id as string).toString(); // mongodb stupidness
-    return server.allowedUsers.some(au => au.user == user._id);
+    return server.allowedUsers.some(au => au.user == user._id) || hasPermission(user, "servers.all.view");
 }

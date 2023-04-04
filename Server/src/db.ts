@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
 import nodeCrypto from 'node:crypto';
+import logger, { LogLevel } from './logger.js';
 // use mongoose unless u want to pain urself
 mongoose.set("strictQuery", false);
 let db = await mongoose.connect(process.env.BURGERPANEL_MONGODB || "mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel");
 
 db.connection.on('error', console.error.bind(console, 'connection error:'));
-console.log("Connected to database");
+logger.log("Connected to database", undefined, LogLevel.DEBUG, false);
 export let users = db.model("User", new mongoose.Schema({
     username: {
         type: String,

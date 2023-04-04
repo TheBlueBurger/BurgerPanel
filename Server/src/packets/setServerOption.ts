@@ -3,6 +3,7 @@ import { servers, users } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
 import { hasPermission, ServerPermissions, ServerProfiles, _ServerPermissions } from "../../../Share/Permission.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class SetServerOption extends Packet {
     name: string = "setServerOption";
@@ -22,7 +23,7 @@ export default class SetServerOption extends Packet {
         }
         if (data.name && typeof data.name == "string" && data.name.length < 25 && data.name.length > 0) {
             // Check if the name is already taken
-            console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the name of ${server.name} (${server._id}) to ${data.name}`);
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the name of ${server.name} (${server._id}) to ${data.name}`, "server.change-name");
             let serverWithSameName = await servers.findOne({ name: data.name }).exec();
             if (serverWithSameName) {
                 client.json({
@@ -37,7 +38,7 @@ export default class SetServerOption extends Packet {
             server.name = data.name;
         }
         if (data.mem && hasServerPermission(client.data.auth.user, server.toJSON(), "set.mem") && typeof data.mem == "number" && data.mem > 0) {
-            console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the memory of ${server.name} (${server._id}) to ${data.mem}`);
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the memory of ${server.name} (${server._id}) to ${data.mem}`, "server.mem");
             server.mem = data.mem;
         }
         if (data.allowedUsers) {
@@ -59,6 +60,7 @@ export default class SetServerOption extends Packet {
                         let newUser = await users.findById(data.allowedUsers.user).exec();
                         if(!newUser) return;
                         server.allowedUsers.push({permissions: [], user: data?.allowedUsers?.user});
+                        logger.log(`User ${client.data.auth.user?.username} added user ${newUser.username} to the server ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
                     }
                     break;
                 case "remove":
@@ -80,6 +82,7 @@ export default class SetServerOption extends Packet {
                             });
                             return;
                         }
+                        logger.log(`User ${client.data.auth.user?.username} removed user ${userToRemove.username} from the server ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
                         server.allowedUsers = server.allowedUsers.filter(au => au.user != userToRemove);
                     }
                     break;
@@ -105,6 +108,7 @@ export default class SetServerOption extends Packet {
                         }
                         return au;
                     });
+                    logger.log(`${client.data.auth.user?.username} set permission ${permission} of ${userData.username} in ${server.name} to ${newValue}`, "server.allowedUsers.changed", LogLevel.INFO);
                     break;
                 case "applyProfile":
                     if(!hasServerPermission(client.data.auth.user, server.toJSON(), "set.allowedUsers.permissions.write")) return;
@@ -124,6 +128,7 @@ export default class SetServerOption extends Packet {
                         }
                         return au;
                     });
+                    logger.log(`${client.data.auth.user?.username} set applied profile ${profileName} of ${userToApplyProfile.username} in ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
                     client.json({
                         type: "setServerOption",
                         success: true,
@@ -131,24 +136,35 @@ export default class SetServerOption extends Packet {
                     });
             }
         }
-        if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port")) {
+        if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port") && !serverManager.serverIsRunning(server.toJSON())) {
             server.port = data.port;
         }
         if (typeof data.autoStart == "boolean" && hasServerPermission(client.data.auth.user, server.toJSON(), "set.autostart")) {
-            console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto start of ${server.name} (${server._id}) to ${data.autoStart}`);
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto start of ${server.name} (${server._id}) to ${data.autoStart}`, "server.autostart.change");
             server.autoStart = data.autoStart;
         }
         await server.save(); // DO NOT MOVE THIS LINE DOWN. FUNCTIONS BELOW WILL AUTOMATICALLY SAVE THE SERVER AND WILL CAUSE CHAOS
         if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port")) {
-            console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the port of ${server.name} (${server._id}) to ${data.port}`);
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the port of ${server.name} (${server._id}) to ${data.port}`, "server.port", LogLevel.INFO);
             await serverManager.changePort(server.toJSON(), data.port);
         }
         if (data.software) {
-            console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the software of ${server.name} (${server._id}) to ${data.software}`);
-            await serverManager.editSoftware(server.toJSON(), data.software);
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the software of ${server.name} (${server._id}) to ${data.software}`, "server.software", LogLevel.INFO);
+            try {
+                await serverManager.editSoftware(server.toJSON(), data.software);
+            } catch(err) {
+                client.json({
+                    type: "setServerOption",
+                    success: false,
+                    server,
+                    message: err,
+                    emitEvent: true,
+                    emits: ["setServerOption-" + data.id]
+                });
+            }
         }
         if (data.version) {
-            console.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the version of ${server.name} (${server._id}) to ${data.version}`);
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the version of ${server.name} (${server._id}) to ${data.version}`, "server.version", LogLevel.INFO);
             await serverManager.editVersion(server.toJSON(), data.version);
         }
         client.json({

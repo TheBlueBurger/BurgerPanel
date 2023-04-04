@@ -11,18 +11,27 @@ import serverManager from './serverManager.js';
 import { servers, users } from './db.js';
 import { Permission } from '../../Share/Permission.js';
 import hasPermission from './util/permission.js';
+import logger, { LogLevel } from './logger.js';
+const isProd = process.env.NODE_ENV == "production";
 let app = express();
 let httpServer = http.createServer(app);
 let wss = new WebSocketServer({ server: httpServer });
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     next();
-})
+});
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
-app.use(express.static(path.join(__dirname, "..", "..", "..", "public")));
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, "..", "..", "..", "public", "index.html"));
-})
+if(isProd) {
+    app.use(express.static(path.join(__dirname, "Web")));
+    app.use((req, res) => {
+        res.sendFile(path.join(__dirname, "Web", "index.html"));
+    });
+} else {
+    app.use(express.static(path.join(__dirname, "..", "..", "..", "public")));
+    app.use((req, res) => {
+        res.sendFile(path.join(__dirname, "..", "..", "..", "public", "index.html"));
+    })
+}
 
 class PacketHandler {
     packets: {
@@ -33,27 +42,32 @@ class PacketHandler {
     }
     async init() {
         this.packets = {};
-        let files = fs.readdirSync(__dirname + "/packets");
-        for (let file of files) {
-            if (!file.endsWith(".js")) continue;
-            let packetClass = await import("./packets/" + file);
-            let packet = new packetClass.default();
-            this.packets[packet.name] = packet;
+        if(process.env.NODE_ENV != "production") {
+            let files = fs.readdirSync(__dirname + "/packets");
+            for (let file of files) {
+                if (!file.endsWith(".js")) continue;
+                let packetClass = await import("./packets/" + file);
+                let packet = new packetClass.default();
+                this.packets[packet.name] = packet;
+            }
+        } else {
+            // @ts-expect-error
+            let packets = await import("../../../packets.js")
+            packets.default.forEach((packetClass: any) => {
+                let packet = new packetClass();
+                this.packets[packet.name] = packet;
+            });
         }
-        console.table(Object.values(this.packets).map(c => ({
-            name: c.name,
-            requiresAuth: c.requiresAuth,
-            permission: c.permission
-        })));
     }
     async handle(client: OurClient, data: any) {
         let packet = this.packets[data.type];
         if (!packet) {
-            console.log("Packet not found");
+            logger.log(`User ${client.data.auth.user?.username || "(not logged in)"} attempted to use non-existing packet: ${data.type}`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
         if (packet.requiresAuth && !client.data.auth.authenticated) {
             console.log("Packet requires auth: " + packet.name);
+            logger.log(`User attempted to use packet: ${data.type} but isn't logged in!`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
         if(packet.permission && !hasPermission(client.data.auth?.user, packet.permission)) {
@@ -62,6 +76,7 @@ class PacketHandler {
                 success: false,
                 message: "No permission",
             });
+            logger.log(`User attempted to use packet: ${data.type} but doesn't have the perm required!`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
         try {
@@ -114,6 +129,8 @@ wss.on('connection', (_client) => {
     };
     client.on('error', err => {
         console.log("WS error", err);
+        serverManager.handleDisconnect(client);
+        clients.splice(clients.indexOf(client), 1);
     })
     client.on('message', (message) => {
         try {
@@ -133,6 +150,8 @@ wss.on('connection', (_client) => {
         }
     });
     client.on('close', () => {
+        serverManager.handleDisconnect(client);
+        logger.log(`User ${client.data.auth.user?.username || "(not logged in)"} disconnected.`, "disconnect", LogLevel.INFO);
         clients.splice(clients.indexOf(client), 1);
     });
 });
@@ -140,8 +159,9 @@ wss.on('connection', (_client) => {
 process.on("SIGINT", async () => {
     console.log("Stopping!");
     await serverManager.stopAllServers();
+    console.log("All servers stopped, exiting");
     process.exit();
-})
+});
 packetHandler.init().then(async () => {
     let port: number | undefined;
     try {
@@ -160,7 +180,7 @@ packetHandler.init().then(async () => {
         }
     }
     httpServer.listen(port, () => {
-        console.log("Listening on port " + port);
+        logger.log(`Running on port ${port}`, "start", LogLevel.INFO);
         console.log("Type 'help' for help");
         serverManager.autoStartServers();
     });
@@ -238,5 +258,5 @@ packetHandler.init().then(async () => {
 process.on("uncaughtException", errHandler);
 process.on("unhandledRejection", errHandler);
 function errHandler(err: any) {
-    console.log("Uncaught error", err);
+    logger.log("Uncaught error: " + err, undefined, LogLevel.ERROR, false);
 }

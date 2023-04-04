@@ -147,12 +147,17 @@ async function addUser() {
         }
         if(server.value?.allowedUsers.find(u => u.user == newUserID)) return events.emit("createNotification", "This user is already allowed to access this server.");
     }
+    if(!newUserID) return;
+    await addUserByID(newUserID);
+}
+
+async function addUserByID(id: string) {
     events.emit("sendPacket", {
         type: "setServerOption",
         id: props.server,
         allowedUsers: {
             action: "add",
-            user: newUserID
+            user: id
         }
     });
     let resp = await events.awaitEvent("setServerOption-" + props.server);
@@ -235,7 +240,7 @@ async function changeAutoStart() {
         <hr />
         <h3>Allowed users</h3>
         <button @click="addUser" v-if="hasServerPermission(loginStatus, server, 'set.allowedUsers.add')">Add user</button>
-        <button v-if="!server.allowedUsers.find(u => u.user == loginStatus?._id)" @click="loginStatus?._id ? server.allowedUsers.push({user: loginStatus._id, permissions: ['full']}) : 0 && hasPermission(loginStatus, 'server.all.set.allowedUsers.add')">Add yourself</button>
+        <button v-if="!server.allowedUsers.find(u => u.user == loginStatus?._id) && hasPermission(loginStatus, 'server.all.set.allowedUsers.add')" @click="loginStatus?._id ? addUserByID(loginStatus._id) : 0">Add yourself</button>
         <br/>
         <div v-for="user in server.allowedUsers" :key="user.user">
             {{ getUserInfo(user.user)?.username || "<Unknown>" }} [{{ user.permissions.join(", ") }}] <button @click="removeUser(user.user)" v-if="hasServerPermission(loginStatus, server, 'set.allowedUsers.remove')">Remove</button> <RouterLink :to="{

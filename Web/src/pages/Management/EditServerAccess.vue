@@ -63,6 +63,7 @@ async function togglePerm(perm: ServerPermissions) {
     }
 }
 async function applyProfile(profile: string) {
+    if(isApplied(profile)) return;
     event.emit("sendPacket", {
         type: "setServerOption",
         id: props.server,
@@ -103,7 +104,11 @@ function isApplied(profile: string) {
         <br/>
         <h2>Profiles</h2>
         <div v-for="profile in Object.keys(ServerProfiles)">
-            {{ profile }} <button @click="applyProfile(profile)">{{ isApplied(profile) ? "Applied" : "Apply" }}</button>
+            {{ profile }} <button @click="applyProfile(profile)" :class="
+            {
+                applied: isApplied(profile)
+            }
+            ">{{ isApplied(profile) ? "Applied" : "Apply" }}</button>
         </div>
         <br/>
         <h2>Permissions</h2>
@@ -118,11 +123,14 @@ function isApplied(profile: string) {
         Loading...
     </div>
 </template>
-<style>
+<style scoped>
 .red {
     color: red;
 }
 .green {
     color: green;
+}
+.applied {
+    cursor: not-allowed;
 }
 </style>
