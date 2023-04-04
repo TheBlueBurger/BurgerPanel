@@ -3,3 +3,4 @@ public
 dist
 *.zip
 _build
+packets.json
