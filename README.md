@@ -9,6 +9,7 @@ Click the Wiki button to read the documentation of BurgerPanel, or click the lin
 Developed with ♥ by:
 - TheBlueBurger \[Founder of the project, worked on most of the features and functionality\]
 - TheRedXD \[Designer (CSS), did part of UX\]
+- ArrayBuffer01 \[Help with frontend and backend\]
 
 PRs are very appreciated, as they help development!
 
