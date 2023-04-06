@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, Ref, ref } from "vue";
-import { Config, defaultConfig, descriptions } from "../../../Share/Config.js";
+import { Config, defaultConfig, descriptions, disabledEditingFrontend } from "../../../Share/Config.js";
 import { User } from "../../../Share/User.js";
 import { setSetting, getAllSettings } from "../util/config";
 import EventEmitter from "../util/event";
@@ -97,20 +97,30 @@ let sortedUsers = computed(() => {
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     })
 });
+let settingsAllowedToShow = computed(() => {
+    return Object.keys(defaultConfig).filter(c => {
+        return !disabledEditingFrontend.some(d => c.startsWith(d))
+    })
+});
 </script>
 <template>
     <div v-if="hasPermission(loginStatus, 'settings.read')">
         <h2>Settings</h2>
         <!-- Do not touch this mess -->
-        <div v-for="option of Object.keys(defaultConfig)">
+        <div v-for="option of settingsAllowedToShow">
             <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>{{ typeof knownSettings[option as
             keyof typeof defaultConfig] != "undefined" ? ": "
             + (knownSettings[option as keyof typeof defaultConfig] === "" ? "<Empty string> " : knownSettings[option as keyof
                 typeof defaultConfig]) : ": <Unknown>" }}
                 <button @click="() => changeOption(option as keyof typeof defaultConfig)">Edit</button>
         </div>
-        <hr v-if="hasPermission(loginStatus, 'users.view')" />
     </div>
+    <div v-if="hasPermission(loginStatus, 'settings.logging.set')">
+        <RouterLink :to="{
+            name: 'logging'
+        }"><button>Logging Settings</button></RouterLink>
+    </div>
+    <hr v-if="hasPermission(loginStatus, 'users.view')" />
     <h3>Users</h3>
     <div>
         <button @click="creatingUser = !creatingUser">{{ !creatingUser ? "Add user" : "Close" }}</button>
@@ -121,9 +131,6 @@ let sortedUsers = computed(() => {
             <button type="submit">Create user</button>
         </form>
     </div>
-    <br>
-    <hr>
-    <br>
     <table>
         <tr>
             <th>ID</th>

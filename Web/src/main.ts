@@ -56,6 +56,7 @@ const router = createRouter({
         },
         {
             path: '/settings/logging',
+            name: 'logging',
             component: () => import('./pages/Logging.vue')
         },
         {

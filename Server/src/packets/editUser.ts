@@ -3,6 +3,7 @@ import { users } from "../db.js";
 import { hasPermission, isValidPermissionString, Permission } from "../../../Share/Permission.js";
 import filterUserData from "../util/filterUserData.js";
 import { User } from "../../../Share/User.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class EditUser extends Packet {
     name: string = "editUser";
@@ -39,7 +40,9 @@ export default class EditUser extends Packet {
                     });
                     return;
                 }
+                if(typeof value != "boolean" || typeof permission != "string") return;
                 if (value && permission) {
+                    await logger.log(`${client.data.auth.user?.username} is giving the permission ${permission} to ${user.username}`, "user.permission.change", LogLevel.WARNING)
                     if (!user?.permissions.includes(permission)) {
                         // Add the permission
                         user?.permissions.push(permission);
@@ -54,6 +57,7 @@ export default class EditUser extends Packet {
                         });
                     }
                 } else if (!value && permission) {
+                    await logger.log(`${client.data.auth.user?.username} is removing the permission ${permission} from ${user.username}`, "user.permission.change", LogLevel.WARNING)
                     if (!user?.permissions.includes(permission)) {
                         client.json({
                             success: false,

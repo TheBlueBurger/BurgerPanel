@@ -17,8 +17,8 @@ export async function setSetting(key: keyof Config, value: any) {
     events.emit("knownSettingsUpdated", _knownSettings);
     return resp.value;
 }
-export async function getSetting(key: keyof Config) {
-    if (_knownSettings[key] !== undefined) {
+export async function getSetting(key: keyof Config, ignoreCache: boolean = false) {
+    if (!ignoreCache && _knownSettings[key] !== undefined) {
         return _knownSettings[key];
     }
     events.emit("sendPacket", {

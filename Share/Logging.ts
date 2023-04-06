@@ -26,6 +26,7 @@ export let IDs = [
     "error",
     "logs.read",
     "disconnect",
-    "packet.invalid-packet"
+    "packet.invalid-packet",
+    "logging.change"
 ] as const;
 export type IDs = typeof IDs[number];

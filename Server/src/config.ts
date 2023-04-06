@@ -4,6 +4,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { isValidPermissionString } from '../../Share/Permission.js';
 import { allowedSoftwares } from './serverManager.js';
+import { IDs } from '../../Share/Logging.js';
 
 let forcedChangeConfig: (keyof Config)[] = ["serverPath"];
 let cachedSettings: { [key in keyof Config]?: string | number | null } = {};
@@ -68,6 +69,14 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
     },
     defaultMCSoftware: async(val) => {
         if(!allowedSoftwares.includes(val)) throw new Error("Invalid software");
+        return true;
+    },
+    logging_DisabledIDs: async(val) => {
+        if(val === "") return true;
+        let splitVal = val.split(",");
+        if(splitVal.some(v => {
+            return !IDs.includes(v as IDs); // why is this needed
+        })) throw new Error("Invalid value!!");
         return true;
     }
 }

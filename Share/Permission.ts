@@ -7,7 +7,7 @@ export const _ServersPermissions = [
     "all.view"
 ] as const;
 export const _UserPermissions = ["create", "view", "set.admin", "token.read", "delete", "permissions.read", "permissions.write"] as const;
-export const _SettingPermissions = [`set`, "read"] as const;
+export const _SettingPermissions = [`set`, "read", "logging.set"] as const;
 export const _ServerPerformance = ["view", "mem", "load", "platform"] as const;
 export type ServerPermissions = typeof _ServerPermissions[number];
 export type ServersPermissions = typeof _ServersPermissions[number];

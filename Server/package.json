@@ -1,14 +1,14 @@
 {
   "name": "burgerpanel-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
     "buildRelease": "node makeRelease.mjs",
-    "start": "node dist/Server/src/index.js",
+    "start": "BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js",
     "dev": "npm run build && npm run startInspect",
-    "startInspect": "NODE_OPTIONS=\"--inspect\" node dist/Server/src/index.js"
+    "startInspect": "NODE_OPTIONS=\"--inspect\" BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js"
   },
   "type": "module",
   "keywords": [],
