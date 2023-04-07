@@ -1,18 +1,31 @@
 import mongoose from 'mongoose';
 import nodeCrypto from 'node:crypto';
-import logger, { LogLevel } from './logger.js';
 import url from "node:url";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { exists } from './util/exists.js';
 // use mongoose unless u want to pain urself
 mongoose.set("strictQuery", false);
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 let mongoURL = process.env.BURGERPANEL_MONGODB;
-if(!mongoURL) mongoURL = (await fs.readFile(path.join(__dirname, "mongodb_url.txt"))).toString();
+// If not found it will search up to 5 folders for mongodb_url.txt
+if(!mongoURL) {
+    let searchingPath = __dirname;
+    searchLoop: for(let i = 0; i < 5; i++) {
+        let pathToSearch = path.join(searchingPath, "mongodb_url.txt")
+        if(await exists(pathToSearch)) {
+            mongoURL = (await fs.readFile(pathToSearch)).toString().trim(); // set the mongodb url to the file contents and trim it
+            break searchLoop;
+        }
+        searchingPath = path.join(searchingPath, "..");
+    }
+}
+if(!mongoURL) {
+    throw new Error("Unable to find mongodb url, searched for env var BURGERPANEL_MONGODB and mongodb_url.txt for 5 folders");
+}
 let db = await mongoose.connect(mongoURL);
 
 db.connection.on('error', console.error.bind(console, 'connection error:'));
-logger.log("Connected to database", undefined, LogLevel.DEBUG, false);
 export let users = db.model("User", new mongoose.Schema({
     username: {
         type: String,

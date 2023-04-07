@@ -1,3 +1,4 @@
+import "./config.js"
 import express from 'express';
 import http from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
@@ -5,13 +6,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { User } from '../../Share/User.js';
 import url from "node:url";
-import { getSetting, setSetting } from './config.js';
+import { getSetting, isValidKey, setSetting } from './config.js';
 import { once } from "node:events";
 import serverManager from './serverManager.js';
 import { servers, users } from './db.js';
 import { Permission } from '../../Share/Permission.js';
 import hasPermission from './util/permission.js';
 import logger, { LogLevel } from './logger.js';
+import { Config } from "../../Share/Config.js";
 const isProd = process.env.NODE_ENV == "production";
 let app = express();
 let httpServer = http.createServer(app);
@@ -155,13 +157,14 @@ wss.on('connection', (_client) => {
         clients.splice(clients.indexOf(client), 1);
     });
 });
-
-process.on("SIGINT", async () => {
-    console.log("Stopping!");
+async function exit(signal?: string) {
+    console.log(`${signal ? "Recieved SIG" + signal + " - " : ""}Stopping!`);
     await serverManager.stopAllServers();
     console.log("All servers stopped, exiting");
     process.exit();
-});
+}
+process.on("SIGINT", () => exit("INT"));
+process.on("SIGTERM", () => exit("TERM"));
 packetHandler.init().then(async () => {
     let port: number | undefined;
     try {
@@ -227,8 +230,8 @@ packetHandler.init().then(async () => {
                     console.log("Server path: " + server.path);
                     console.log("Server autostart: " + server.autoStart);
                     console.log("Allowed users: " + (await Promise.all(server.allowedUsers.map(async u => {
-                        let userdata = await users.findById(u);
-                        return userdata?.username + " (" + u + ")";
+                        let userdata = await users.findById(u.user);
+                        return userdata?.username + " (" + u.permissions.join(", ") + ")";
                     }))).join(", "));
                     console.log("---------");
                 }
@@ -249,9 +252,18 @@ packetHandler.init().then(async () => {
                 console.log("servers: List all servers")
                 console.log("packetLog: Toggle packet logging");
                 console.log("stop: Stop all servers and exit");
+                console.log("set-opt <option> <value>: Sets a setting");
                 break;
-            default:
-                console.log("Unknown command. Type 'help' for a list of Burgerpanel commands.");
+        }
+        if(dataStr.startsWith("set-opt ")) { // ik this "command handler" is awful
+            let args = dataStr.split(" ");
+            args.shift();
+            let option = args.shift();
+            let value = args.join(" ");
+            if(!isValidKey(option)) return;
+            await logger.log(`${option} is being changed to ${value} in the console`, "settings.change", LogLevel.INFO);
+            await setSetting(option, value);
+
         }
     });
 });

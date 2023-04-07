@@ -30,6 +30,10 @@ export default class Logging extends Packet {
             if(typeof data.url != "string") return;
             await logger.log(`${client.data.auth.user?.username} is changing the logging URL to ${data.url}`, "logging.change", LogLevel.WARNING);
             await setSetting("logging_DiscordWebHookURL", data.url);
+        } else if(data.setLogFileLocation) {
+            if(typeof data.location != "string") return;
+            await logger.log(`${client.data.auth.user?.username} is changing the log location to ${data.location}`, "logging.change", LogLevel.WARNING);
+            await setSetting("logging_logFile", data.location);
         }
         client.json({
             type: "logging",

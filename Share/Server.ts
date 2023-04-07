@@ -16,3 +16,5 @@ export interface Server {
     port: number;
     autoStart: boolean;
 }
+
+export let allowedSoftwares = ["purpur", "paper", "vanilla"];

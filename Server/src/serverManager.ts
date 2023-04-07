@@ -1,4 +1,4 @@
-import { Server } from "../../Share/Server.js"
+import { allowedSoftwares, Server } from "../../Share/Server.js"
 import { clients, OurClient } from "./index.js"
 import { ChildProcess, spawn } from "node:child_process"
 import { User } from "../../Share/User.js";
@@ -10,7 +10,6 @@ import { hasServerPermission } from "./util/permission.js";
 import { userHasAccessToServer as _userHasAccessToServer } from "../../Share/Permission.js";
 import logger, { LogLevel } from "./logger.js";
 
-export let allowedSoftwares = ["purpur", "paper", "vanilla"];
 export default new class ServerManager {
     servers: {
         [key: string]: { // Server ID. _id from the database

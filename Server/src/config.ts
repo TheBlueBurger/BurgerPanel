@@ -1,13 +1,13 @@
-import { settings } from './db.js';
+var forcedChangeConfig: (keyof Config)[] = ["serverPath"];
+var cachedSettings: { [key in keyof Config]?: string | number | null } = {};
 import { defaultConfig, Config } from "../../Share/Config.js";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { isValidPermissionString } from '../../Share/Permission.js';
-import { allowedSoftwares } from './serverManager.js';
+import { settings } from './db.js';
 import { IDs } from '../../Share/Logging.js';
-
-let forcedChangeConfig: (keyof Config)[] = ["serverPath"];
-let cachedSettings: { [key in keyof Config]?: string | number | null } = {};
+import { exists } from "./util/exists.js";
+import { allowedSoftwares } from "../../Share/Server.js";
 export async function getSetting(key: keyof typeof defaultConfig, ignoreForcedChangeConfig?: boolean, errorIfNotSet?: boolean) {
     if (key in cachedSettings && !errorIfNotSet) {
         return cachedSettings[key];
@@ -78,7 +78,22 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
             return !IDs.includes(v as IDs); // why is this needed
         })) throw new Error("Invalid value!!");
         return true;
+    },
+    logging_DiscordWebHookURL: async(val) => {
+        return /http(s)?:\/\/.+\..+/.test(val) || val == "disabled";
+    },
+    logging_logFile: async(val) => {
+        return (path.isAbsolute(val) && await exists(val)) || val == "disabled";
+    },
+    defaultMCVersion: async(val) => {
+        let manifest = await (await fetch("https://launchermeta.mojang.com/mc/game/version_manifest.json")).json();
+        let version = manifest?.versions?.find((v: any) => v.id == val);
+        return !!version;
     }
+}
+export function isValidKey(key: string | undefined): key is keyof Config {
+    if(typeof key != "string") return false;
+    return key in defaultConfig;
 }
 export async function setSetting<K extends keyof Config>(key: K, value: Config[K] extends number ? number : string) {
     // Ensure the key is valid

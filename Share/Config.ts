@@ -8,7 +8,8 @@ export let defaultConfig: Config = {
     stopServerTimeout: 120_000, // 2 mins
     defaultPermissions: "performance.view,performance.mem,performance.load,performance.platform", // thats how the database works and im too lazy to change
     logging_DiscordWebHookURL: "",
-    logging_DisabledIDs: "packet.invalid-packet"
+    logging_DisabledIDs: "packet.invalid-packet",
+    logging_logFile: ""
 }
 export interface Config {
     defaultMemory: number;
@@ -21,6 +22,7 @@ export interface Config {
     defaultPermissions: string;
     logging_DisabledIDs: string; // comma-separated IDs
     logging_DiscordWebHookURL: string;
+    logging_logFile: string;
 }
 export let descriptions: { [key in keyof Config]?: string } = {
     defaultMemory: "The default amount of memory to allocate to a server",

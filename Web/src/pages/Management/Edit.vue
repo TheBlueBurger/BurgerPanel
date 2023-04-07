@@ -7,6 +7,7 @@ import { User } from '../../../../Share/User';
 import events from '../../util/event';
 import getServerByID from '../../util/getServerByID';
 import getUsers from '../../util/getUsers';
+import TextInput from '../../components/TextInput.vue';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
@@ -27,8 +28,7 @@ onMounted(async () => {
         getUserlist();
     }
 });
-async function renameServer() {
-    let newName = prompt("Enter a new name for this server", server.value?.name);
+async function renameServer(newName: string) {
     if(newName) {
         events.emit("sendPacket", {
             type: "setServerOption",
@@ -44,8 +44,7 @@ async function renameServer() {
         }
     }
 }
-async function changeMemory() {
-    let newMem = prompt("Enter new ram limit for server", server.value?.mem.toString());
+async function changeMemory(newMem: string) {
     if(newMem && !isNaN(parseInt(newMem))) {
         events.emit("sendPacket", {
             type: "setServerOption",
@@ -61,8 +60,7 @@ async function changeMemory() {
         }
     }
 }
-async function changeVersion() {
-    let newVersion = prompt("Enter new version for server", server.value?.version);
+async function changeVersion(newVersion: string) {
     if(newVersion) {
         events.emit("sendPacket", {
             type: "setServerOption",
@@ -78,8 +76,7 @@ async function changeVersion() {
         }
     }
 }
-async function changeSoftware() {
-    let newSoftware = prompt("Enter new software for server", server.value?.software);
+async function changeSoftware(newSoftware: string) {
     if(newSoftware) {
         events.emit("sendPacket", {
             type: "setServerOption",
@@ -95,8 +92,7 @@ async function changeSoftware() {
         }
     }
 }
-async function changePort() {
-    let newPort = prompt("Enter new port for server", server.value?.port.toString());
+async function changePort(newPort: string) {
     if(newPort) {
         events.emit("sendPacket", {
             type: "setServerOption",
@@ -111,14 +107,6 @@ async function changePort() {
             alert("Failed to change server port: " + resp.message);
         }
     }
-}
-function gotoConsole() {
-    router.push({
-        name: "manageServer",
-        params: {
-            server: props.server
-        }
-    })
 }
 async function removeUser(user: string) {
     if(server?.value?.allowedUsers?.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
@@ -223,17 +211,17 @@ async function changeAutoStart() {
             server: props.server
         }
     }"><button>View logs</button></RouterLink> <br/><hr/>
-    Server name: {{ server.name }} <button @click="renameServer">Rename</button>
+    Server name: <TextInput :default="server.name" @set="renameServer" />
     <br />
     Server path: {{ server.path }} (Read only)
     <br />
-    Memory: {{ server.mem }} MB <button @click="changeMemory">Change</button>
+    Memory (MB): <TextInput :default="server.mem.toString()" @set="changeMemory" />
     <br />
-    Version: {{ server.version }} <button @click="changeVersion">Change</button>
+    Version: <TextInput :default="server.version" @set="changeVersion" />
     <br />
-    Software: {{ server.software }} <button @click="changeSoftware">Change</button>
+    Software: <TextInput :default="server.software" @set="changeSoftware" />
     <br />
-    Port: {{ server.port }} <button @click="changePort">Change</button>
+    Port: <TextInput :default="server.port.toString()" @set="changePort" />
     <br />
     Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart">Change</button>
     <div v-if="hasPermission(loginStatus, 'users.view')">

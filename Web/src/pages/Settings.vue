@@ -7,6 +7,7 @@ import EventEmitter from "../util/event";
 import { useRouter } from "vue-router";
 import { hasPermission } from "../../../Share/Permission";
 import getUsers from "../util/getUsers";
+import TextInput from "../components/TextInput.vue";
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User>;
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
@@ -17,12 +18,11 @@ if (!hasPermission(loginStatus.value, "settings.read") && !hasPermission(loginSt
     });
 }
 let knownSettings = inject("knownSettings") as Ref<{ [key in keyof Config]: any }>;
-async function changeOption(option: keyof typeof defaultConfig) {
-    let newValue = prompt("New value for " + option + "\n" + descriptions[option], knownSettings.value[option] ?? "");
+async function changeOption(option: keyof typeof defaultConfig, newValue: string) {
     try {
         if (!newValue) return;
         let val = await setSetting(option, newValue);
-        knownSettings.value = await getAllSettings(); // i cant bother with this breaking
+        knownSettings.value = await getAllSettings();
         events.value.emit("createNotification", "Successfully changed option")
     } catch (e) {
         alert("Failed to set option: " + e);
@@ -106,13 +106,9 @@ let settingsAllowedToShow = computed(() => {
 <template>
     <div v-if="hasPermission(loginStatus, 'settings.read')">
         <h2>Settings</h2>
-        <!-- Do not touch this mess -->
         <div v-for="option of settingsAllowedToShow">
-            <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>{{ typeof knownSettings[option as
-            keyof typeof defaultConfig] != "undefined" ? ": "
-            + (knownSettings[option as keyof typeof defaultConfig] === "" ? "<Empty string> " : knownSettings[option as keyof
-                typeof defaultConfig]) : ": <Unknown>" }}
-                <button @click="() => changeOption(option as keyof typeof defaultConfig)">Edit</button>
+            <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>
+            <TextInput :default="knownSettings[option as keyof Config]" @set="v => changeOption(option as keyof Config, v)"></TextInput>
         </div>
     </div>
     <div v-if="hasPermission(loginStatus, 'settings.logging.set')">
@@ -163,6 +159,7 @@ let settingsAllowedToShow = computed(() => {
 <style>
 .setting-span {
     cursor: help;
+    margin-right: 10px;
 }
 table {
     width: 100%;

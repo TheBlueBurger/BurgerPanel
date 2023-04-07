@@ -1,9 +1,10 @@
 import { OurClient, Packet } from "../index.js";
-import { servers, users } from "../db.js";
+import { servers } from "../db.js";
 import path from "path";
 import type { CreateServerS2C } from "../../../Share/CreateServer.js"
 import { getSetting, setSetting } from "../config.js";
-import serverManager, { allowedSoftwares } from "../serverManager.js";
+import serverManager from "../serverManager.js";
+import { allowedSoftwares } from "../../../Share/Server.js";
 import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 

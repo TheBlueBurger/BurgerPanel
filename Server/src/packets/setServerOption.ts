@@ -143,7 +143,18 @@ export default class SetServerOption extends Packet {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto start of ${server.name} (${server._id}) to ${data.autoStart}`, "server.autostart.change");
             server.autoStart = data.autoStart;
         }
-        await server.save(); // DO NOT MOVE THIS LINE DOWN. FUNCTIONS BELOW WILL AUTOMATICALLY SAVE THE SERVER AND WILL CAUSE CHAOS
+        try {
+            await server.save(); // DO NOT MOVE THIS LINE DOWN. FUNCTIONS BELOW WILL AUTOMATICALLY SAVE THE SERVER AND WILL CAUSE CHAOS
+        } catch(err) {
+            client.json({
+                type: "setServerOption",
+                success: false,
+                message: "Failed to save new server: " + (err as any)?.message,
+                emitEvent: true,
+                emits: ["setServerOption-" + data.id]
+            });
+            return;
+        }
         if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port")) {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the port of ${server.name} (${server._id}) to ${data.port}`, "server.port", LogLevel.INFO);
             await serverManager.changePort(server.toJSON(), data.port);

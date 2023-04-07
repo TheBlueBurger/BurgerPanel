@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-
+    import { ref } from 'vue';
     let props = defineProps({
         default: {
             type: String,
@@ -8,9 +7,14 @@ import { ref } from 'vue';
         },
         placeholder: {
             type: String
+        },
+        initialEditing: {
+            type: Boolean,
+            required: false,
+            default: true
         }
     });
-    let disabled = ref(true);
+    let disabled = ref(props.initialEditing);
     let emits = defineEmits(["set"]);
     function set() {
         if(disabled.value) return;
@@ -25,7 +29,7 @@ import { ref } from 'vue';
 </script>
 <template>
     <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
-        width: (text.length * 1.05) + 'ch'
+        width: Math.max(text.length * 1.05, 10) + 'ch'
     }">
     <button v-if="disabled" @click="disabled = false">Edit</button>
     <button v-if="!disabled" @click="set">Set</button>
