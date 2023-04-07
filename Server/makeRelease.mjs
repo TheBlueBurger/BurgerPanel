@@ -7,7 +7,7 @@ import replace from '@rollup/plugin-replace';
 import esbuild from "esbuild";
 import license from "rollup-plugin-license";
 import path from "path";
-import { execSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import packageJSON from "./package.json" assert {type: "json"}
 console.time("Total");
 try {
