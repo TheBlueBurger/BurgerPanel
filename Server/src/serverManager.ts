@@ -9,6 +9,7 @@ import { exists } from "./util/exists.js";
 import { hasServerPermission } from "./util/permission.js";
 import { userHasAccessToServer as _userHasAccessToServer } from "../../Share/Permission.js";
 import logger, { LogLevel } from "./logger.js";
+import isValidMCVersion from "./util/isValidMCVersion.js";
 
 export default new class ServerManager {
     servers: {
@@ -197,6 +198,7 @@ enforce-secure-profile=false
         await fs.writeFile(server.path + "/server.properties", fileData);
     }
     async editVersion(server: Server, version: string) {
+        if(!isValidMCVersion(version)) return;
         let serverEntry = this.servers[server._id];
         if (serverEntry?.childProcess) throw new Error("Server is running. Please stop it before changing the version.");
         await fs.rm(server.path + "/server.jar", { force: true });

@@ -51,6 +51,12 @@ async function getLogs(logName: string) {
 if(viewingLog) getLogs(viewingLog.value?.toString() || "");
 </script>
 <template>
+    <RouterLink :to="{
+        name: 'editServer',
+        params: {
+            server: props.server
+        }
+    }" v-if="!viewingLog"><button>Go back</button></RouterLink>
     <h1 v-if="!viewingLog">Logs for {{ server?.name }}</h1>
     <div v-for="log in logs" class="logname" v-if="!viewingLog">
         <RouterLink :to="{

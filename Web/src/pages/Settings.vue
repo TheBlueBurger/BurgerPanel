@@ -108,7 +108,7 @@ let settingsAllowedToShow = computed(() => {
         <h2>Settings</h2>
         <div v-for="option of settingsAllowedToShow">
             <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>
-            <TextInput :default="knownSettings[option as keyof Config]" @set="v => changeOption(option as keyof Config, v)"></TextInput>
+            <TextInput :default="knownSettings[option as keyof Config]" @set="v => changeOption(option as keyof Config, v)" v-if="typeof knownSettings[option as keyof Config] != 'undefined'" />
         </div>
     </div>
     <div v-if="hasPermission(loginStatus, 'settings.logging.set')">

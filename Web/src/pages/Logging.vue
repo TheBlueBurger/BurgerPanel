@@ -10,7 +10,7 @@
     let disabledLogs = ref([] as typeof IDs[number][]);
     async function load(reload: boolean = false) {
         webhookURL.value = await getSetting("logging_DiscordWebHookURL", reload);
-        disabledLogs.value = await getSetting("logging_DisabledIDs", reload);
+        disabledLogs.value = (await getSetting("logging_DisabledIDs", reload)).split(",");
         logPath.value = await getSetting("logging_logFile", reload);
     }
     onMounted(async () => {

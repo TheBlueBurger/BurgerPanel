@@ -13,9 +13,13 @@ import { servers, users } from './db.js';
 import { Permission } from '../../Share/Permission.js';
 import hasPermission from './util/permission.js';
 import logger, { LogLevel } from './logger.js';
-import { Config } from "../../Share/Config.js";
+
 const isProd = process.env.NODE_ENV == "production";
 let app = express();
+if(!isProd) app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+})
 let httpServer = http.createServer(app);
 let wss = new WebSocketServer({ server: httpServer });
 app.use((req, res, next) => {

@@ -29,7 +29,7 @@
 </script>
 <template>
     <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
-        width: Math.max(text.length * 1.05, 10) + 'ch'
+        width: Math.max((text || '').length * 1.05, 10) + 'ch'
     }">
     <button v-if="disabled" @click="disabled = false">Edit</button>
     <button v-if="!disabled" @click="set">Set</button>

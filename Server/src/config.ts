@@ -8,6 +8,7 @@ import { settings } from './db.js';
 import { IDs } from '../../Share/Logging.js';
 import { exists } from "./util/exists.js";
 import { allowedSoftwares } from "../../Share/Server.js";
+import isValidMCVersion from "./util/isValidMCVersion.js";
 export async function getSetting(key: keyof typeof defaultConfig, ignoreForcedChangeConfig?: boolean, errorIfNotSet?: boolean) {
     if (key in cachedSettings && !errorIfNotSet) {
         return cachedSettings[key];
@@ -86,9 +87,7 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
         return (path.isAbsolute(val) && await exists(val)) || val == "disabled";
     },
     defaultMCVersion: async(val) => {
-        let manifest = await (await fetch("https://launchermeta.mojang.com/mc/game/version_manifest.json")).json();
-        let version = manifest?.versions?.find((v: any) => v.id == val);
-        return !!version;
+        return isValidMCVersion(val);
     }
 }
 export function isValidKey(key: string | undefined): key is keyof Config {
