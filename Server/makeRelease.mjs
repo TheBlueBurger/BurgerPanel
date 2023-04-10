@@ -19,7 +19,6 @@ files.forEach((f) => {
     fileData += `import ${f.replace(".ts", "")} from "./dist/Server/src/packets/${f.replace(".ts", ".js")}";\n`;
 });
 fileData += `export default [${files.map(f => f.replace(".ts", "")).join(", ")}];\n`;
-console.log(fileData);
 fs.writeFileSync("packets.mjs", fileData);
 console.time("Build TS");
 spawnSync("npm", ["run", "build"]);
@@ -43,6 +42,11 @@ let build = await rollup({
           },
         },
       })],
+      onwarn(msg) {
+        if(/Circular dependency\: dist\/(.+) -> dist\/(.+)/.test(msg.message)) {
+            console.warn("Warning: " + msg.message);
+        }
+      }
 });
 await build.write({
     format: "esm",
