@@ -171,9 +171,14 @@ process.on("SIGINT", () => exit("INT"));
 process.on("SIGTERM", () => exit("TERM"));
 packetHandler.init().then(async () => {
     let port: number | undefined;
-    try {
+    portTry: try {
         port = await getSetting("webServerPort", true, true) as number;
     } catch {
+        let portEnv = process.env?.PORT;
+        if(portEnv) {
+            port = parseInt(portEnv);
+            break portTry;
+        }
         console.log("Port not set. Please enter a port to listen on and press enter: ");
         while (!port) {
             let data = await (await once(process.stdin, "data")).toString().trim();
@@ -273,6 +278,18 @@ packetHandler.init().then(async () => {
 });
 process.on("uncaughtException", errHandler);
 process.on("unhandledRejection", errHandler);
+let adminUser = await users.findOne({
+    permissions: "full"
+}).exec();
+if(!adminUser) {
+    await logger.log("Unable to find admin user, creating one...", "start", LogLevel.DEBUG);
+    let adminUser = await users.create({
+        permissions: ["full"],
+        username: "gen-admin-" + Date.now(),
+    });
+    adminUser.save();
+    await logger.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token, "start", LogLevel.INFO, false);
+}
 function errHandler(err: any) {
     logger.log("Uncaught error: " + err, undefined, LogLevel.ERROR, false);
 }

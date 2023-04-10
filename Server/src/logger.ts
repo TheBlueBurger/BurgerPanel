@@ -48,8 +48,8 @@ export default new class Logger {
         if(emitWebhook) await this.sendDiscordWebhook(this.formatLog(message, id, level, false));
     }
     private formatLog(message: string, id?: IDs, level?: LogLevel, useColors?: boolean) {
-        let str = `[${LogLevel[level || LogLevel.INFO]}] ${id ? id + ": " : ''}${message}`
-        return useColors ? colors[level || LogLevel.INFO](str) : str
+        let str = `[${LogLevel[level ?? LogLevel.INFO]}] ${id ? id + ": " : ''}${message}`
+        return useColors ? colors[level ?? LogLevel.INFO](str) : str
     }
     async isDisabled(id: IDs): Promise<boolean> {
         return (await getSetting("logging_DisabledIDs"))?.toString().split(",").includes(id as string) || false;
