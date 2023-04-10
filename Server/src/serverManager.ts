@@ -115,7 +115,7 @@ enforce-secure-profile=false
                     emitEvent: true,
                     emits: ["serverErrored-" + server._id],
                     server: server._id,
-                    message: err?.message || "Unknown message?!?!?",
+                    error: err?.message || "Unknown message?!?!?",
                 });
                 serverEntry.childProcess = undefined;
                 this.updateStatus(server);

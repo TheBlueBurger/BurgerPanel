@@ -43,14 +43,9 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
     serverPath: async (value) => {
         if (!value) throw new Error("Server path cannot be empty");
         let newPath = path.normalize(value);
-        if (await getSetting("serverPathIsRelative")) {
-            if (!value.match(/^[a-zA-Z0-9_]+$/)) throw new Error("Server path is invalid.");
-            newPath = path.join(process.cwd(), value);
-        } else {
-            if (!value.match(/^[a-zA-Z0-9_\-\/\\:]+$/)) throw new Error("Server path is invalid.");
-            newPath = path.normalize(value);
-            if (!path.isAbsolute(newPath)) throw new Error("Server path is not absolute.");
-        }
+        if (!value.match(/^[a-zA-Z0-9_\-\/\\:]+$/)) throw new Error("Server path is invalid.");
+        newPath = path.normalize(value);
+        if (!path.isAbsolute(newPath)) throw new Error("Server path is not absolute.");
         // Ensure the folder exists, but is empty
         if (!(await (await fs.stat(newPath)).isDirectory())) {
             throw new Error("Server path is not a directory: " + newPath);
@@ -60,7 +55,6 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
         }
         return path.normalize(newPath);
     },
-    serverPathIsRelative: boolValidator,
     defaultPermissions: async(value) => {
         let permissions = value.split(",");
         permissions.forEach(p => {

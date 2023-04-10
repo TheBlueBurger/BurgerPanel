@@ -64,21 +64,7 @@ export default class Auth extends Packet {
             });
             return;
         }
-        if (await getSetting("serverPathIsRelative")) {
-            if (path.isAbsolute(await getSetting("serverPath") as string)) {
-                await setSetting("serverPath", "");
-                this.respond(client, {
-                    type: "createServer",
-                    success: false,
-                    message: "Server path is absolute, but serverPathIsRelative is set to true. Please change the server path to be relative to the web server. It has been reset.",
-                    emitEvent: true
-                });
-                return;
-            }
-            serverPath = path.join(await getSetting("serverPath") as string, data.name);
-        } else {
-            serverPath = path.join(await getSetting("serverPath") as string, data.name);
-        }
+        serverPath = path.join(await getSetting("serverPath") as string, data.name);
         let version = data.version;
         if (!version) {
             version = await getSetting("defaultMCVersion");
