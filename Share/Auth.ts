@@ -1,4 +1,4 @@
-import { Server } from "./Server.js";
+import { Server, ServerStatuses } from "./Server.js";
 import type { User } from "./User.js";
 export interface AuthS2C {
     type: "auth";
@@ -9,4 +9,5 @@ export interface AuthS2C {
     servers?: Server[];
     emitEvent?: boolean;
     emits?: string[];
+    statuses?: ServerStatuses;
 }

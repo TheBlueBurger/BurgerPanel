@@ -18,6 +18,7 @@ export default class AttachToServer extends Packet {
             });
             return;
         }
+        let status = hasServerPermission(client.data.auth.user, server.toJSON(), "status") ? serverManager.getStatus(server.toJSON()) : "unknown";
         if(hasServerPermission(client.data.auth.user, server.toJSON(), "console.read")) {
             let resp = serverManager.attachClientToServer(client, server.toJSON());
             client.json({
@@ -26,7 +27,8 @@ export default class AttachToServer extends Packet {
                 server,
                 emitEvent: true,
                 emits: ["server-attached-" + data._id],
-                lastLogs: resp.lastLogs
+                lastLogs: resp.lastLogs,
+                status
             });
         } else {
             client.json({
@@ -36,7 +38,8 @@ export default class AttachToServer extends Packet {
                 emitEvent: true,
                 emits: ["server-attached-" + data._id],
                 stay: true,
-                server: userHasAccessToServer(client.data.auth.user, server.toJSON()) ? server : undefined
+                server: server.toJSON(),
+                status
             });
         }
     }

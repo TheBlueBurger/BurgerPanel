@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, inject, onMounted, ref, onUnmounted } from 'vue';
-import { Server } from '../../../../Share/Server';
+import { Server, ServerStatuses } from '../../../../Share/Server';
 import events from '../../util/event';
 import { useRouter } from 'vue-router';
 import { hasServerPermission } from '../../../../Share/Permission';
@@ -16,6 +16,8 @@ let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);
 let attached = ref(false);
 let loginStatus = inject("loginStatus") as Ref<User | null>;
+let setServerStatuses = inject("setServerStatuses") as Function;
+let statuses = inject("statuses") as Ref<ServerStatuses>;
 
 onMounted(async () => {
   loadingServerFromAPI.value = true;
@@ -35,6 +37,12 @@ onMounted(async () => {
       setTimeout(() => { // there has to be a better way to do this, but this is what ill do and it works
         serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
       }, 50);
+      setServerStatuses({
+        ...statuses.value,
+        [props.server]: {
+          status: resp.status
+        }
+      })
     } else {
       if(resp.stay) {
         server.value = resp.server;
@@ -119,14 +127,7 @@ function onScrolled() {
     autoScrollInterrupted.value = true;
   }
 }
-function editServer() {
-  router.push({
-    name: "editServer",
-    params: {
-      server: props.server
-    }
-  })
-}
+
 </script>
 
 <template>
@@ -136,7 +137,7 @@ function editServer() {
     <button @click="stopServer()">Stop</button>
     <button @click="killServer()">Kill</button>
     <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
-    <span class="server-status"><ServerStatus :server="server" /></span>
+    <span class="server-status"><ServerStatus :server="server._id" /></span>
     <br />
     Logs:
     <textarea readonly ref="serverTextArea" @scroll="onScrolled">{{ logs.join("") }}</textarea>

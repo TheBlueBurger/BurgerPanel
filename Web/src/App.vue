@@ -9,6 +9,8 @@ import Navbar from "./components/Navbar.vue";
 import { Config } from "../../Share/Config";
 import { _knownSettings } from "./util/config";
 import { useRouter } from "vue-router";
+import { ServerStatuses } from '../../Share/Server';
+import event from "./util/event";
 let router = useRouter();
 let events = ref(EventEmitter);
 let knownSettings = ref(_knownSettings) as Ref<{ [key in keyof Config]: any }>
@@ -117,6 +119,7 @@ function initWS() {
         debugMessage.value = authPacket;
         if (lastID.value != authPacket.user._id) createNotification("Welcome, " + authPacket.user.username + "!");
         lastID.value = authPacket.user._id;
+        if(authPacket.statuses) serverStatuses.value = authPacket.statuses;
       }
     } else if (data.type == "error") {
       alert("Error: " + data.message);
@@ -192,6 +195,13 @@ router.beforeEach(async guard => {
     });
     console.log("DONE");
   }
+});
+
+let serverStatuses = ref({} as ServerStatuses);
+provide("statuses", serverStatuses);
+provide("setServerStatuses", (v: any) => serverStatuses.value = v);
+event.on("getAllServers", data => {
+  serverStatuses.value = data.statuses;
 });
 </script>
 

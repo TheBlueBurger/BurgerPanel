@@ -121,7 +121,7 @@ function importServer() {
                 <td>{{ server.mem }} MB</td>
                 <td>{{ server.path }}</td>
                 <td>{{ server.port }}</td>
-                <td><ServerStatus :server="server"/></td>
+                <td><ServerStatus :server="server._id"/></td>
                 <td><RouterLink :to="{name: 'manageServer', params: {server: server._id}}"><button>Manage</button></RouterLink></td>
             </tr>
         </table>

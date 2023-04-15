@@ -18,3 +18,9 @@ export interface Server {
 }
 
 export let allowedSoftwares = ["purpur", "paper", "vanilla"];
+
+export type ServerStatuses = {
+    [id: string]: {
+        status: "running" | "stopped" | "unknown";
+    }
+}

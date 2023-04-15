@@ -1,24 +1,15 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, Ref } from 'vue';
-import event from '../util/event';
+import { computed, inject, Ref, watch } from 'vue';
+import { ServerStatuses } from '../../../Share/Server';
 let props = defineProps({
     server: {
-        
+        type: String,
+        required: true
     }
-})
-let status: Ref<"running" | "stopped" | undefined> = ref();
-onMounted(() => {
-    event.on("serverStatusUpdate-" + (props.server as any)?._id || (() => {throw new Error("Server ID does not exist: " + props.server)})(), d =>{
-        status.value = d?.status;
-    });
-    event.emit("sendPacket", {
-        type: "getServer",
-        id: (props.server as any)?._id,
-        requestStatus: true
-    })
 });
-onUnmounted(() => {
-    event.removeAllListeners("serverStatusUpdate-" + (props.server as any)?._id);
+let statuses = inject("statuses") as Ref<ServerStatuses>;
+let status: Ref<"running" | "stopped" | "unknown"> = computed(() => {
+    return statuses.value[props.server]?.status || "unknown";
 });
 </script>
 
