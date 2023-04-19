@@ -33,7 +33,7 @@ export default class Logging extends Packet {
         } else if(data.setLogFileLocation) {
             if(typeof data.location != "string") return;
             await logger.log(`${client.data.auth.user?.username} is changing the log location to ${data.location}`, "logging.change", LogLevel.WARNING);
-            await setSetting("logging_logFile", data.location);
+            await setSetting("logging_logDir", data.location); // validation is in config.ts
         }
         client.json({
             type: "logging",

@@ -76,6 +76,10 @@ export let servers = db.model("Server", new mongoose.Schema({
     autoStart: {
         type: Boolean,
         default: false
+    },
+    autoRestart: {
+        type: Boolean,
+        default: false
     }
 }));
 export let settings = db.model("Setting", new mongoose.Schema({

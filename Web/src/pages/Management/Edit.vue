@@ -193,6 +193,21 @@ async function changeAutoStart() {
         alert("Failed to change server auto start: " + resp.message);
     }
 }
+async function changeAutoRestart() {
+    console.log(server.value?.autoStart);
+    events.emit("sendPacket", {
+        type: "setServerOption",
+        id: props.server,
+        autoRestart: !server.value?.autoRestart
+    });
+    let resp = await events.awaitEvent("setServerOption-" + props.server);
+    if (resp?.success) {
+        events.emit("createNotification", `Server auto restart changed to '${!server.value?.autoRestart}'`);
+        server.value = await getServerByID(null, props.server);
+    } else {
+        alert("Failed to change server auto restart: " + resp.message);
+    }
+}
 </script>
 
 <template>
@@ -224,6 +239,8 @@ async function changeAutoStart() {
     Port: <TextInput :default="server.port.toString()" @set="changePort" />
     <br />
     Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart">Change</button>
+    <br />
+    Auto restart: {{ server.autoRestart ? "Yes" : "No" }} <button @click="changeAutoRestart">Change</button>
     <div v-if="hasPermission(loginStatus, 'users.view')">
         <hr />
         <h3>Allowed users</h3>

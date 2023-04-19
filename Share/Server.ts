@@ -15,6 +15,7 @@ export interface Server {
     software: "vanilla" | "purpur" | "paper";
     port: number;
     autoStart: boolean;
+    autoRestart: boolean;
 }
 
 export let allowedSoftwares = ["purpur", "paper", "vanilla"];

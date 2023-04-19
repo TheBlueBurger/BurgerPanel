@@ -11,6 +11,7 @@ export let IDs = [
     "server.allowedUsers.changed",
     "server.change-name",
     "server.autostart",
+    "server.autorestart",
     "server.autostart.change",
     "server.console.write",
     "server.mem",
@@ -30,4 +31,5 @@ export let IDs = [
     "logging.change",
     "info"
 ] as const;
+// WARNING: Do not remove any of these before fixing the issue
 export type IDs = typeof IDs[number];

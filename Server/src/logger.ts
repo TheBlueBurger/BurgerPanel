@@ -3,8 +3,10 @@ import chalk from "chalk";
 import {IDs} from "../../Share/Logging.js";
 import { getSetting, setSetting } from "./config.js";
 import fs from "node:fs";
+import fsp from "node:fs/promises";
 import url from "node:url";
 import path from "node:path";
+import { exists } from "./util/exists.js";
 export enum LogLevel {
     DEBUG,
     INFO,
@@ -29,16 +31,29 @@ export default new class Logger {
         this.writeStream = fs.createWriteStream(location);
         this.log("Logging to " + location, "info", LogLevel.DEBUG, false, false)
     }
+    private makeNiceDate() {
+        return `${Intl.DateTimeFormat("sv").format()} ${Intl.DateTimeFormat("sv", {hour: "2-digit", hourCycle: "h24", minute: "2-digit", second: "2-digit"}).format()}`;
+    }
     private async getLogLocation(): Promise<string | null> {
-        let logLocationInConfig = await getSetting("logging_logFile");
+        let logLocationInConfig = await getSetting("logging_logDir");
         if(typeof logLocationInConfig != "string") return null;
         if(logLocationInConfig == "") {
-            let newLogLocation = path.join(__dirname, "burgerpanel.log");
-            await setSetting("logging_logFile", newLogLocation);
+            let logDir = path.join(__dirname, "logs")
+            if(!await exists(logDir)) await fsp.mkdir(logDir);
+            await setSetting("logging_logDir", logDir);
+            logLocationInConfig = logDir;
         } else if(logLocationInConfig == "disabled") {
             return null;
         }
-        return logLocationInConfig;
+        let filePath = path.join(logLocationInConfig, `BurgerPanel ${this.makeNiceDate()}`);
+        if(await exists(filePath + ".log")) { // how would this even trigger it changes every second
+            let i = 0;
+            while(await exists(filePath + i + ".log")) {
+                i++;
+            }
+            filePath = filePath + i;
+        }
+        return filePath + ".log";
     }
     async log(message: string, id?: IDs, level: LogLevel = LogLevel.INFO, emitWebhook: boolean = true, logToFile: boolean = true) {
         if(!id) return;

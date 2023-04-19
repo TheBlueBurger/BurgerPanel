@@ -8,7 +8,7 @@ export let defaultConfig: Config = {
     defaultPermissions: "performance.view,performance.mem,performance.load,performance.platform", // thats how the database works and im too lazy to change
     logging_DiscordWebHookURL: "",
     logging_DisabledIDs: "packet.invalid-packet",
-    logging_logFile: ""
+    logging_logDir: ""
 }
 export interface Config {
     defaultMemory: number;
@@ -20,7 +20,7 @@ export interface Config {
     defaultPermissions: string;
     logging_DisabledIDs: string; // comma-separated IDs
     logging_DiscordWebHookURL: string;
-    logging_logFile: string;
+    logging_logDir: string;
 }
 export let descriptions: { [key in keyof Config]?: string } = {
     defaultMemory: "The default amount of memory to allocate to a server",
@@ -31,6 +31,6 @@ export let descriptions: { [key in keyof Config]?: string } = {
     stopServerTimeout: "The amount of time in milliseconds to wait for a server to stop before killing it.",
     defaultPermissions: "The permission to give a new user, separated by commas"
 }
-export let disabledEditingFrontend: string[] = ["logging_"]; // if it starts with this, it will be ignored
+export let disabledEditingFrontend: string[] = ["logging_"]; // if it starts with this, it will be ignored on the frontend settings page
 // Array of keys that are allowed to be read by all users
 export let allUsersAllowedToRead: (keyof Config)[] = [];

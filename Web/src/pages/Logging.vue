@@ -11,7 +11,7 @@
     async function load(reload: boolean = false) {
         webhookURL.value = await getSetting("logging_DiscordWebHookURL", reload);
         disabledLogs.value = (await getSetting("logging_DisabledIDs", reload)).split(",");
-        logPath.value = await getSetting("logging_logFile", reload);
+        logPath.value = await getSetting("logging_logDir", reload);
     }
     onMounted(async () => {
         await load();
@@ -67,7 +67,8 @@
         </div>
         <br/>
         <div v-if="logPath != 'disabled'">
-            Log path: <TextInput @set="setLogPath" :default="logPath" placeholder="The Path" /> <button @click="setLogPath('disabled')">Disable</button>
+            Log path:
+            <TextInput @set="setLogPath" :default="logPath" placeholder="The Path" /> <button @click="setLogPath('disabled')">Disable</button>
         </div>
         <div v-else>
             Logging to file is disabled. <button @click="initialEditing = true; logPath = ''">Enable</button>

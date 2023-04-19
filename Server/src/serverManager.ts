@@ -10,6 +10,7 @@ import { hasServerPermission } from "./util/permission.js";
 import { userHasAccessToServer as _userHasAccessToServer } from "../../Share/Permission.js";
 import logger, { LogLevel } from "./logger.js";
 import isValidMCVersion from "./util/isValidMCVersion.js";
+import { promiseSleep } from "blueutilities";
 
 export default new class ServerManager {
     servers: {
@@ -120,7 +121,8 @@ enforce-secure-profile=false
                 serverEntry.childProcess = undefined;
                 this.updateStatus(server);
             });
-        })
+            this.handleAutorestart(server, 20_000);
+        });
         childProcess.once("exit", c => {
             logger.log(`Server ${server.name} exited with code ${c}`, "server.stop", LogLevel.DEBUG);
             serverEntry.lastLogs.push("Server exited with code " + c + "\n");
@@ -134,9 +136,16 @@ enforce-secure-profile=false
                     code: c,
                 })
             });
-        })
+            this.handleAutorestart(server, 10_000);
+        });
         this.updateStatus(server);
         logger.log("Server " + server.name + " started.", "server.start", LogLevel.DEBUG);
+    }
+    async handleAutorestart(server: Server, timeout?: number) {
+        if(!server.autoRestart) return;
+        if(timeout) await promiseSleep(timeout);
+        logger.log("Restarting stopped server: " + server.name, "server.autorestart");
+        await this.startServer(server);
     }
     stopServer(server: Server) {
         return new Promise<void>(async resolve => {

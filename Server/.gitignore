@@ -4,3 +4,4 @@ dist
 *.zip
 _build
 packets.mjs
+*.log

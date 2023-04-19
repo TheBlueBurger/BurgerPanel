@@ -77,8 +77,8 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
     logging_DiscordWebHookURL: async(val) => {
         return /http(s)?:\/\/.+\..+/.test(val) || val == "disabled";
     },
-    logging_logFile: async(val) => {
-        return (path.isAbsolute(val) && await exists(val)) || val == "disabled";
+    logging_logDir: async(val) => {
+        return (path.isAbsolute(val) && await exists(val) && (await fs.stat(val)).isDirectory()) || val == "disabled";
     },
     defaultMCVersion: async(val) => {
         return isValidMCVersion(val);

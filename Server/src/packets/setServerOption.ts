@@ -143,6 +143,10 @@ export default class SetServerOption extends Packet {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto start of ${server.name} (${server._id}) to ${data.autoStart}`, "server.autostart.change");
             server.autoStart = data.autoStart;
         }
+        if (typeof data.autoRestart == "boolean" && hasServerPermission(client.data.auth.user, server.toJSON(), "set.autorestart")) {
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto restart of ${server.name} (${server._id}) to ${data.autoRestart}`, "server.autostart.change");
+            server.autoRestart = data.autoRestart;
+        }
         try {
             await server.save(); // DO NOT MOVE THIS LINE DOWN. FUNCTIONS BELOW WILL AUTOMATICALLY SAVE THE SERVER AND WILL CAUSE CHAOS
         } catch(err) {

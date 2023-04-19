@@ -4,7 +4,7 @@ import type { DeleteServerS2C } from "../../../Share/DeleteServer.js"
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
 
-export default class Auth extends Packet {
+export default class DeleteServer extends Packet {
     name: string = "deleteServer";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any) {

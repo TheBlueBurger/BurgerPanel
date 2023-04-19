@@ -88,7 +88,7 @@ class PacketHandler {
         try {
             await packet.handle(client, data);
         } catch (err) {
-            console.log("Packet errored.", data.type, data.data, err);
+            logger.log("Packet errored. " + data.type + " " + err, "error", LogLevel.ERROR);
         }
     }
 }
@@ -100,7 +100,7 @@ export class Packet {
     constructor() {
     }
     handle(client: OurClient, data: any) {
-        console.log("Packet not implemented");
+        throw new Error("Packet not implemented");
     }
 }
 

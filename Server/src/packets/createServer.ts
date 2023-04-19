@@ -9,7 +9,7 @@ import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import isValidMCVersion from "../util/isValidMCVersion.js";
 
-export default class Auth extends Packet {
+export default class CreateServer extends Packet {
     name: string = "createServer";
     requiresAuth: boolean = true;
     permission: Permission = "servers.create";
