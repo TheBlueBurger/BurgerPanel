@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, Ref, inject, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { _ServerPermissions, userHasAccessToServer, hasServerPermission, ServerPermissions, ServerProfiles } from '../../../../Share/Permission';
+import { _ServerPermissions, userHasAccessToServer, hasServerPermission, ServerPermissions, ServerProfiles, hasPermission } from '../../../../Share/Permission';
 import { Server } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import event from '../../util/event';
@@ -96,11 +96,11 @@ function isApplied(profile: string) {
     }"><button>Go back</button></RouterLink>
     <div v-if="server && user">
         <h1>Managing {{ user.username }} in {{ server.name }}</h1> <RouterLink :to="{
-            name: 'manageUser',
+            name: 'editUserPermissions',
             params: {
                 user: props.user
             }
-        }"><button>Manage user</button></RouterLink>
+        }" v-if="hasPermission(loginStatus, 'users.permissions.read')"><button>Manage global user permissions</button></RouterLink>
         <br/>
         <h2>Profiles</h2>
         <div v-for="profile in Object.keys(ServerProfiles)">

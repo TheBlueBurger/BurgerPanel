@@ -42,6 +42,12 @@ const router = createRouter({
             name: "editServerAccess"
         },
         {
+            path: '/manage/server/:server/edit/files',
+            component: () => import('./pages/Management/ServerFiles.vue'),
+            props: true,
+            name: "serverFiles",
+        },
+        {
             path: '/manage/server/import',
             component: () => import('./pages/Management/Import.vue'),
             name: 'importServer'

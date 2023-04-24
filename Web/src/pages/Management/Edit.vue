@@ -225,7 +225,15 @@ async function changeAutoRestart() {
         params: {
             server: props.server
         }
-    }"><button>View logs</button></RouterLink> <br/><hr/>
+    }"><button>View logs</button></RouterLink>
+    <RouterLink :to="{
+        name: 'serverFiles',
+        params: {
+            server: props.server
+        }
+    }">
+        <button>Edit Files</button>
+    </RouterLink><br/><hr/>
     Server name: <TextInput :default="server.name" @set="renameServer" />
     <br />
     Server path: {{ server.path }} (Read only)
@@ -262,7 +270,7 @@ async function changeAutoRestart() {
     Loading server data...
 </div>
 </template>
-<style>
+<style scoped>
 .button-red {
     background-color: #b13737;
 }

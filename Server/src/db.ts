@@ -52,7 +52,8 @@ export let servers = db.model("Server", new mongoose.Schema({
     path: {
         type: String,
         unique: true,
-        maxlength: 255
+        maxlength: 255,
+        required: true
     },
     mem: Number,
     allowedUsers: [{

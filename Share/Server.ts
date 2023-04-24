@@ -18,10 +18,14 @@ export interface Server {
     autoRestart: boolean;
 }
 
-export let allowedSoftwares = ["purpur", "paper", "vanilla"];
+export const allowedSoftwares = ["purpur", "paper", "vanilla"];
 
 export type ServerStatuses = {
     [id: string]: {
         status: "running" | "stopped" | "unknown";
     }
 }
+// allowed mime types from file editor
+export const allowedMimeTypes = ["text/plain", "application/json", "text/yaml"];
+// bypassed mime type blocks, direct paths
+export const allowedFileNames = ["/server.properties"];

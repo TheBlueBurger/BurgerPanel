@@ -75,7 +75,7 @@ if(!hasPermission(loginStatus.value, "users.permissions.read")) {
         Loading...
     </div>
 </template>
-<style>
+<style scoped>
 .red {
     color: red;
 }
@@ -87,6 +87,9 @@ table > tr > th {
     /* Center */
     text-align: left;
     margin-left: 100;
+}
+table {
+    width: 100%;
 }
 td, th, .manage-btn {
   border: 1px solid #dddddd;

@@ -81,7 +81,7 @@ if(viewingLog) getLogs(viewingLog.value?.toString() || "");
         <textarea readonly>{{ logData }}</textarea>
     </div>
 </template>
-<style>
+<style scoped>
     .logname {
         margin-bottom: 10px;
     }
