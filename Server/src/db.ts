@@ -26,6 +26,7 @@ if(!mongoURL) {
 let db = await mongoose.connect(mongoURL);
 
 db.connection.on('error', console.error.bind(console, 'connection error:'));
+export let makeToken = () => nodeCrypto.randomBytes(64).toString("base64url");
 export let users = db.model("User", new mongoose.Schema({
     username: {
         type: String,
@@ -36,7 +37,7 @@ export let users = db.model("User", new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     token: {
         type: String,
-        default: () => nodeCrypto.randomBytes(64).toString("base64url")
+        default: makeToken
     },
     permissions: {
         type: [String],
@@ -50,7 +51,6 @@ export let users = db.model("User", new mongoose.Schema({
         default: true
     }
 }));
-export let makeToken = () => nodeCrypto.randomBytes(64).toString("base64url");
 export let servers = db.model("Server", new mongoose.Schema({
     name: {
         type: String,
