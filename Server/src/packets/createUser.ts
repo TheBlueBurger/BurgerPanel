@@ -30,7 +30,8 @@ export default class CreateUser extends Packet {
         }
         let user = await users.create({
             username: data.username,
-            permissions: (await getSetting("defaultPermissions"))?.toString().split(",")
+            permissions: (await getSetting("defaultPermissions"))?.toString().split(","),
+            password: true
         });
         logger.log(`${client.data.auth.user.username} (${client.data.auth.user._id}) created user '${user.username}'`, "user.create", LogLevel.INFO);
         await user.save();

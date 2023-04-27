@@ -5,6 +5,7 @@ import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import logger, { LogLevel } from "../logger.js";
 import { ServerStatuses } from "../../../Share/Server.js";
 import { hasServerPermission } from "../util/permission.js";
+import makeHash from "../util/makeHash.js";
 
 export default class Auth extends Packet {
     name: string = "auth";
@@ -19,32 +20,49 @@ export default class Auth extends Packet {
             return;
         } else {
             if (!data.token) {
-                this.respond(client, {
-                    type: "auth",
-                    success: false,
-                    message: "No token provided",
-                    emitEvent: true,
-                    emits: ["loginFailed"]
-                });
-                return;
-            }
-            try {
-                client.data.auth.user = (await users.findOne({ token: data.token }).exec())?.toJSON();
-            } catch {
-                this.respond(client, {
-                    type: "auth",
-                    success: false,
-                    message: "Invalid token",
-                    emitEvent: true,
-                    emits: ["loginFailed"]
-                });
-                return;
+                if(!data.username || !data.password) {
+                    this.respond(client, {
+                        type: "auth",
+                        success: false,
+                        message: "Missing username, password and token!",
+                        emitEvent: true,
+                        emits: ["loginFailed"]
+                    });
+                }
+                if(typeof data.username != "string" || typeof data.password != "string") return;
+                try {
+                    client.data.auth.user = (await users.findOne({ username: data.username, password: makeHash(data.password) }).exec())?.toJSON();
+                } catch {
+                    this.respond(client, {
+                        type: "auth",
+                        success: false,
+                        message: "Invalid username or password",
+                        emitEvent: true,
+                        emits: ["loginFailed"]
+                    });
+                    logger.log("Failed login attempt! (using name/pass) for name: " + data.username, "login.fail", LogLevel.WARNING);
+                    return;
+                }
+            } else {
+                try {
+                    client.data.auth.user = (await users.findOne({ token: data.token }).exec())?.toJSON();
+                } catch {
+                    this.respond(client, {
+                        type: "auth",
+                        success: false,
+                        message: "Invalid token",
+                        emitEvent: true,
+                        emits: ["loginFailed"]
+                    });
+                    logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);
+                    return;
+                }
             }
             if (!client.data.auth.user) {
                 this.respond(client, {
                     type: "auth",
                     success: false,
-                    message: "Invalid token",
+                    message: "Login failed",
                     emitEvent: true,
                     emits: ["loginFailed"]
                 });
@@ -52,7 +70,7 @@ export default class Auth extends Packet {
                 return;
             }
             client.data.auth.authenticated = true;
-            client.data.auth.token = data.token;
+            client.data.auth.token = client.data.auth.user.token;
             // Get the server list for the user
             let allowedServers = await servers.find({
                 "allowedUsers.user": client.data.auth.user?._id
@@ -70,7 +88,7 @@ export default class Auth extends Packet {
                 type: "auth",
                 success: true,
                 user: client.data.auth.user,
-                servers: allowedServers as any, // FIXME: Make this not any
+                servers: allowedServers.map(s => s.toJSON()),
                 statuses
             });
             logger.log(`User ${client.data.auth.user.username} (${client.data.auth.user._id}) logged in.`, "login.success", LogLevel.INFO);

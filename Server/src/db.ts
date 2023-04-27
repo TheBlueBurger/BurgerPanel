@@ -41,6 +41,13 @@ export let users = db.model("User", new mongoose.Schema({
     permissions: {
         type: [String],
         default: []
+    },
+    password: {
+        type: String
+    },
+    setupPending: {
+        type: Boolean,
+        default: true
     }
 }));
 export let servers = db.model("Server", new mongoose.Schema({

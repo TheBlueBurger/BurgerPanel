@@ -8,7 +8,7 @@ import "./style.css";
 import Navbar from "./components/Navbar.vue";
 import { Config } from "../../Share/Config";
 import { _knownSettings } from "./util/config";
-import { useRouter } from "vue-router";
+import { RouteLocationNormalized, useRouter } from "vue-router";
 import { ServerStatuses } from '../../Share/Server';
 import event from "./util/event";
 let router = useRouter();
@@ -70,6 +70,7 @@ onMounted(() => {
 });
 onUnmounted(() => {
   clearInterval(pingInterval);
+  ws.value.close();
 });
 function initWS() {
   ws.value = new WebSocket(API_URL.replace("http", "ws"));
@@ -78,7 +79,7 @@ function initWS() {
     events.value.emit("connected");
     if (localStorage.getItem("token")) {
       token.value = localStorage.getItem("token") || "";
-      login();
+      login(true);
     } else {
       showLoginScreen.value = true;
     }
@@ -119,7 +120,7 @@ function initWS() {
         debugMessage.value = authPacket;
         if (lastID.value != authPacket.user._id) createNotification("Welcome, " + authPacket.user.username + "!");
         lastID.value = authPacket.user._id;
-        if(authPacket.statuses) serverStatuses.value = authPacket.statuses;
+        if (authPacket.statuses) serverStatuses.value = authPacket.statuses;
       }
     } else if (data.type == "error") {
       alert("Error: " + data.message);
@@ -128,13 +129,23 @@ function initWS() {
 }
 
 initWS();
-function login() {
-  ws.value.send(
-    JSON.stringify({
-      type: "auth",
-      token: token.value,
-    })
-  );
+function login(usingToken: boolean = false) {
+  if(usingTokenLogin.value || usingToken) {
+    ws.value.send(
+      JSON.stringify({
+        type: "auth",
+        token: token.value,
+      })
+    );
+  } else {
+    ws.value.send(
+      JSON.stringify({
+        type: "auth",
+        username: loginUsername.value,
+        password: loginPassword.value
+      }));
+    
+  }
 }
 let token = ref("");
 let loginStatus: Ref<User | null> = ref() as Ref<User | null>;
@@ -171,8 +182,22 @@ events.value.on("yourUserEdited", newUser => {
   loginStatus.value = newUser.user;
 });
 let showLoginScreen = ref(false);
+function gotoSetup(_currentRoute?: RouteLocationNormalized) {
+  let currentRoute = _currentRoute ?? router.currentRoute.value;
+  if (currentRoute.name == "userSetup") return;
+  let shouldHaveCB = currentRoute.name ? currentRoute.name.toString() != "userSetup" : true;
+  router.push({
+    name: "userSetup",
+    query: {
+      cb: shouldHaveCB ? currentRoute.fullPath : undefined
+    }
+  })
+}
 router.beforeEach(async guard => {
   // Logs in with the token provided in the ?useToken= query
+  if (guard.name != "userSetup" && loginStatus.value?.setupPending) {
+    gotoSetup(guard);
+  }
   if (guard.query.useToken) {
     console.log("Using token from query.");
     if (loginStatus.value?.username) {
@@ -186,7 +211,7 @@ router.beforeEach(async guard => {
     console.log("Readystate is", ws.value.readyState)
     console.log("Connected, logging in...");
     token.value = guard.query.useToken as string;
-    login();
+    login(true);
     console.log("Token used, removing from query.");
     router.push({
       path: guard.path,
@@ -203,6 +228,14 @@ provide("setServerStatuses", (v: any) => serverStatuses.value = v);
 event.on("getAllServers", data => {
   serverStatuses.value = data.statuses;
 });
+watch(loginStatus, l => {
+  if (l?.setupPending) {
+    setTimeout(() => gotoSetup(), 100); // i know this is stupid
+  }
+});
+let usingTokenLogin = ref(false);
+let loginUsername = ref("");
+let loginPassword = ref("");
 </script>
 
 <template>
@@ -214,12 +247,22 @@ event.on("getAllServers", data => {
       {{ notification }}
     </div>
   </div>
-  <div v-else>
-    <form @submit.prevent="login" v-if="!loginStatus && showLoginScreen">
-      <input type="password" placeholder="Token" v-model="token" class="login-token-input" />
-      <p v-if="loginMsg">{{ loginMsg }}</p>
-      <button type="submit">Login</button>
-    </form>
+  <div v-else id="login-div">
+      <form @submit.prevent="login(false)" v-if="!loginStatus && showLoginScreen">
+        <h1>Login</h1>
+        <br/>
+        <div v-if="usingTokenLogin">
+          <input type="password" placeholder="Token" v-model="token" class="login-token-input" />
+        </div>
+        <div v-else>
+          <input type="text" placeholder="Username" v-model="loginUsername">
+          <input type="password" placeholder="Password" v-model="loginPassword">
+        </div>
+        <p v-if="loginMsg">{{ loginMsg }}</p>
+        <button type="submit">Login</button>
+        <br/>
+        <a href="#" @click.prevent="usingTokenLogin = !usingTokenLogin">Log in with {{ usingTokenLogin ? "username and password" : "token" }} instead</a>
+      </form>
     <p v-else>Logging in...</p>
   </div>
 </template>

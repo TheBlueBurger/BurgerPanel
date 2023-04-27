@@ -95,3 +95,19 @@ input[type=text], input[type=password], input[type=number] {
 .login-token-input {
     width: calc(min(100%, 725px) - 20px);
 }
+
+textarea {
+    font-family: 'Ubuntu Mono Regular', monospace;
+    font-size:medium;
+}
+
+#login-div {
+    background-color: #302c2c;
+    align-items: center;
+    text-align: center;
+    margin: auto;
+    width: fit-content;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 25px;
+}

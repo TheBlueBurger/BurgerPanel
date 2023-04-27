@@ -4,6 +4,7 @@ import { hasPermission, isValidPermissionString, Permission } from "../../../Sha
 import filterUserData from "../util/filterUserData.js";
 import { User } from "../../../Share/User.js";
 import logger, { LogLevel } from "../logger.js";
+import makeHash from "../util/makeHash.js";
 
 export default class EditUser extends Packet {
     name: string = "editUser";
@@ -71,10 +72,67 @@ export default class EditUser extends Packet {
                     }
                 }
                 this.sendUserUpdated(user.toJSON());
+                break;
+            case "changePassword":
+                if(client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.password.change")) {
+                    client.json({
+                        success: false,
+                        emitEvent: true,
+                        emits: ["editUser-" + data.id],
+                        message: "You do not have permission to edit this user's password"
+                    });
+                    return;
+                }
+                let newPassword = data.password;
+                if(typeof newPassword != "string") return;
+                let hashedPassword = makeHash(newPassword);
+                if(hashedPassword == user.password) {
+                    client.json({
+                        success: false,
+                        emitEvent: true,
+                        emits: ["editUser-" + data.id],
+                        message: "That is already the password!"
+                    });
+                    return;
+                }
+                user.password = hashedPassword;
+                await user.save();
+                client.json({
+                    success: true,
+                    emitEvent: true,
+                    emits: ["editUser-" + data.id],
+                    message: "Password has been set!"
+                });
+                this.sendUserUpdated(user.toJSON());
+                break;
+            case "finishSetup":
+                if(user._id.toHexString() != client.data.auth.user?._id) return;
+                if(!user.setupPending) return;
+                if(typeof client.data.auth.user?.password != "string") {
+                    client.json({
+                        success: false,
+                        emitEvent: true,
+                        emits: ["editUser-" + data.id],
+                        message: "Set a password first!"
+                    });
+                    return;
+                }
+                user.setupPending = false;
+                user.save();
+                this.sendUserUpdated(user.toJSON());
+                client.json({
+                    success: true,
+                    emitEvent: true,
+                    emits: ["editUser-" + data.id],
+                    message: "Setup finished!"
+                });
+                break;
+
         }
-        user?.save(); // restart?
+        user?.save();
     }
-    sendUserUpdated(user: User) {
+    sendUserUpdated(user: User | undefined) {
+        if(!user) return;
         user._id = user._id.toString();
         clients.forEach(c => {
             if(c.data.auth.user?._id == user._id) {

@@ -9,7 +9,8 @@ const router = createRouter({
     routes: [
         {
             path: '/',
-            component: () => import('./pages/Home.vue')
+            component: () => import('./pages/Home.vue'),
+            name: "Home"
         },
         {
             path: "/manage/user/:user/permissions",
@@ -68,6 +69,11 @@ const router = createRouter({
         {
             path: '/about',
             component: () => import('./pages/About.vue'),
+        },
+        {
+            path: '/user-setup',
+            name: "userSetup",
+            component: () => import('./pages/UserSetup.vue')
         }
     ],
 })

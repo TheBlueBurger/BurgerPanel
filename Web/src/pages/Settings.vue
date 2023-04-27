@@ -69,12 +69,7 @@ async function deleteUser(user: User) {
 
 let knownTokens: Ref<{[id: string]: string}> = ref({});
 let viewingToken = ref("");
-async function viewToken(userID: string, copy: boolean = false) {
-    if (viewingToken.value == userID) {
-        viewingToken.value = "";
-        return;
-    }
-    if (knownTokens.value[userID] && !copy) viewingToken.value == userID ? "" : userID;
+async function getToken(userID: string) {
     await events.value.emit("sendPacket", {
         type: "getUserToken",
         id: userID
@@ -82,11 +77,24 @@ async function viewToken(userID: string, copy: boolean = false) {
     let resp = await events.value.awaitEvent("getUserToken-" + userID);
     if (resp?.success) {
         knownTokens.value[userID] = resp.token;
-        if (!copy) viewingToken.value = userID;
-        else copyToClip(resp?.token);
+        return resp.token;
     } else {
-        alert("Failed to get user token: " + resp.message);
+        throw new Error(resp.message);
     }
+}
+async function viewToken(userID: string, copy: boolean = false) {
+    if (viewingToken.value == userID) {
+        viewingToken.value = "";
+        return;
+    }
+    if (knownTokens.value[userID] && !copy) viewingToken.value == userID ? "" : userID;
+    let token = await getToken(userID);
+    if (!copy) viewingToken.value = userID;
+    else copyToClip(token);
+}
+async function copyLoginURL(userID: string) {
+    let token = await getToken(userID);
+    copyToClip(`${location.origin}/?useToken=${token}`);
 }
 function copyToClip(text: string) {
     navigator.clipboard.writeText(text);
@@ -142,7 +150,7 @@ let settingsAllowedToShow = computed(() => {
                 <td>{{ new Date(user.createdAt).toLocaleString() }}</td>
                 <td>
                     {{ viewingToken == user._id ? knownTokens[user._id] : "<Hidden>" }} <button @click="viewToken(user._id)">{{viewingToken == user._id ? "Hide" : "View" }}
-                token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button>
+                token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button> <button @click="copyLoginURL(user._id)">Generate login url</button>
                 </td>
                 <td><RouterLink :to="{
                 name: 'editUserPermissions',

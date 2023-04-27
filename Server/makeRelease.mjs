@@ -5,7 +5,6 @@ import json from "@rollup/plugin-json"
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import esbuild from "esbuild";
-import license from "rollup-plugin-license";
 import path from "path";
 import { spawnSync } from "node:child_process";
 import packageJSON from "./package.json" assert {type: "json"}
@@ -31,17 +30,7 @@ let build = await rollup({
     plugins: [commonjs(), nodeResolve({browser: false, exportConditions: ["node"]}), json(), replace({
         "process.env.NODE_ENV": JSON.stringify('production'),
         preventAssignment: true
-    }), license({
-        sourcemap: true,
-        cwd: process.cwd(), // The default
-        thirdParty: {
-          includePrivate: true, // Default is false.
-          output: {
-            file: path.join(process.cwd(), '_build', 'THIRD_PARTY_LICENSES.txt'),
-            encoding: 'utf-8', // Default is utf-8.
-          },
-        },
-      })],
+    })],
       onwarn(msg) {
         if(/Circular dependency\: dist\/(.+) -> dist\/(.+)/.test(msg.message)) {
             console.warn("Warning: " + msg.message);
@@ -70,7 +59,6 @@ spawnSync("npm", ["run", "build"], {cwd: "../Web/"});
 fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
 console.timeEnd("Build Frontend");
 fs.writeFileSync("_build/mongodb_url.txt", "mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel");
-fs.copyFileSync("../Web/THIRD_PARTY_LICENSES_WEB.txt", "_build/THIRD_PARTY_LICENSES_WEB.txt");
 console.time("Zip");
 try {
     spawnSync("7z", ["a", `../BurgerPanel-${packageJSON.version}.zip`, "*"], {cwd: path.join(process.cwd(), "_build")})

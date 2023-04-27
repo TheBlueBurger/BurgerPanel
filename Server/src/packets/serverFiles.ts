@@ -14,7 +14,8 @@ export default class ServerFiles extends Packet {
         if(!server || !hasServerPermission(client.data.auth.user, server?.toJSON(), "serverfiles.read")) return; //very bad!!!!
         // Make sure the user doesnt do anything spooky
         if(!data.path || typeof data.path != "string") return;
-        if(/^[A-Za-z0-9\-_\.]+$/.test(data.path)) return; // i am aware this will lead to .. "working", we will need to join and make sure it doesnt end up outside
+        if(/^[A-Za-z0-9\-_\.]+$/.test(data.path)) return;
+        if(data.path.includes("..")) return; // just in case
         let pathToCheck = path.join(server.path, data.path);
         if(!pathToCheck.startsWith(server.path)) return;
         // Lastly check if it actually exists

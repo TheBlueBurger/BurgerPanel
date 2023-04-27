@@ -6,4 +6,6 @@ export interface User {
     createdAt: Date;
     token: string;
     permissions: PermissionString[];
+    password?: string;
+    setupPending: boolean;
 }

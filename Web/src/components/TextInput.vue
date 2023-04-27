@@ -12,6 +12,11 @@
             type: Boolean,
             required: false,
             default: true
+        },
+        password: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     });
     let disabled = ref(props.initialEditing);
@@ -29,8 +34,8 @@
 </script>
 <template>
     <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
-        width: Math.max((text || '').length * 1.05, 10) + 'ch'
-    }">
+        width: Math.max((text || '').length * 1.05 + 1, 10) + 'ch'
+    }" :type="props.password ? 'password' : 'text'">
     <button v-if="disabled" @click="disabled = false">Edit</button>
     <button v-if="!disabled" @click="set">Set</button>
     <button v-if="!disabled" @click="reset">Cancel</button>
