@@ -149,6 +149,7 @@ enforce-secure-profile=false
     }
     stopServer(server: Server) {
         return new Promise<void>(async resolve => {
+            logger.log("Waiting for " + server.name + " to stop...", "server.stop", LogLevel.DEBUG, false);
             let startTimestamp = Date.now();
             let serverEntry = this.servers[server._id];
             if (!serverEntry.childProcess) return resolve();
@@ -237,7 +238,8 @@ enforce-secure-profile=false
             type: "serverStatusUpdate",
             emitEvent: true,
             emits: ["serverStatusUpdate-" + server._id],
-            status
+            status,
+            server: server._id
         }))
     }
     getStatus(server: Server) {

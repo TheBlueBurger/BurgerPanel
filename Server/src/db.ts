@@ -50,6 +50,7 @@ export let users = db.model("User", new mongoose.Schema({
         default: true
     }
 }));
+export let makeToken = () => nodeCrypto.randomBytes(64).toString("base64url");
 export let servers = db.model("Server", new mongoose.Schema({
     name: {
         type: String,

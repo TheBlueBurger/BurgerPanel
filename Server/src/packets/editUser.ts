@@ -1,5 +1,5 @@
 import { OurClient, Packet, clients } from "../index.js";
-import { users } from "../db.js";
+import { makeToken, users } from "../db.js";
 import { hasPermission, isValidPermissionString, Permission } from "../../../Share/Permission.js";
 import filterUserData from "../util/filterUserData.js";
 import { User } from "../../../Share/User.js";
@@ -85,6 +85,15 @@ export default class EditUser extends Packet {
                 }
                 let newPassword = data.password;
                 if(typeof newPassword != "string") return;
+                if(newPassword.length < 6) {
+                    client.json({
+                        success: false,
+                        emitEvent: true,
+                        emits: ["editUser-" + data.id],
+                        message: "Too insecure!"
+                    });
+                    return;
+                }
                 let hashedPassword = makeHash(newPassword);
                 if(hashedPassword == user.password) {
                     client.json({
@@ -95,6 +104,7 @@ export default class EditUser extends Packet {
                     });
                     return;
                 }
+                logger.log(`${client.data.auth.user?.username} is changing the password of ${user.username}!`, "user.password.changed", LogLevel.INFO);
                 user.password = hashedPassword;
                 await user.save();
                 client.json({
@@ -105,10 +115,40 @@ export default class EditUser extends Packet {
                 });
                 this.sendUserUpdated(user.toJSON());
                 break;
+            case "changeUsername":
+                if (user._id.toString() != client.data.auth.user?._id && !hasPermission(client.data.auth.user, "users.username.change"))
+                    return client.json({ // should emitEvent be by default do u think its almsot always used
+                        // TODO: do that
+                        success: false,
+                        emitEvent: true,
+                        emits: ["editUser-" + data.id],
+                        message: "You do not have permission to edit the username!" //Its impossible to edit someone else through the official client
+                    });
+                    
+                    if (typeof data.username != "string")
+                        return;
+                    
+                    logger.log(`${client.data.auth.user?.username} is changing the username of ${user.username} to ${data.username}!`, "user.username.changed", LogLevel.INFO);
+                    
+                    user.username = data.username;
+                    await user.save();
+                    
+                    this.sendUserUpdated(user.toJSON());
+                    client.json({
+                        success: true,
+                        emitEvent: true,
+                        emits: ["editUser-" + data.id],
+                        message: "Username changed!"
+                    });
+                break;
             case "finishSetup":
-                if(user._id.toHexString() != client.data.auth.user?._id) return;
-                if(!user.setupPending) return;
-                if(typeof client.data.auth.user?.password != "string") {
+                if (user._id.toHexString() != client.data.auth.user?._id)
+                    return;
+                
+                if (!user.setupPending)
+                    return;
+                    
+                if (typeof client.data.auth.user?.password != "string") {
                     client.json({
                         success: false,
                         emitEvent: true,
@@ -119,12 +159,31 @@ export default class EditUser extends Packet {
                 }
                 user.setupPending = false;
                 user.save();
+                logger.log(`${client.data.auth.user?.username} finished setup!`, "user.username.changed", LogLevel.INFO);
                 this.sendUserUpdated(user.toJSON());
                 client.json({
                     success: true,
                     emitEvent: true,
                     emits: ["editUser-" + data.id],
                     message: "Setup finished!"
+                });
+                break;
+            
+            case "resetToken":
+                if (client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.token.reset")) return;
+                logger.log(`${client.data.auth.user?.username} is resetting the token of ${user.username}`)
+                user.token = makeToken();
+                await user.save();
+                //Ig brb eat
+                // brb eat too lol
+                clients.filter(c => c.data.auth.user?._id == client.data.auth.user?._id).forEach(cl => {
+                    if(cl != client) cl.close();
+                });
+                client.json({
+                    success: true,
+                    emitEvent: true,
+                    emits: ["editUser-" + data.id],
+                    newToken: user.token
                 });
                 break;
 
@@ -135,7 +194,7 @@ export default class EditUser extends Packet {
         if(!user) return;
         user._id = user._id.toString();
         clients.forEach(c => {
-            if(c.data.auth.user?._id == user._id) {
+            if (c.data.auth.user?._id == user._id) {
                 c.data.auth.user = user; // i think i know whats happening but what!?!? ill attach my debugger
                 c.json({
                     type: "yourUserEdited",

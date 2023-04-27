@@ -115,7 +115,7 @@ function initWS() {
         });
         loginStatus.value = authPacket.user;
         console.log("Logged in as " + authPacket.user.username);
-        localStorage.setItem("token", token.value);
+        localStorage.setItem("token", authPacket.user.token);
         servers.value = authPacket.servers as any;
         debugMessage.value = authPacket;
         if (lastID.value != authPacket.user._id) createNotification("Welcome, " + authPacket.user.username + "!");
@@ -225,6 +225,11 @@ router.beforeEach(async guard => {
 let serverStatuses = ref({} as ServerStatuses);
 provide("statuses", serverStatuses);
 provide("setServerStatuses", (v: any) => serverStatuses.value = v);
+event.on("serverStatusUpdate", d => {
+  serverStatuses.value[d.server] = {
+    status: d.status
+  }
+})
 event.on("getAllServers", data => {
   serverStatuses.value = data.statuses;
 });

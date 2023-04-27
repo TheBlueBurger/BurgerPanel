@@ -110,6 +110,18 @@ let settingsAllowedToShow = computed(() => {
         return !disabledEditingFrontend.some(d => c.startsWith(d))
     })
 });
+async function resetToken(id: string) {
+    if (!confirm("Sure? All sessions will be logged out. Auto-login will break for all sessions."))
+        return;
+    events.value.emit("sendPacket", {
+        type: "editUser",
+        id: id,
+        action: "resetToken",
+    });
+    
+    let resp = await events.value.awaitEvent("editUser-" + id);
+    events.value.emit("createNotification", resp.success ? "Token has been reset!" : ("Error: " + resp.message));
+}
 </script>
 <template>
     <div v-if="hasPermission(loginStatus, 'settings.read')">
@@ -150,7 +162,7 @@ let settingsAllowedToShow = computed(() => {
                 <td>{{ new Date(user.createdAt).toLocaleString() }}</td>
                 <td>
                     {{ viewingToken == user._id ? knownTokens[user._id] : "<Hidden>" }} <button @click="viewToken(user._id)">{{viewingToken == user._id ? "Hide" : "View" }}
-                token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button> <button @click="copyLoginURL(user._id)">Generate login url</button>
+                token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button> <button @click="copyLoginURL(user._id)">Generate login url</button> <button @click="resetToken(user._id)" v-if="hasPermission(loginStatus, 'users.token.reset')">Reset Token</button>
                 </td>
                 <td><RouterLink :to="{
                 name: 'editUserPermissions',

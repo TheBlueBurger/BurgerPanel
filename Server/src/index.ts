@@ -162,7 +162,7 @@ wss.on('connection', (_client) => {
     });
 });
 async function exit(signal?: string) {
-    console.log(`${signal ? "Recieved SIG" + signal + " - " : ""}Stopping!`);
+    logger.log(`${signal ? "Recieved SIG" + signal + " - " : ""}Stopping!`, "info", LogLevel.INFO);
     await serverManager.stopAllServers();
     console.log("All servers stopped, exiting");
     process.exit();

@@ -24,12 +24,15 @@ export let IDs = [
     "user.create",
     "user.permission.change",
     "user.delete",
+    "user.username.changed",
+    "user.password.changed",
+    "user.setup.finished",
     "error",
     "logs.read",
     "disconnect",
     "packet.invalid-packet",
     "logging.change",
-    "info"
+    "info",
 ] as const;
 // WARNING: Do not remove any of these before fixing the issue
 export type IDs = typeof IDs[number];

@@ -17,7 +17,9 @@ function logout() {
           <span class="item link" v-if="hasPermission(loginStatus, 'settings.read') || hasPermission(loginStatus, 'users.view')"><RouterLink to="/settings">Settings</RouterLink></span>
           <span class="item link"><RouterLink to="/about">About</RouterLink></span>
           <!-- Top left -->
-         <span id="user" class="item" v-if="loginStatus?.username">{{ loginStatus?.username}} <button @click="logout">Log out</button></span>
+         <span id="user" class="item" v-if="loginStatus?.username"><RouterLink :to="{
+            name: 'MyUser'
+         }" style="color: white; text-decoration: none;">{{ loginStatus?.username}}</RouterLink> <button @click="logout">Log out</button></span>
         </div>
     </div>
 </template>

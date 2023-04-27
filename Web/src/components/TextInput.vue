@@ -11,7 +11,7 @@
         initialEditing: {
             type: Boolean,
             required: false,
-            default: true
+            default: false
         },
         password: {
             type: Boolean,
@@ -19,7 +19,7 @@
             default: false
         }
     });
-    let disabled = ref(props.initialEditing);
+    let disabled = ref(!props.initialEditing);
     let emits = defineEmits(["set"]);
     function set() {
         if(disabled.value) return;
@@ -34,7 +34,7 @@
 </script>
 <template>
     <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
-        width: Math.max((text || '').length * 1.05 + 1, 10) + 'ch'
+        width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
     }" :type="props.password ? 'password' : 'text'">
     <button v-if="disabled" @click="disabled = false">Edit</button>
     <button v-if="!disabled" @click="set">Set</button>

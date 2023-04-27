@@ -76,7 +76,7 @@ async function finish() {
         </div>
     </div>
     <div v-else>
-        <h3>You do not have access to any servers{{ hasPermission(user, "servers.create") ? "but you can make one after you finished the setup" : "" }}!</h3>
+        <h3>You do not have access to any servers{{ hasPermission(user, "servers.create") ? " but you can make one after you finished the setup" : "" }}!</h3>
     </div>
     <br/>
     <button @click="finish">Finish setup</button>
