@@ -31,8 +31,10 @@ export default new class Logger {
         this.writeStream = fs.createWriteStream(location);
         this.log("Logging to " + location, "info", LogLevel.DEBUG, false, false)
     }
-    private makeNiceDate() {
-        return `${Intl.DateTimeFormat("sv").format()} ${Intl.DateTimeFormat("sv", {hour: "2-digit", hourCycle: "h24", minute: "2-digit", second: "2-digit"}).format()}`;
+    private makeNiceDate(replaceColon: boolean = false) {
+        let dateString = `${Intl.DateTimeFormat("sv").format()} ${Intl.DateTimeFormat("sv", {hour: "2-digit", hourCycle: "h24", minute: "2-digit", second: "2-digit"}).format()}`
+        if(replaceColon) dateString = dateString.replaceAll(":", "-"); // windows moment
+        return dateString;
     }
     private async getLogLocation(): Promise<string | null> {
         let logLocationInConfig = await getSetting("logging_logDir");
@@ -45,7 +47,7 @@ export default new class Logger {
         } else if(logLocationInConfig == "disabled") {
             return null;
         }
-        let filePath = path.join(logLocationInConfig, `BurgerPanel ${this.makeNiceDate()}`);
+        let filePath = path.join(logLocationInConfig, `BurgerPanel ${this.makeNiceDate(process.platform == "win32")}`);
         if(await exists(filePath + ".log")) { // how would this even trigger it changes every second
             let i = 0;
             while(await exists(filePath + i + ".log")) {
