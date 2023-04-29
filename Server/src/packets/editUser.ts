@@ -9,7 +9,6 @@ import makeHash from "../util/makeHash.js";
 export default class EditUser extends Packet {
     name: string = "editUser";
     requiresAuth: boolean = true;
-    permission: Permission = "users.view"; // each action will require a different perm
     async handle(client: OurClient, data: any) {
         let action = data.action;
         if (!data.id) return; // it sends it as user, should be .id
@@ -17,7 +16,7 @@ export default class EditUser extends Packet {
         if(!user) return;
         switch (action) {
             case "setPermission":
-                if (!hasPermission(client.data.auth.user, "users.permissions.write")) {
+                if (!hasPermission(client.data.auth.user, {all: ["users.permissions.write", "users.view"]})) {
                     client.json({
                         success: false,
                         emits: ["editUser-" + data.id],
@@ -109,10 +108,9 @@ export default class EditUser extends Packet {
             case "changeUsername":
                 if (user._id.toString() != client.data.auth.user?._id && !hasPermission(client.data.auth.user, "users.username.change"))
                     return client.json({ 
-                        // TODO: do that
                         success: false,
                         emits: ["editUser-" + data.id],
-                        message: "You do not have permission to edit the username!" //Its impossible to edit someone else through the official client
+                        message: "You do not have permission to edit the username!"
                     });
                     
                     if (typeof data.username != "string")
