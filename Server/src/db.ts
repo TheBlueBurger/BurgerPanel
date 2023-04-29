@@ -6,16 +6,17 @@ import path from "node:path";
 import { exists } from './util/exists.js';
 // use mongoose unless u want to pain urself
 mongoose.set("strictQuery", false);
+if(process.env.BURGERPANEL_MONGOOSE_DEBUG) mongoose.set("debug", true)
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 let mongoURL = process.env.BURGERPANEL_MONGODB;
 // If not found it will search up to 5 folders for mongodb_url.txt
 if(!mongoURL) {
     let searchingPath = __dirname;
-    searchLoop: for(let i = 0; i < 5; i++) {
+    for(let i = 0; i < 5; i++) {
         let pathToSearch = path.join(searchingPath, "mongodb_url.txt")
         if(await exists(pathToSearch)) {
             mongoURL = (await fs.readFile(pathToSearch)).toString().trim(); // set the mongodb url to the file contents and trim it
-            break searchLoop;
+            break;
         }
         searchingPath = path.join(searchingPath, "..");
     }
@@ -49,7 +50,12 @@ export let users = db.model("User", new mongoose.Schema({
     setupPending: {
         type: Boolean,
         default: true
-    }
+    },
+    /*roles: [
+        {
+            type: mongoose.Types.ObjectId,
+        }
+    ]*/
 }));
 export let servers = db.model("Server", new mongoose.Schema({
     name: {
@@ -66,7 +72,8 @@ export let servers = db.model("Server", new mongoose.Schema({
     mem: Number,
     allowedUsers: [{
         user: String,
-        permissions: [String]
+        permissions: [String],
+        /*roles: [mongoose.Types.ObjectId]*/
     }],
     version: {
         type: String,
@@ -102,3 +109,38 @@ export let settings = db.model("Setting", new mongoose.Schema({
         maxlength: 255,
     },
 }));
+
+/*export let roles = db.model("Role", new mongoose.Schema({
+    name: {
+        type: String,
+        unique: true,
+        required: true,
+        maxlength: 16
+    },
+    type: {
+        type: String,
+        maxlength: "server".length,
+        required: true,
+    },
+    permissions: [
+        {
+            type: String,
+            unique: true,
+            maxlength: 64,
+            required: true
+        }
+    ],
+    inheritsFrom: [
+        {
+            type: mongoose.Types.ObjectId,
+            unique: true,
+            required: true
+        }
+    ],
+    createdAt: {
+        type: Date,
+        unique: true,
+        required: true
+    }
+}));
+*/

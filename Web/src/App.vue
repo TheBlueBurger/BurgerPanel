@@ -103,7 +103,7 @@ function initWS() {
         }
       }
     }
-    if (data.type == "auth") { // TODO: Fix this absolute mess
+    if (data.type == "auth") {
       let authPacket = data as AuthS2C;
       if (authPacket.success) {
         if (!authPacket.user) {
@@ -245,15 +245,15 @@ let loginPassword = ref("");
 
 <template>
   <Navbar :events="events" :login-status="loginStatus" @logout="logout" />
-  <span v-if="!connected">Connecting to server...</span>
-  <div v-else-if="loginStatus?.username">
+  <div v-if="loginStatus?.username">
     <RouterView></RouterView>
     <div class="notification" v-for="notification in notifications">
       {{ notification }}
     </div>
   </div>
   <div v-else id="login-div">
-      <form @submit.prevent="login(false)" v-if="!loginStatus && showLoginScreen">
+      <span v-if="!connected">Connecting to server...</span>
+      <form @submit.prevent="login(false)" v-else-if="!loginStatus && showLoginScreen">
         <h1>Login</h1>
         <br/>
         <div v-if="usingTokenLogin">

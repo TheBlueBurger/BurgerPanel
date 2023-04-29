@@ -2,7 +2,7 @@ import { OurClient, Packet } from "../index.js";
 import { servers, users } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
-import { hasPermission, ServerPermissions, ServerProfiles, _ServerPermissions } from "../../../Share/Permission.js";
+import { hasPermission, ServerPermissions, DefaultServerProfiles, _ServerPermissions } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 
 export default class SetServerOption extends Packet {
@@ -114,7 +114,7 @@ export default class SetServerOption extends Packet {
                     if(!hasServerPermission(client.data.auth.user, server.toJSON(), "set.allowedUsers.permissions.write")) return;
                     let profileName = data.allowedUsers.profile;
                     let userToApplyProfileID = data?.allowedUsers?.user;
-                    let profile = ServerProfiles[profileName];
+                    let profile = DefaultServerProfiles[profileName];
                     if(!profile) return;
                     if(profile.some(p => {
                         if(!server) return true;

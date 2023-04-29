@@ -21,6 +21,7 @@ export let IDs = [
     "logout",
     "settings.change",
     "user.token.read",
+    "user.token.reset",
     "user.create",
     "user.permission.change",
     "user.delete",

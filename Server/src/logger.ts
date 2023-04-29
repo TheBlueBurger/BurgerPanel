@@ -57,10 +57,10 @@ export default new class Logger {
         }
         return filePath + ".log";
     }
-    async log(message: string, id?: IDs, level: LogLevel = LogLevel.INFO, emitWebhook: boolean = true, logToFile: boolean = true) {
+    async log(message: string, id: IDs, level: LogLevel = LogLevel.INFO, emitWebhook: boolean = true, logToFile: boolean = true, logNoMatterWhat: boolean = false) {
         if(!id) return;
         if(logToFile && this.writeStream?.writable) this.writeStream.write(this.formatLog(message, id, level, false) + "\n");
-        if(await this.isDisabled(id)) return;
+        if(!logNoMatterWhat && await this.isDisabled(id)) return;
         console.log(this.formatLog(message, id, level, true));
         if(emitWebhook) await this.sendDiscordWebhook(this.formatLog(message, id, level, false));
     }

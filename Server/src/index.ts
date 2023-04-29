@@ -291,7 +291,7 @@ packetHandler.init().then(async () => {
 process.on("uncaughtException", errHandler);
 process.on("unhandledRejection", errHandler);
 function errHandler(err: any) {
-    logger.log("Uncaught error: " + err, undefined, LogLevel.ERROR, false).catch((err2) => {
+    logger.log("Uncaught error: " + err, "error", LogLevel.ERROR, false, true, true).catch((err2) => {
         console.log("Error while logging error?!?!?: " + err2 + ". Original error: " + err);
     });
 }

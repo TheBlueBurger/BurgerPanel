@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, Ref, inject, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { _ServerPermissions, userHasAccessToServer, hasServerPermission, ServerPermissions, ServerProfiles, hasPermission } from '../../../../Share/Permission';
+import { _ServerPermissions, userHasAccessToServer, hasServerPermission, ServerPermissions, DefaultServerProfiles, hasPermission } from '../../../../Share/Permission';
 import { Server } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import event from '../../util/event';
@@ -82,7 +82,7 @@ async function applyProfile(profile: string) {
 }
 function isApplied(profile: string) {
     return !_ServerPermissions.some(p => {
-        if(ServerProfiles[profile].includes(p)) return !userInAllowedUsers.value?.permissions.includes(p);
+        if(DefaultServerProfiles[profile].includes(p)) return !userInAllowedUsers.value?.permissions.includes(p);
         return userInAllowedUsers.value?.permissions.includes(p);
     })
 }
@@ -103,7 +103,7 @@ function isApplied(profile: string) {
         }" v-if="hasPermission(loginStatus, 'users.permissions.read')"><button>Manage global user permissions</button></RouterLink>
         <br/>
         <h2>Profiles</h2>
-        <div v-for="profile in Object.keys(ServerProfiles)">
+        <div v-for="profile in Object.keys(DefaultServerProfiles)">
             {{ profile }} <button @click="applyProfile(profile)" :class="
             {
                 applied: isApplied(profile)

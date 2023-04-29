@@ -171,7 +171,7 @@ export default class EditUser extends Packet {
             
             case "resetToken":
                 if (client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.token.reset")) return;
-                logger.log(`${client.data.auth.user?.username} is resetting the token of ${user.username}`)
+                logger.log(`${client.data.auth.user?.username} is resetting the token of ${user.username}`, "user.token.reset")
                 user.token = makeToken();
                 await user.save();
                 //Ig brb eat

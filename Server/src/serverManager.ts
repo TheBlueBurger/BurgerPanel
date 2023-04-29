@@ -108,7 +108,7 @@ enforce-secure-profile=false
         childProcess.stdout.on("data", d => this.handleServerLog(server, d.toString()));
         childProcess.stderr.on("data", d => this.handleServerLog(server, d.toString()));
         childProcess.on("error", err => {
-            logger.log("Server " + server._id + " had a error: " + err, undefined, LogLevel.ERROR);
+            logger.log("Server " + server._id + " had a error: " + err, "error", LogLevel.ERROR);
             serverEntry.childProcess = undefined;
             serverEntry.clientsAttached.forEach(client => {
                 client.json({
@@ -168,7 +168,7 @@ enforce-secure-profile=false
             });
             if (process.platform != "win32") serverEntry.childProcess.kill("SIGTERM");
             else serverEntry.childProcess.stdin?.write("stop\nend\n");
-            logger.log(`Waiting for ${server.name} (${server._id}) to stop...`, undefined, LogLevel.DEBUG, false);
+            logger.log(`Waiting for ${server.name} (${server._id}) to stop...`, "server.stop", LogLevel.DEBUG, false);
         })
     }
     killServer(server: Server) {

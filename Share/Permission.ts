@@ -24,9 +24,9 @@ export const validPermissions: PermissionString[] = [
     "full"
 ] as PermissionString[];
 // this is a mess.
-export const ServerProfiles: {[name:  string]: ServerPermissions[]} = {
+export const DefaultServerProfiles: {[name:  string]: ServerPermissions[]} = {
     "basic": ["console.read", "status"],
-    "trusted": ["console.read", "console.write", "status", "stop", "start", "oldlogs.read"],
+    "trusted": ["console.read", "console.write", "status", "stop", "start", "oldlogs.read", "serverfiles.read"],
     "admin": ["full"]
 };
 
@@ -42,7 +42,7 @@ export type Permission = PermissionString | PermissionString[] | {
 };
 export function hasPermission(user: User | undefined | null, permission: Permission): boolean {
     if(!user) return false;
-    if(typeof permission == "string" && !isValidPermissionString(permission)) throw new Error("Invalid permission: " + permission);
+    if(typeof permission == "string" && !isValidPermissionString(permission)) throw new Error("Invalid permission string: " + permission);
     if(user.permissions.includes("full")) return true;
     if(Array.isArray(permission) && !permission.some(p => typeof p == "string")) {
         // Check if one of the permissions match
