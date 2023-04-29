@@ -22,7 +22,6 @@ export default class KillServer extends Packet {
                 type: "stopServer",
                 success: false,
                 message: "You cannot kill this server.",
-                emitEvent: true,
                 emits: ["server-killed-" + data.id]
             });
             return;
@@ -33,7 +32,6 @@ export default class KillServer extends Packet {
             type: "killServer",
             success: true,
             server,
-            emitEvent: true,
             emits: ["server-killed-" + data.id]
         });
     }

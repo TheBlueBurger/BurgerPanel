@@ -7,7 +7,6 @@ export interface AuthS2C {
     alreadyAuthenticated?: boolean;
     user?: User;
     servers?: Server[];
-    emitEvent?: boolean;
     emits?: string[];
     statuses?: ServerStatuses;
 }

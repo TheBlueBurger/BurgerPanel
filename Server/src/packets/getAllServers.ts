@@ -20,7 +20,6 @@ export default class GetAllServers extends Packet {
             type: "getAllServers",
             success: true,
             servers: serverList,
-            emitEvent: true,
             statuses
         });
     }

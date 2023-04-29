@@ -9,7 +9,6 @@ export interface ServerPerformancePacketS2C {
   type: "serverPerformance";
   load?: number[];
   mem?: MemoryUsage;
-  emitEvent: boolean;
   platform?: string;
 }
 // yup

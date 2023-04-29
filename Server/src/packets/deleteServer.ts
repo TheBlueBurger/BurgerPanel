@@ -16,7 +16,6 @@ export default class DeleteServer extends Packet {
                 type: "deleteServer",
                 success: false,
                 message: "Server does not exist",
-                emitEvent: true,
                 emits: ["server-deleted-" + data.id]
             });
             return;
@@ -26,7 +25,6 @@ export default class DeleteServer extends Packet {
                 type: "deleteServer",
                 success: false,
                 message: "No permission",
-                emitEvent: true,
                 emits: ["server-deleted-" + data.id]
             });
         }
@@ -36,7 +34,6 @@ export default class DeleteServer extends Packet {
             type: "deleteServer",
             success: true,
             serverName: server.name,
-            emitEvent: true,
             emits: ["server-deleted-" + data.id]
         });
         serverManager.deleteServerFromCache(server.toJSON());

@@ -14,7 +14,6 @@ export default class StartServer extends Packet {
                 type: "startServer",
                 success: false,
                 message: "Server not found",
-                emitEvent: true,
                 emits: ["server-started-" + data.id]
             });
             return;
@@ -24,7 +23,6 @@ export default class StartServer extends Packet {
                 type: "startServer",
                 success: false,
                 message: "Not allowed",
-                emitEvent: true,
                 emits: ["server-started-" + data.id]
             });
             return;
@@ -36,7 +34,6 @@ export default class StartServer extends Packet {
             type: "startServer",
             success: true,
             server,
-            emitEvent: true,
             emits: ["server-started-" + data.id]
         });
     }

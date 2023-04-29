@@ -19,7 +19,6 @@ export default class ServerPerformance extends Packet {
         this.lastUpdate = Date.now();
         let packet: ServerPerformancePacketS2C = {
             type: "serverPerformance",
-            emitEvent: true,
             load: cpuUsage(),
             mem: getMemoryUsage(),
             platform: process.platform

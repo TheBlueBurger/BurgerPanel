@@ -31,7 +31,6 @@ export default class ServerFiles extends Packet {
                 client.json({
                     type: "serverFiles",
                     success: true,
-                    emitEvent: true,
                     files: (await Promise.allSettled(files.map(async f => {
                         return {
                             name: f,
@@ -48,7 +47,6 @@ export default class ServerFiles extends Packet {
                 if(statData.size > 32000) {
                     client.json({
                         type: "serverFiles",
-                        emitEvent: true,
                         success: false,
                         message: "File is over size limit"
                     });
@@ -58,7 +56,6 @@ export default class ServerFiles extends Packet {
                 if(!allowedMimeTypes.includes(mimeData.toString()) && !allowedFileNames.includes(data.path)) {
                     client.json({
                         type: "serverFiles",
-                        emitEvent: true,
                         success: false,
                         message: "Disallowed file type!"
                     });
@@ -67,7 +64,6 @@ export default class ServerFiles extends Packet {
                 let fileData = await fs.readFile(pathToCheck, "utf-8");
                 client.json({
                     type: "serverFiles",
-                    emitEvent: true,
                     success: true,
                     fileData,
                     emits: ["serverFiles-file-data-" + data.i]

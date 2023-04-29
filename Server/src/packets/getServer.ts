@@ -14,7 +14,6 @@ export default class GetServer extends Packet {
                 type: "getServer",
                 success: false,
                 message: "Server not found",
-                emitEvent: true,
                 emits: ["getServer-" + data.id]
             });
             return;
@@ -24,7 +23,6 @@ export default class GetServer extends Packet {
             type: "getServer",
             success: true,
             server,
-            emitEvent: true,
             emits: ["getServer-" + data.id],
             status
         });

@@ -5,5 +5,4 @@ export interface CreateServerS2C {
     success: boolean;
     message?: string;
     server?: Server;
-    emitEvent?: boolean;
 };

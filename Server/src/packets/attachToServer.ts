@@ -13,7 +13,6 @@ export default class AttachToServer extends Packet {
                 type: "attachToServer",
                 success: false,
                 message: "Server not found",
-                emitEvent: true,
                 emits: ["server-attached-" + data._id]
             });
             return;
@@ -25,7 +24,6 @@ export default class AttachToServer extends Packet {
                 type: "attachToServer",
                 success: true,
                 server,
-                emitEvent: true,
                 emits: ["server-attached-" + data._id],
                 lastLogs: resp.lastLogs,
                 status
@@ -35,7 +33,6 @@ export default class AttachToServer extends Packet {
                 type: "attachToServer",
                 success: false,
                 message: "You do not have permission to attach (read logs) from this server!",
-                emitEvent: true,
                 emits: ["server-attached-" + data._id],
                 stay: true,
                 server: server.toJSON(),

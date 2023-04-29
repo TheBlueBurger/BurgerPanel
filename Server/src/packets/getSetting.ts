@@ -15,7 +15,6 @@ export default class GetSetting extends Packet {
             success: true,
             key: data.key,
             value: value,
-            emitEvent: true
         });
     }
 }

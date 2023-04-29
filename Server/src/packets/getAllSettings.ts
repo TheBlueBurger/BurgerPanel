@@ -15,7 +15,6 @@ export default class GetAllSettings extends Packet {
                 type: "getAllSettings",
                 success: false,
                 message: (err as any)?.message,
-                emitEvent: true
             });
             return;
         }
@@ -23,7 +22,6 @@ export default class GetAllSettings extends Packet {
             type: "getAllSettings",
             success: true,
             settings: val,
-            emitEvent: true
         });
     }
 }

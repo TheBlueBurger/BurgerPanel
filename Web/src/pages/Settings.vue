@@ -53,7 +53,7 @@ function showHelpForSetting(setting: string) {
     alert("Help for " + setting + ":\n" + descriptions[setting as keyof typeof defaultConfig]);
 }
 async function deleteUser(user: User) {
-    if(!confirm("Are you sure you want to remove the user" + user.username + "?")) return;
+    if(!confirm("Are you sure you want to remove the user " + user.username + "?")) return;
     events.value.emit("sendPacket", {
         type: "deleteUser",
         id: user._id

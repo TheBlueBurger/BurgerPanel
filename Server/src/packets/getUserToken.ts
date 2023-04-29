@@ -20,7 +20,6 @@ export default class GetUserToken extends Packet {
                 type: "getUserToken",
                 success: false,
                 message: "Not found",
-                emitEvent: true,
                 emits: ["getUserToken-" + userID]
             });
             return;
@@ -29,7 +28,6 @@ export default class GetUserToken extends Packet {
         client.json({
             type: "getUserToken",
             success: true,
-            emitEvent: true,
             emits: ["getUserToken-" + userID],
             token: user.token
         });

@@ -82,6 +82,14 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
     },
     defaultMCVersion: async(val) => {
         return isValidMCVersion(val);
+    },
+    webServerPort: async(val) => {
+        let valNum = Number(val);
+        return valNum < 65536 && valNum >= 0 && !isNaN(valNum)
+    },
+    defaultMemory: async(val) => {
+        let valNum = Number(val);
+        return valNum >= 0 && !isNaN(valNum)
     }
 }
 export function isValidKey(key: string | undefined): key is keyof Config {

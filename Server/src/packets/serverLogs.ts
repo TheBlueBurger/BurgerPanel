@@ -22,7 +22,6 @@ export default class ServerLogs extends Packet {
                     type: "serverLogs",
                     success: true,
                     files,
-                    emitEvent: true,
                     emits: ["serverLogs-list"]
                 });
             } catch {
@@ -30,7 +29,6 @@ export default class ServerLogs extends Packet {
                     type: "serverLogs",
                     success: false,
                     message: "Cannot read logs folder",
-                    emitEvent: true,
                     emits: ["serverLogs-list"]
                 });
             }
@@ -42,7 +40,6 @@ export default class ServerLogs extends Packet {
                 client.json({
                     type: "serverLogs",
                     success: false,
-                    emitEvent: true,
                     emits: ["serverLog-" + data.log]
                 });
                 return;
@@ -55,14 +52,12 @@ export default class ServerLogs extends Packet {
                         type: "serverLogs",
                         success: true,
                         log: res.toString(),
-                        emitEvent: true,
                         emits: ["serverLogs-" + data.log]
                     });
                     client.json({
                         type: "serverLogs",
                         success: false,
                         message: "Failed to gunzip",
-                        emitEvent: true,
                         emits: ["serverLogs-" + data.log]
                     });
                     logger.log("Unable to gunzip: " + err, "error", LogLevel.ERROR);
@@ -71,7 +66,6 @@ export default class ServerLogs extends Packet {
                 type: "serverLogs",
                 success: true,
                 log: fileData.toString(),
-                emitEvent: true,
                 emits: ["serverLogs-" + data.log]
             });
         }

@@ -3,6 +3,5 @@ export interface DeleteServerS2C {
     success: boolean;
     message?: string;
     serverName?: string;
-    emitEvent?: boolean;
     emits?: string[];
 }

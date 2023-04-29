@@ -17,7 +17,6 @@ export default class SetSetting extends Packet {
                 success: false,
                 message: "Missing required key",
                 emits: ["setSetting-" + data.key],
-                emitEvent: true
             });
             return;
         }
@@ -30,7 +29,6 @@ export default class SetSetting extends Packet {
                 success: false,
                 message: (err as any)?.message,
                 emits: ["setSetting-" + data.key],
-                emitEvent: true
             });
             return;
         }
@@ -41,7 +39,6 @@ export default class SetSetting extends Packet {
             emits: ["setSetting-" + data.key],
             key: data.key,
             value: val,
-            emitEvent: true
         });
     }
 }

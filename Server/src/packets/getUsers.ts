@@ -14,7 +14,6 @@ export default class GetUsers extends Packet {
             type: "getUsers",
             success: true,
             userList: filteredUserList,
-            emitEvent: true
         });
     }
 }

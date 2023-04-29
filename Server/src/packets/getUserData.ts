@@ -14,7 +14,6 @@ export default class GetUserData extends Packet {
                 type: "getUserData",
                 success: false,
                 message: "User not provided!",
-                emitEvent: true,
                 emits: ["getUserData-" + data.id]
             });
             return;
@@ -24,14 +23,12 @@ export default class GetUserData extends Packet {
             type: "getUserData",
             success: true,
             user: filterUserData(user.toJSON()),
-            emitEvent: true,
             emits: ["getUserData-" + data.id]
         });
         else client.json({
             type: "getUserData",
             success: false,
             message: "Invalid user!",
-            emitEvent: true,
             emits: ["getUserData-" + data.id]
         });
     }

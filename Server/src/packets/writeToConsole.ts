@@ -14,7 +14,6 @@ export default class WriteToConsole extends Packet {
                 type: "writeToConsole",
                 success: false,
                 message: "Server not found",
-                emitEvent: true,
                 emits: ["writeToServer-" + data.id]
             });
             return;
@@ -28,7 +27,6 @@ export default class WriteToConsole extends Packet {
                 type: "writeToConsole",
                 success: false,
                 message: "You do not have permission to write in the console of this server.",
-                emitEvent: true,
                 emits: ["writeToServer-" + data.id]
             });
         }

@@ -14,7 +14,6 @@ export default class StopServer extends Packet {
                 type: "stopServer",
                 success: false,
                 message: "Server not found",
-                emitEvent: true,
                 emits: ["server-stopping-" + data.id]
             });
             return;
@@ -24,7 +23,6 @@ export default class StopServer extends Packet {
                 type: "stopServer",
                 success: false,
                 message: "You cannot stop this server.",
-                emitEvent: true,
                 emits: ["server-stopping-" + data.id]
             });
             return;
@@ -35,7 +33,6 @@ export default class StopServer extends Packet {
             type: "stopServer",
             success: true,
             server,
-            emitEvent: true,
             emits: ["server-stopping-" + data.id]
         });
     }

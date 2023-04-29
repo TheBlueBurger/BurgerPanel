@@ -25,7 +25,6 @@ export default class Auth extends Packet {
                         type: "auth",
                         success: false,
                         message: "Missing username, password and token!",
-                        emitEvent: true,
                         emits: ["loginFailed"]
                     });
                 }
@@ -37,7 +36,6 @@ export default class Auth extends Packet {
                         type: "auth",
                         success: false,
                         message: "Invalid username or password",
-                        emitEvent: true,
                         emits: ["loginFailed"]
                     });
                     logger.log("Failed login attempt! (using name/pass) for name: " + data.username, "login.fail", LogLevel.WARNING);
@@ -51,7 +49,6 @@ export default class Auth extends Packet {
                         type: "auth",
                         success: false,
                         message: "Invalid token",
-                        emitEvent: true,
                         emits: ["loginFailed"]
                     });
                     logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);
@@ -63,7 +60,6 @@ export default class Auth extends Packet {
                     type: "auth",
                     success: false,
                     message: "Login failed",
-                    emitEvent: true,
                     emits: ["loginFailed"]
                 });
                 logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);

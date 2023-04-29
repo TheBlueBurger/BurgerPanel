@@ -16,7 +16,6 @@ export default class ImportServer extends Packet {
                 type: "importServer",
                 success: false,
                 message: "No path provided",
-                emitEvent: true,
             });
             return;
         }
@@ -25,7 +24,6 @@ export default class ImportServer extends Packet {
                 type: "importServer",
                 success: false,
                 message: "Invalid path: Not absolute",
-                emitEvent: true,
             });
             return;
         }
@@ -37,7 +35,6 @@ export default class ImportServer extends Packet {
                 type: "importServer",
                 success: false,
                 message: "Invalid path",
-                emitEvent: true,
             });
             return;
         }
@@ -47,7 +44,6 @@ export default class ImportServer extends Packet {
                 type: "importServer",
                 success: false,
                 message: "Missing required files",
-                emitEvent: true,
             });
             return;
         }
@@ -69,7 +65,6 @@ export default class ImportServer extends Packet {
             client.json({
                 type: "importServer",
                 success: true,
-                emitEvent: true,
                 autodetect: {
                     version,
                     software,
@@ -84,7 +79,6 @@ export default class ImportServer extends Packet {
                     type: "importServer",
                     success: false,
                     message: "Missing required option " + requiredOption,
-                    emitEvent: true,
                 });
                 return;
             }
@@ -106,7 +100,6 @@ export default class ImportServer extends Packet {
         client.json({
             type: "importServer",
             success: true,
-            emitEvent: true,
             server: server.toJSON()
         });
     }

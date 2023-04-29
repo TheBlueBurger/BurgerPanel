@@ -85,7 +85,6 @@ enforce-secure-profile=false
         this.servers[server._id].clientsAttached.forEach(c => {
             c.json({
                 type: "serverOutput",
-                emitEvent: true,
                 emits: ["serverOutput-" + server._id],
                 server: server._id,
                 data: data.toString()
@@ -113,7 +112,6 @@ enforce-secure-profile=false
             serverEntry.clientsAttached.forEach(client => {
                 client.json({
                     type: "serverErrored",
-                    emitEvent: true,
                     emits: ["serverErrored-" + server._id],
                     server: server._id,
                     error: err?.message || "Unknown message?!?!?",
@@ -130,7 +128,6 @@ enforce-secure-profile=false
             serverEntry.clientsAttached.forEach(client => {
                 client.json({
                     type: "serverExited",
-                    emitEvent: true,
                     emits: ["serverExited-" + server._id],
                     server: server._id,
                     code: c,
@@ -236,7 +233,6 @@ enforce-secure-profile=false
         let status = this.getStatus(server);
         clients.filter(c => hasServerPermission(c.data.auth?.user, server, "status")).forEach(c => c.json({
             type: "serverStatusUpdate",
-            emitEvent: true,
             emits: ["serverStatusUpdate-" + server._id],
             status,
             server: server._id

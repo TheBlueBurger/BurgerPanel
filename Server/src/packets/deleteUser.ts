@@ -15,7 +15,6 @@ export default class DeleteUser extends Packet {
                 type: "deleteUser",
                 success: false,
                 message: "User does not exist",
-                emitEvent: true
             });
             return;
         }
@@ -34,7 +33,6 @@ export default class DeleteUser extends Packet {
             success: true,
             id: data.id,
             username: userToDelete.username,
-            emitEvent: true
         });
     }
 }

@@ -38,7 +38,6 @@ export default class Logging extends Packet {
         client.json({
             type: "logging",
             success: true,
-            emitEvent: true
         });
     }
 }

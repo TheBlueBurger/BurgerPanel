@@ -16,7 +16,6 @@ export default class SetServerOption extends Packet {
                 type: "setServerOption",
                 success: false,
                 message: "Server not found",
-                emitEvent: true,
                 emits: ["setServerOption-" + data.id]
             });
             return;
@@ -30,7 +29,6 @@ export default class SetServerOption extends Packet {
                     type: "setServerOption",
                     success: false,
                     message: "Server name already taken",
-                    emitEvent: true,
                     emits: ["setServerOption-" + data.id]
                 });
                 return;
@@ -52,7 +50,6 @@ export default class SetServerOption extends Packet {
                                 type: "setServerOption",
                                 success: false,
                                 message: "Already added",
-                                emitEvent: true,
                                 emits: ["setServerOption-" + data.id]
                             });
                             return;
@@ -77,7 +74,6 @@ export default class SetServerOption extends Packet {
                                 type: "setServerOption",
                                 success: false,
                                 message: "Cannot remove user with higher perms than you",
-                                emitEvent: true,
                                 emits: ["setServerOption-" + data.id]
                             });
                             return;
@@ -154,7 +150,6 @@ export default class SetServerOption extends Packet {
                 type: "setServerOption",
                 success: false,
                 message: "Failed to save new server: " + (err as any)?.message,
-                emitEvent: true,
                 emits: ["setServerOption-" + data.id]
             });
             return;
@@ -173,7 +168,6 @@ export default class SetServerOption extends Packet {
                     success: false,
                     server,
                     message: err,
-                    emitEvent: true,
                     emits: ["setServerOption-" + data.id]
                 });
             }
@@ -186,7 +180,6 @@ export default class SetServerOption extends Packet {
             type: "setServerOption",
             success: true,
             server,
-            emitEvent: true,
             emits: ["setServerOption-" + data.id]
         });
     }

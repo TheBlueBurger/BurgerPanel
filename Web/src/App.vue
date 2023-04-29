@@ -95,12 +95,10 @@ function initWS() {
   ws.value.addEventListener("message", (e) => {
     let data = JSON.parse(e.data);
     events.value.emit("packetRecieved", data);
-    if (data.emitEvent) {
-      events.value.emit(data.type, data);
-      if (data.emits) {
-        for (let emit of data.emits) {
-          events.value.emit(emit, data);
-        }
+    events.value.emit(data.type, data);
+    if (data.emits) {
+      for (let emit of data.emits) {
+        events.value.emit(emit, data);
       }
     }
     if (data.type == "auth") {

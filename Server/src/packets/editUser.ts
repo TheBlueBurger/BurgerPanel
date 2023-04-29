@@ -20,7 +20,6 @@ export default class EditUser extends Packet {
                 if (!hasPermission(client.data.auth.user, "users.permissions.write")) {
                     client.json({
                         success: false,
-                        emitEvent: true,
                         emits: ["editUser-" + data.id],
                         message: "No permission to use that action!"
                     });
@@ -35,7 +34,6 @@ export default class EditUser extends Packet {
                 if (!hasPermission(client.data.auth.user, permission)) {
                     client.json({
                         success: false,
-                        emitEvent: true,
                         emits: ["editUser-" + data.id],
                         message: "No permission to give that permission!"
                     });
@@ -48,11 +46,10 @@ export default class EditUser extends Packet {
                         // Add the permission
                         user?.permissions.push(permission);
 
-                        client.json({ success: true, emitEvent: true, emits: ["editUser-" + data.id], user: filterUserData(user?.toJSON()) });
+                        client.json({ success: true, emits: ["editUser-" + data.id], user: filterUserData(user?.toJSON()) });
                     } else {
                         client.json({
                             success: false,
-                            emitEvent: true,
                             emits: ["editUser-" + data.id],
                             message: "User has this permission already!"
                         });
@@ -62,13 +59,12 @@ export default class EditUser extends Packet {
                     if (!user?.permissions.includes(permission)) {
                         client.json({
                             success: false,
-                            emitEvent: true,
                             emits: ["editUser-" + data.id],
                             message: "User does not have this permission!!"
                         });
                     } else {
                         user.permissions = user.permissions.filter(perm => perm != permission);
-                        client.json({ success: true, emitEvent: true, emits: ["editUser-" + data.id], user: filterUserData(user?.toJSON()) });
+                        client.json({ success: true, emits: ["editUser-" + data.id], user: filterUserData(user?.toJSON()) });
                     }
                 }
                 this.sendUserUpdated(user.toJSON());
@@ -77,7 +73,6 @@ export default class EditUser extends Packet {
                 if(client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.password.change")) {
                     client.json({
                         success: false,
-                        emitEvent: true,
                         emits: ["editUser-" + data.id],
                         message: "You do not have permission to edit this user's password"
                     });
@@ -88,7 +83,6 @@ export default class EditUser extends Packet {
                 if(newPassword.length < 6) {
                     client.json({
                         success: false,
-                        emitEvent: true,
                         emits: ["editUser-" + data.id],
                         message: "Too insecure!"
                     });
@@ -98,7 +92,6 @@ export default class EditUser extends Packet {
                 if(hashedPassword == user.password) {
                     client.json({
                         success: false,
-                        emitEvent: true,
                         emits: ["editUser-" + data.id],
                         message: "That is already the password!"
                     });
@@ -106,10 +99,8 @@ export default class EditUser extends Packet {
                 }
                 logger.log(`${client.data.auth.user?.username} is changing the password of ${user.username}!`, "user.password.changed", LogLevel.INFO);
                 user.password = hashedPassword;
-                await user.save();
                 client.json({
                     success: true,
-                    emitEvent: true,
                     emits: ["editUser-" + data.id],
                     message: "Password has been set!"
                 });
@@ -117,10 +108,9 @@ export default class EditUser extends Packet {
                 break;
             case "changeUsername":
                 if (user._id.toString() != client.data.auth.user?._id && !hasPermission(client.data.auth.user, "users.username.change"))
-                    return client.json({ // should emitEvent be by default do u think its almsot always used
+                    return client.json({ 
                         // TODO: do that
                         success: false,
-                        emitEvent: true,
                         emits: ["editUser-" + data.id],
                         message: "You do not have permission to edit the username!" //Its impossible to edit someone else through the official client
                     });
@@ -131,12 +121,10 @@ export default class EditUser extends Packet {
                     logger.log(`${client.data.auth.user?.username} is changing the username of ${user.username} to ${data.username}!`, "user.username.changed", LogLevel.INFO);
                     
                     user.username = data.username;
-                    await user.save();
                     
                     this.sendUserUpdated(user.toJSON());
                     client.json({
                         success: true,
-                        emitEvent: true,
                         emits: ["editUser-" + data.id],
                         message: "Username changed!"
                     });
@@ -151,19 +139,16 @@ export default class EditUser extends Packet {
                 if (typeof client.data.auth.user?.password != "string") {
                     client.json({
                         success: false,
-                        emitEvent: true,
                         emits: ["editUser-" + data.id],
                         message: "Set a password first!"
                     });
                     return;
                 }
                 user.setupPending = false;
-                user.save();
                 logger.log(`${client.data.auth.user?.username} finished setup!`, "user.username.changed", LogLevel.INFO);
                 this.sendUserUpdated(user.toJSON());
                 client.json({
                     success: true,
-                    emitEvent: true,
                     emits: ["editUser-" + data.id],
                     message: "Setup finished!"
                 });
@@ -173,7 +158,6 @@ export default class EditUser extends Packet {
                 if (client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.token.reset")) return;
                 logger.log(`${client.data.auth.user?.username} is resetting the token of ${user.username}`, "user.token.reset")
                 user.token = makeToken();
-                await user.save();
                 //Ig brb eat
                 // brb eat too lol
                 clients.filter(c => c.data.auth.user?._id == client.data.auth.user?._id).forEach(cl => {
@@ -181,14 +165,13 @@ export default class EditUser extends Packet {
                 });
                 client.json({
                     success: true,
-                    emitEvent: true,
                     emits: ["editUser-" + data.id],
                     newToken: user.token
                 });
                 break;
 
         }
-        user?.save();
+        await user?.save();
     }
     sendUserUpdated(user: User | undefined) {
         if(!user) return;
@@ -199,7 +182,6 @@ export default class EditUser extends Packet {
                 c.json({
                     type: "yourUserEdited",
                     user: user,
-                    emitEvent: true
                 });
             }
         });

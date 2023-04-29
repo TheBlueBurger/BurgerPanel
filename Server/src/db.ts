@@ -69,7 +69,11 @@ export let servers = db.model("Server", new mongoose.Schema({
         maxlength: 255,
         required: true
     },
-    mem: Number,
+    mem: {
+        type: Number,
+        min: 0,
+        max: 99999
+    },
     allowedUsers: [{
         user: String,
         permissions: [String],

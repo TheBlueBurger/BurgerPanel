@@ -39,7 +39,6 @@ export default class CreateUser extends Packet {
             type: "createUser",
             success: true,
             user: filterUserData(user.toJSON()),
-            emitEvent: true
         });
     }
 }

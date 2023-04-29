@@ -19,7 +19,6 @@ export default class CreateServer extends Packet {
                 type: "createServer",
                 success: false,
                 message: "No name provided",
-                emitEvent: true
             });
             return;
         }
@@ -31,7 +30,6 @@ export default class CreateServer extends Packet {
                 type: "createServer",
                 success: false,
                 message: "Server name already taken",
-                emitEvent: true
             });
             return;
         }
@@ -40,7 +38,6 @@ export default class CreateServer extends Packet {
                 type: "createServer",
                 success: false,
                 message: "Server name is too long. It must be 16 characters or less.",
-                emitEvent: true
             });
             return;
         }
@@ -50,7 +47,6 @@ export default class CreateServer extends Packet {
                 type: "createServer",
                 success: false,
                 message: "Server name is invalid. Only alphanumeric characters and underscores are allowed.",
-                emitEvent: true
             });
             return;
         }
@@ -60,7 +56,6 @@ export default class CreateServer extends Packet {
                 type: "createServer",
                 success: false,
                 message: "Server path is not set. Please set it in the config.",
-                emitEvent: true
             });
             return;
         }
@@ -80,7 +75,6 @@ export default class CreateServer extends Packet {
                 type: "createServer",
                 success: false,
                 message: "Invalid port",
-                emitEvent: true
             });
             return;
         }
@@ -89,7 +83,6 @@ export default class CreateServer extends Packet {
                 type: "createServer",
                 success: false,
                 message: "Invalid software",
-                emitEvent: true
             });
             return;
         }
@@ -112,14 +105,12 @@ export default class CreateServer extends Packet {
                 type: "createServer",
                 success: true,
                 server: server.toJSON(),
-                emitEvent: true
             });
         } catch(err) {
             this.respond(client, {
                 type: "createServer",
                 success: false,
                 message: `Error: ${err}`,
-                emitEvent: true
             });
             return;
         }
