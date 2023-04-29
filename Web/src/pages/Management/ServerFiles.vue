@@ -3,8 +3,8 @@
     import { Server } from '../../../../Share/Server';
     import getServerByID from '../../util/getServerByID';
     import event from '../../util/event';
-import { useRouter } from 'vue-router';
-
+    import { useRouter } from 'vue-router';
+    let i = ref(0);
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -30,13 +30,16 @@ import { useRouter } from 'vue-router';
     })
     let fileData = ref("");
     async function readFile() {
+        i.value++;
+        fileData.value = "Loading...";
         event.emit("sendPacket", {
             type: "serverFiles",
             id: props.server,
             path: path.value,
-            action: "read"
+            action: "read",
+            i: i.value
         });
-        let resp = await event.awaitEvent("serverFiles");
+        let resp = await event.awaitEvent("serverFiles-file-data-" + i.value);
         if(!resp.success) event.emit("createNotification", resp.message);
         fileData.value = resp.fileData;
     }

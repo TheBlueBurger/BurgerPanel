@@ -69,7 +69,8 @@ export default class ServerFiles extends Packet {
                     type: "serverFiles",
                     emitEvent: true,
                     success: true,
-                    fileData
+                    fileData,
+                    emits: ["serverFiles-file-data-" + data.i]
                 });
         }
     }
