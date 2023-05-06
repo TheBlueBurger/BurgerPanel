@@ -65,7 +65,6 @@
         <div v-else>
             Webhooks are disabled. <button @click="initialEditing = true; webhookURL = ''">Enable</button>
         </div>
-        <br/>
         <div v-if="logPath != 'disabled'">
             Log path:
             <TextInput @set="setLogPath" :default="logPath" placeholder="The Path" /> <button @click="setLogPath('disabled')">Disable</button>
@@ -73,6 +72,10 @@
         <div v-else>
             Logging to file is disabled. <button @click="initialEditing = true; logPath = ''">Enable</button>
         </div>
+        <p><b>For security reasons, changing or disabling the log path will require a server restart.</b></p>
+        <br/>
+        <h3>Log Events</h3>
+        <p><b>Note:</b> This will only apply for webhooks. For security reasons everything will be logged to the terminal and log file.</p>
         <div v-for="id in IDs">
             {{ id }} - <span :class="{
                 red: isDisabled(id),

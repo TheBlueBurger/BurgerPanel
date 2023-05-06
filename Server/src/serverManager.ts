@@ -146,7 +146,6 @@ enforce-secure-profile=false
     }
     stopServer(server: Server) {
         return new Promise<void>(async resolve => {
-            logger.log("Waiting for " + server.name + " to stop...", "server.stop", LogLevel.DEBUG, false);
             let startTimestamp = Date.now();
             let serverEntry = this.servers[server._id];
             if (!serverEntry.childProcess) return resolve();
@@ -163,7 +162,7 @@ enforce-secure-profile=false
                 this.updateStatus(server);
                 resolve();
             });
-            if (process.platform != "win32") serverEntry.childProcess.kill("SIGTERM");
+            if (process.platform != "win32") serverEntry.childProcess.kill("SIGTERM"); // windows doesnt have SIGTERM so we need this
             else serverEntry.childProcess.stdin?.write("stop\nend\n");
             logger.log(`Waiting for ${server.name} (${server._id}) to stop...`, "server.stop", LogLevel.DEBUG, false);
         })

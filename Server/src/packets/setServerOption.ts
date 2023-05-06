@@ -133,6 +133,14 @@ export default class SetServerOption extends Packet {
             }
         }
         if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port") && !serverManager.serverIsRunning(server.toJSON())) {
+            if(serverManager.serverIsRunning(server.toJSON())) {
+                client.json({
+                    type: "setServerOption",
+                    success: true,
+                    server: server.toJSON(),
+                    emits: ["setServerOption-" + server._id.toHexString()]
+                });
+            }
             server.port = data.port;
         }
         if (typeof data.autoStart == "boolean" && hasServerPermission(client.data.auth.user, server.toJSON(), "set.autostart")) {

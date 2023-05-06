@@ -85,6 +85,7 @@ class PacketHandler {
             logger.log(`User attempted to use packet: ${data.type} but doesn't have the perm required!`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
+        if(lockdownMode && lockDownExcludedUser != client.data.auth.user?._id && packet.name != "auth") return;
         try {
             await packet.handle(client, data);
         } catch (err) {
@@ -117,6 +118,8 @@ export interface OurClient extends WebSocket {
 let packetHandler = new PacketHandler();
 let logging = false;
 let loggingIgnore: string[] = [];
+export let lockdownMode = false;
+export let lockDownExcludedUser = "";
 export const clients: OurClient[] = [];
 wss.on('connection', (_client) => {
     let client: OurClient = _client as OurClient;
@@ -164,7 +167,7 @@ wss.on('connection', (_client) => {
 async function exit(signal?: string) {
     logger.log(`${signal ? "Recieved SIG" + signal + " - " : ""}Stopping!`, "info", LogLevel.INFO);
     await serverManager.stopAllServers();
-    console.log("All servers stopped, exiting");
+    logger.log("All servers have been stopped, exiting", "info", LogLevel.DEBUG, true, true, true);
     process.exit();
 }
 process.on("SIGINT", () => exit("INT"));
@@ -248,12 +251,24 @@ packetHandler.init().then(async () => {
             case "exit":
             case "stop":
             case "quit":
-                await serverManager.stopAllServers();
-                process.exit();
+                exit();
                 break;
             case "packetLog":
                 logging = !logging;
                 console.log("Packet logging " + (logging ? "enabled" : "disabled"));
+                break;
+            case "lockdown":
+                lockdownMode = !lockdownMode;
+                if(lockdownMode) clients.forEach(c => c.close())
+                logger.log(`Lockdown mode is now ${lockdownMode ? "enabled. Use the same command to re-enable. You may use delete-user to delete a user, gen-admin-user to make a new one and 'lockdown-exclude <user>' to exclude a user." : "disabled."}`, "info", LogLevel.WARNING);
+                break;
+            case "lockdown-auto":
+                lockdownMode = true;
+                clients.forEach(c => c.close())
+                let lockdownUser = await users.create({username: "lockdown-" + Date.now(), setupPending: false, permissions: ["full"]});
+                await lockdownUser.save();
+                lockDownExcludedUser = lockdownUser._id.toString();
+                logger.log(`Lockdown mode has been enabled. Use this token to log in: "${lockdownUser.token}". Use a private/incognito tab if you get stuck on logging in. Use 'lockdown' to disable.`, "info", LogLevel.INFO, false);
                 break;
             case "help":
                 console.log("users: List all users");
@@ -262,6 +277,12 @@ packetHandler.init().then(async () => {
                 console.log("packetLog: Toggle packet logging");
                 console.log("stop: Stop all servers and exit");
                 console.log("set-opt <option> <value>: Sets a setting");
+                console.log("start <server>: Start a server");
+                console.log("stop <server>: Stop a server");
+                console.log("lockdown-auto: Enable lockdown mode and create a excluded user (recommended)");
+                console.log("lockdown: Enter lockdown mode. All logins will be disabled. Nothing will work. Use in case of a hacked account, etc");
+                console.log("lockdown-exclude <user id>: Exclude a user from lockdown.");
+                console.log("delete-user <user id>: Remove a user.");
                 break;
         }
         if(dataStr.startsWith("set-opt ")) { // ik this "command handler" is awful
@@ -269,10 +290,32 @@ packetHandler.init().then(async () => {
             args.shift();
             let option = args.shift();
             let value = args.join(" ");
-            if(!isValidKey(option)) return;
+            if(!isValidKey(option)) return logger.log(`Attempted to change config key ${option} to ${value} but it does not exist!`, "error", LogLevel.ERROR);
             await logger.log(`${option} is being changed to ${value} in the console`, "settings.change", LogLevel.INFO);
             await setSetting(option, value);
-
+        } else if(dataStr.startsWith("start ")) {
+            let server = await servers.findOne({name: dataStr.split(" ")[1]}).exec();
+            try {
+                if(!server) server = await servers.findById(dataStr.split(" ")[1]).exec();
+            } catch {}
+            if(!server) return logger.log("Server not found. Searched both by name and ID. Use 'servers' for a server list", "error", LogLevel.ERROR, false);
+            serverManager.startServer(server?.toJSON());
+        } else if(dataStr.startsWith("stop ")) {
+            let server = await servers.findOne({name: dataStr.split(" ")[1]}).exec();
+            try {
+                if(!server) server = await servers.findById(dataStr.split(" ")[1]).exec();
+            } catch {}
+            if(!server) return logger.log("Server not found. Searched both by name and ID. Use 'servers' for a server list", "error", LogLevel.ERROR, false);
+            serverManager.stopServer(server?.toJSON());
+        } else if(dataStr.startsWith("lockdown-exclude ")) {
+            lockDownExcludedUser = dataStr.split(" ")[1];
+            logger.log(`${lockDownExcludedUser} is now excluded.`, "info", LogLevel.WARNING);
+        } else if(dataStr.startsWith("delete-user ")) {
+            let deleteUserID = dataStr.split(" ")[1];
+            let deleteUser = await users.findById(deleteUserID).exec();
+            if(!deleteUser) return logger.log(`${deleteUserID} cant be found.`, "error", LogLevel.ERROR);
+            await deleteUser?.deleteOne();
+            logger.log(`${deleteUser?.username} is now removed.`, "info");
         }
     });
     let adminUser = await users.findOne({

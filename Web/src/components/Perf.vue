@@ -37,9 +37,9 @@ onMounted(() => {
             <p v-if="perf.load"><b>Load:</b> 1m: {{ perf?.load[0] }} 5m: {{ perf.load[1] }} 15m: {{ perf.load[2] }}</p>
             <p v-if="perf.platform == 'win32'">Load is unavailable since this server is hosted on Windows.</p>
             <p v-else-if="!hasPermission(loginStatus, 'performance.load')">You do not have permission to view load data.</p>
-            <p v-if="perf.mem">Server RAM: {{ perf?.mem?.percentage }}%</p>
+            <p v-if="perf.mem"><b>Server RAM:</b> {{ perf?.mem?.percentage }}%</p>
             <p v-else>You do not have permission to see RAM data.</p>
-            <p v-if="perf.platform">Platform: {{ perf.platform }}</p>
+            <p v-if="perf.platform"><b>Platform:</b> {{ perf.platform }}</p>
             <p v-else>You do not have permission to view the platform.</p>
         </div>
         <div v-else-if="!hasPermission(loginStatus, 'performance.view')">

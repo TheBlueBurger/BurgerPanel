@@ -1,4 +1,4 @@
-import { OurClient, Packet } from "../index.js";
+import { OurClient, Packet, lockDownExcludedUser, lockdownMode } from "../index.js";
 import { servers, users } from "../db.js";
 import type { AuthS2C } from "../../../Share/Auth.js"
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
@@ -65,6 +65,7 @@ export default class Auth extends Packet {
                 logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);
                 return;
             }
+            if(lockdownMode && lockDownExcludedUser != client.data.auth.user._id) return;
             client.data.auth.authenticated = true;
             client.data.auth.token = client.data.auth.user.token;
             // Get the server list for the user

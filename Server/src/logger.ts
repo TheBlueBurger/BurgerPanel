@@ -60,8 +60,8 @@ export default new class Logger {
     async log(message: string, id: IDs, level: LogLevel = LogLevel.INFO, emitWebhook: boolean = true, logToFile: boolean = true, logNoMatterWhat: boolean = false) {
         if(!id) return;
         if(logToFile && this.writeStream?.writable) this.writeStream.write(this.formatLog(message, id, level, false) + "\n");
-        if(!logNoMatterWhat && await this.isDisabled(id)) return;
         console.log(this.formatLog(message, id, level, true));
+        if(!logNoMatterWhat && await this.isDisabled(id)) return;
         if(emitWebhook) await this.sendDiscordWebhook(this.formatLog(message, id, level, false));
     }
     private formatLog(message: string, id?: IDs, level?: LogLevel, useColors?: boolean) {

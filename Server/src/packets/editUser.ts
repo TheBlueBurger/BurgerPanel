@@ -106,11 +106,11 @@ export default class EditUser extends Packet {
                 this.sendUserUpdated(user.toJSON());
                 break;
             case "changeUsername":
-                if (user._id.toString() != client.data.auth.user?._id && !hasPermission(client.data.auth.user, "users.username.change"))
+                if (!hasPermission(client.data.auth.user, "users.username.change.all") && !(client.data.auth.user?._id == user._id.toHexString() && !hasPermission(client.data.auth.user, "users.username.change.self")))
                     return client.json({ 
                         success: false,
                         emits: ["editUser-" + data.id],
-                        message: "You do not have permission to edit the username!"
+                        message: `You do not have permission to edit the username of ${client.data.auth.user?._id == user._id.toHexString() ? "yourself" : "this person"}!`
                     });
                     
                     if (typeof data.username != "string")
@@ -156,8 +156,7 @@ export default class EditUser extends Packet {
                 if (client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.token.reset")) return;
                 logger.log(`${client.data.auth.user?.username} is resetting the token of ${user.username}`, "user.token.reset")
                 user.token = makeToken();
-                //Ig brb eat
-                // brb eat too lol
+                
                 clients.filter(c => c.data.auth.user?._id == client.data.auth.user?._id).forEach(cl => {
                     if(cl != client) cl.close();
                 });

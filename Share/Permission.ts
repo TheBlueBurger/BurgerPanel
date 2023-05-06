@@ -6,7 +6,7 @@ export const _ServersPermissions = [
     "import",
     "all.view"
 ] as const;
-export const _UserPermissions = ["create", "view", "set.admin", "token.read", "token.reset", "delete", "permissions.read", "permissions.write", "password.change", "username.change"] as const;
+export const _UserPermissions = ["create", "view", "set.admin", "token.read", "token.reset", "delete", "permissions.read", "permissions.write", "password.change", "username.change.self", "username.change.all"] as const;
 export const _SettingPermissions = [`set`, "read", "logging.set"] as const;
 export const _ServerPerformance = ["view", "mem", "load", "platform"] as const;
 export type ServerPermissions = typeof _ServerPermissions[number];
