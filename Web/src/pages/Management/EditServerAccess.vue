@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, Ref, inject, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { _ServerPermissions, userHasAccessToServer, hasServerPermission, ServerPermissions, DefaultServerProfiles, hasPermission } from '../../../../Share/Permission';
+import { _ServerPermissions, userHasAccessToServer, hasServerPermission, ServerPermissions, DefaultServerProfiles, hasPermission, serverProfilesDescriptions } from '../../../../Share/Permission';
 import { Server } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import event from '../../util/event';
@@ -104,7 +104,7 @@ function isApplied(profile: string) {
         <br/>
         <h2>Profiles</h2>
         <div v-for="profile in Object.keys(DefaultServerProfiles)">
-            {{ profile }} <button @click="applyProfile(profile)" :class="
+            <span :title="serverProfilesDescriptions[profile]" :style="{cursor: 'default'}">{{ profile }}</span> <button @click="applyProfile(profile)" :class="
             {
                 applied: isApplied(profile)
             }

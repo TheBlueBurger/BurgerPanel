@@ -197,7 +197,7 @@ enforce-secure-profile=false
         if (typeof port == "string") port = parseInt(port);
         if (port < 1 || port > 65535 || isNaN(port)) throw new Error("Invalid port.");
         // Ensure it is not already in use
-        if (!exists(server.path + "/server.properties")) throw new Error("server.properties does not exist.");
+        if (!await exists(server.path + "/server.properties")) throw new Error("server.properties does not exist.");
         // Update the server.properties file
         let fileData = await fs.readFile(server.path + "/server.properties", "utf8");
         fileData = fileData.replace(/server-port=[0-9]+/g, "server-port=" + port);

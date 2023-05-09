@@ -6,7 +6,7 @@ export const _ServersPermissions = [
     "import",
     "all.view"
 ] as const;
-export const _UserPermissions = ["create", "view", "set.admin", "token.read", "token.reset", "delete", "permissions.read", "permissions.write", "password.change", "username.change.self", "username.change.all"] as const;
+export const _UserPermissions = ["create", "view", "token.read", "token.reset", "delete", "permissions.read", "permissions.write", "password.change", "username.change.self", "username.change.all"] as const;
 export const _SettingPermissions = [`set`, "read", "logging.set"] as const;
 export const _ServerPerformance = ["view", "mem", "load", "platform"] as const;
 export type ServerPermissions = typeof _ServerPermissions[number];
@@ -32,9 +32,9 @@ export const DefaultServerProfiles: {[name:  string]: ServerPermissions[]} = {
 
 export const serverProfilesDescriptions: {[name: string]: string} = {
     basic: "Can read the console",
-    trusted: "Read and write to console, start and stop and read old logs",
+    trusted: "Read and write to console, read files, start and stop and read old logs",
     admin: "Can do anything, only give it to people you really trust!"
-}
+};
 
 // full is spooky scary dont give it to like anyone except urself
 export type Permission = PermissionString | PermissionString[] | {

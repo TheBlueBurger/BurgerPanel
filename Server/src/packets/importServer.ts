@@ -96,7 +96,11 @@ export default class ImportServer extends Packet {
             port: data.port,
             path: data.path,
         });
-        await serverManager.changePort(server.toJSON(), data.port); // if the user changes the port when importing the server, it will be changed in server files as well
+        try {
+            await serverManager.changePort(server.toJSON(), data.port); // if the user changes the port when importing the server, it will be changed in server files as well
+        } catch {
+            logger.log(`Could not change the port to the user specified one while importing the server ${server._id.toHexString()} (${server.name}), assuming the user is correct`, "server.import", LogLevel.WARNING);
+        }
         client.json({
             type: "importServer",
             success: true,
