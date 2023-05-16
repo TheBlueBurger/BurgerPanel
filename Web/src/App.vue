@@ -17,14 +17,11 @@ let knownSettings = ref(_knownSettings) as Ref<{ [key in keyof Config]: any }>
 let notifications = ref([] as string[]);
 let notificationQueue: string[] = [];
 function createNotification(text: string) {
-  console.log("Creating notification", text);
   if (notifications.value.length != 0) return notificationQueue.push(text);
-  console.log("Pushing", text, "to", notifications.value)
   notifications.value.push(text);
   setTimeout(() => {
     notifications.value = [];
     let nextNotification = notificationQueue.shift();
-    console.log("next notification", nextNotification)
     if (nextNotification && nextNotification != text) {
       setTimeout(createNotification, 250, nextNotification);
     }
@@ -46,7 +43,7 @@ events.value.on("sendPacket", (data: any) => {
 });
 let API_URL: string;
 if (import.meta.env.PROD) {
-  API_URL = location.protocol + "//" + location.host
+  API_URL = location.origin
 } else {
   API_URL = "http://localhost:3001"
 }
@@ -192,10 +189,10 @@ function gotoSetup(_currentRoute?: RouteLocationNormalized) {
   })
 }
 router.beforeEach(async guard => {
-  // Logs in with the token provided in the ?useToken= query
   if (guard.name != "userSetup" && loginStatus.value?.setupPending) {
     gotoSetup(guard);
   }
+  // Logs in with the token provided in the ?useToken= query
   if (guard.query.useToken) {
     console.log("Using token from query.");
     if (loginStatus.value?.username) {

@@ -2,9 +2,10 @@ import { OurClient, Packet } from "../index.js";
 import { servers } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
+import { Request } from "../../../Share/Requests.js";
 
 export default class AttachToServer extends Packet {
-    name: string = "attachToServer";
+    name: Request = "attachToServer";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any) {
         let server = await servers.findById(data._id).exec();

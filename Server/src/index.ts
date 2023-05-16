@@ -11,6 +11,7 @@ import { once } from "node:events";
 import serverManager from './serverManager.js';
 import { servers, users } from './db.js';
 import { Permission } from '../../Share/Permission.js';
+import { Request, RequestResponses } from '../../Share/Requests.js';
 import hasPermission from './util/permission.js';
 import logger, { LogLevel } from './logger.js';
 
@@ -22,19 +23,19 @@ if(!isProd) app.use((req, res, next) => {
 })
 let httpServer = http.createServer(app);
 let wss = new WebSocketServer({ server: httpServer });
-app.use((req, res, next) => {
+if(!isProd) app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     next();
 });
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 if(isProd) {
     app.use(express.static(path.join(__dirname, "Web")));
-    app.use((req, res) => {
+    app.use((_, res) => {
         res.sendFile(path.join(__dirname, "Web", "index.html"));
     });
 } else {
     app.use(express.static(path.join(__dirname, "..", "..", "..", "public")));
-    app.use((req, res) => {
+    app.use((_, res) => {
         res.sendFile(path.join(__dirname, "..", "..", "..", "public", "index.html"));
     })
 }
@@ -93,14 +94,17 @@ class PacketHandler {
         }
     }
 }
+export type ServerPacketResponse<T extends Request> = Promise<RequestResponses[T] | Error | undefined>;
 export class Packet {
-    name: string = "EXAMPLE_DONT_USE";
+    // @ts-expect-error
+    name: Request = "EXAMPLE_DONT_USE";
     requiresAuth: boolean = true;
     requiresAdmin: boolean = false;
     permission: Permission | null = null;
     constructor() {
     }
-    handle(client: OurClient, data: any) {
+    // @ts-expect-error
+    async handle(client: OurClient, data: any): ServerPacketResponse<""> {
         throw new Error("Packet not implemented");
     }
 }
@@ -125,7 +129,6 @@ wss.on('connection', (_client) => {
     let client: OurClient = _client as OurClient;
     client.data = {
         auth: {
-            token: undefined,
             authenticated: false,
         }
     };
