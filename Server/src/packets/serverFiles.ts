@@ -44,7 +44,7 @@ export default class ServerFiles extends Packet {
             case "read":
                 let statData = await fs.stat(pathToCheck);
                 if(!statData.isFile()) return; // spooky
-                if(statData.size > 32000) {
+                if(statData.size > 320_000) {
                     client.json({
                         type: "serverFiles",
                         success: false,
