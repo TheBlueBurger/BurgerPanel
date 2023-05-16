@@ -1,15 +1,12 @@
-import { OurClient, Packet } from "../index.js";
+import { Request } from "../../../Share/Requests.js";
+import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import serverManager from "../serverManager.js";
 
 export default class DetachFromServer extends Packet {
-    name: string = "detachFromServer";
+    name: Request = "detachFromServer";
     requiresAuth: boolean = true;
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"detachFromServer"> {
         if (!data.id) return;
         serverManager.detachFromServer(client, data.id);
-        client.json({
-            type: "detachFromServer",
-            success: true,
-        });
     }
 }

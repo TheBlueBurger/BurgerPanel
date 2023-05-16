@@ -13,6 +13,9 @@ import { ServerStatuses } from '../../Share/Server';
 import event from "./util/event";
 let router = useRouter();
 let events = ref(EventEmitter);
+event.once("reload", () => {
+  location.reload();
+})
 let knownSettings = ref(_knownSettings) as Ref<{ [key in keyof Config]: any }>
 let notifications = ref([] as string[]);
 let notificationQueue: string[] = [];

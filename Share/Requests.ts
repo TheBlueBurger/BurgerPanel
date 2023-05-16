@@ -15,6 +15,16 @@ export type RequestResponses = {
     logout: undefined,
     createServer: {
         server: Server
+    },
+    createUser: {
+        user: User
+    },
+    deleteServer: undefined,
+    deleteUser: undefined,
+    detachFromServer: undefined,
+    editUser: {
+        user: User,
+        token?: string
     }
 }
 

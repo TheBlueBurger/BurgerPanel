@@ -118,6 +118,7 @@ export interface OurClient extends WebSocket {
         }
     },
     json: (data: any) => void,
+    requestReload: () => undefined
 };
 let packetHandler = new PacketHandler();
 let logging = false;
@@ -132,13 +133,14 @@ wss.on('connection', (_client) => {
             authenticated: false,
         }
     };
-    clients.push(client);
     client.json = (data: any) => {
         if (logging && !loggingIgnore.includes(data.type)) {
             console.log("SEND", data);
         }
         client.send(JSON.stringify(data));
     };
+    client.requestReload = () => client.json({type: "reload"});
+    clients.push(client);
     client.on('error', err => {
         console.log("WS error", err);
         serverManager.handleDisconnect(client);

@@ -1,41 +1,25 @@
-import { OurClient, Packet } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { servers } from "../db.js";
 import type { DeleteServerS2C } from "../../../Share/DeleteServer.js"
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
+import { Request } from "../../../Share/Requests.js";
 
 export default class DeleteServer extends Packet {
-    name: string = "deleteServer";
+    name: Request = "deleteServer";
     requiresAuth: boolean = true;
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"deleteServer"> {
         if(!client.data.auth.user) return;
         // Ensure the server exists
         let server = await servers.findById(data.id).exec();
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
-            this.respond(client, {
-                type: "deleteServer",
-                success: false,
-                message: "Server does not exist",
-                emits: ["server-deleted-" + data.id]
-            });
-            return;
+            return new Error("Server does not exist")
         }
         if(!hasServerPermission(client.data.auth.user, server.toJSON(), "delete")) {
-            this.respond(client, {
-                type: "deleteServer",
-                success: false,
-                message: "No permission",
-                emits: ["server-deleted-" + data.id]
-            });
+            return new Error("No permission");
         }
         await server.deleteOne();
         await serverManager.stopServer(server.toJSON());
-        this.respond(client, {
-            type: "deleteServer",
-            success: true,
-            serverName: server.name,
-            emits: ["server-deleted-" + data.id]
-        });
         serverManager.deleteServerFromCache(server.toJSON());
     }
     respond(client: OurClient, data: DeleteServerS2C) {
