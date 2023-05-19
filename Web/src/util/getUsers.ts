@@ -10,6 +10,7 @@ export default async function getUsers(cachedUsers: Map<string, User>, refresh: 
     if(!hasPermission(user, "users.view")) throw new Error("Attempted to get user list but not authenticated.");
     if(allUsersAlreadyCached && !refresh) return cachedUsers;
     let users = (await sendRequest("getUsers")).userList;
+    cachedUsers.clear();
     users.forEach((u: User) => {
         cachedUsers.set(u._id, u);
     });

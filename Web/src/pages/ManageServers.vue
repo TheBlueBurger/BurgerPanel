@@ -41,22 +41,17 @@ async function createServer() {
     }
     serverCreating.value = true;
     events.value.emit("createNotification", "Creating server...")
-    events.value.emit("sendPacket", {
-        type: "createServer",
+    let resp = await sendRequest("createServer", {
         name: newServerName.value,
         mem: newServerMem.value,
         version: newMCServerVersion.value,
         software: newMCServerSoftware.value,
         port: newMCServerPort.value
-    });
-    let resp = await events.value.awaitEvent("createServer");
-    if (resp?.success) {
-        events.value.emit("createNotification", "Server successfully created!");
-        manageServer(resp.server._id)
-    } else {
-        events.value.emit("createNotification", "Failed to create server: " + resp.message);
+    }).catch(err => {
+        alert(err);
         serverCreating.value = false;
-    }
+    });
+    if(resp?.server) manageServer(resp.server._id);
 }
 function manageServer(id: string) {
     router.push({

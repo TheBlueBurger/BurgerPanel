@@ -52,13 +52,15 @@ export type RequestResponses = {
         token: string
     },
     importServer: {
-        server: Server
+        server: Server,
+        type: "success"
     } | {
         autodetect: {
             version: string,
             software: string,
             port: number
-        }
+        },
+        type: "autodetect"
     },
     killServer: undefined,
     logging: undefined,
@@ -67,14 +69,18 @@ export type RequestResponses = {
         files: {
             name: string,
             folder: boolean
-        }[]
+        }[],
+        type: "filelist"
     } | {
-        fileData: string
+        fileData: string,
+        type: "data"
     },
     serverLogs: {
-        files: string[]
+        files: string[],
+        type: "list"
     } | {
-        log: string
+        log: string,
+        type: "log"
     },
     serverPerformance: ServerPerformancePacketS2C,
     setServerOption: {

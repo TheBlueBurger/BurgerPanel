@@ -75,16 +75,16 @@ class PacketHandler {
         if(typeof data.r != "number") return; // hm
         if (packet.requiresAuth && !client.data.auth.authenticated) {
             console.log("Packet requires auth: " + packet.name);
-            logger.log(`User attempted to use packet: ${data.type} but isn't logged in!`, "packet.invalid-packet", LogLevel.WARNING);
+            logger.log(`User attempted to use packet: ${data.n} but isn't logged in!`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
         if(packet.permission && !hasPermission(client.data.auth?.user, packet.permission)) {
+            logger.log(`User attempted to use packet: ${data.n} but doesn't have the perm required!`, "packet.invalid-packet", LogLevel.WARNING);
             client.json({
-                type: data.type,
-                success: false,
-                message: "No permission",
+                r: data.r,
+                e: "You do not have permission to use this packet!",
+                n: data.n
             });
-            logger.log(`User attempted to use packet: ${data.type} but doesn't have the perm required!`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
         if(lockdownMode && lockDownExcludedUser != client.data.auth.user?._id && packet.name != "auth") return;

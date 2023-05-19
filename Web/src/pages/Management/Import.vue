@@ -3,31 +3,28 @@ import { onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { getSetting } from '../../util/config';
 import event from '../../util/event';
+import sendRequest from '../../util/request';
 
 let router = useRouter();
 let serverPath = ref();
 let updateServerPath = async () => {
     let _serverPath = router.currentRoute.value.query.serverPath;
+    serverPath.value = _serverPath;
     if (!_serverPath) {
         return;
     }
-    serverPath.value = _serverPath;
-    event.emit("sendPacket", {
-        type: "importServer",
+    let resp = await sendRequest("importServer", {
         path: _serverPath,
         requestConfirmation: true
-    });
-    let resp = await event.awaitEvent("importServer");
-    if (!resp.success) {
-        event.emit("createNotification", "Failed to import server: " + resp.message);
+    }).catch(err => {
+        alert(err);
         router.push({
-            query: {
-                serverPath: undefined
-            }
-        });
-        serverPath.value = "";
-        return;
-    }
+        query: {
+            serverPath: undefined
+        }
+    });
+    }); // is there a better way to do this?
+    if(resp?.type !== "autodetect") return;
     if (resp.autodetect.version) version.value = resp.autodetect.version;
     if (resp.autodetect.software) software.value = resp.autodetect.software;
     if (resp.autodetect.port) port.value = resp.autodetect.port;
@@ -55,8 +52,7 @@ onMounted(async () => {
     if (software.value == "") software = ref(await getSetting("defaultMCSoftware"));
 });
 async function importServer() {
-    event.emit("sendPacket", {
-        type: "importServer",
+    let resp = await sendRequest("importServer", {
         path: serverPath.value,
         name: name.value,
         mem: mem.value,
@@ -64,11 +60,7 @@ async function importServer() {
         software: software.value,
         port: port.value
     });
-    let resp = await event.awaitEvent("importServer");
-    if (!resp.success) {
-        event.emit("createNotification", "Failed to import server: " + resp.message);
-        return;
-    }
+    if(resp?.type != "success") return;
     event.emit("createNotification", "Server imported successfully");
     router.push({
         name: "manageServer",

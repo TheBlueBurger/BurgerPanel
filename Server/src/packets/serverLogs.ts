@@ -21,7 +21,8 @@ export default class ServerLogs extends Packet {
             try {
                 let files = await fs.readdir(logPath);
                 return {
-                    files
+                    files,
+                    type: "list"
                 }
             } catch {
                 return "Cannot read logs folder";
@@ -38,10 +39,12 @@ export default class ServerLogs extends Packet {
             if(logFile.endsWith(".gz")) {
                 let buff = await ourGunzip(fileData);
                 return {
-                    log: buff.toString()
+                    log: buff.toString(),
+                    type: "log"
                 }
             } else return {
-                log: fileData.toString()
+                log: fileData.toString(),
+                type: "log"
             }
         }
     }

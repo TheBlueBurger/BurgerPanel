@@ -120,11 +120,11 @@ export default class SetServerOption extends Packet {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the port of ${server.name} (${server._id}) to ${data.port}`, "server.port", LogLevel.INFO);
             await serverManager.changePort(server.toJSON(), data.port);
         }
-        if (data.software) {
+        if (data.software && hasServerPermission(client.data.auth.user, server.toJSON(), "set.software")) {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the software of ${server.name} (${server._id}) to ${data.software}`, "server.software", LogLevel.INFO);
             await serverManager.editSoftware(server.toJSON(), data.software);
         }
-        if (data.version) {
+        if (data.version && hasServerPermission(client.data.auth.user, server.toJSON(), "set.version")) {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the version of ${server.name} (${server._id}) to ${data.version}`, "server.version", LogLevel.INFO);
             await serverManager.editVersion(server.toJSON(), data.version);
         }

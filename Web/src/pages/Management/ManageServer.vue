@@ -103,9 +103,9 @@ function onScrolled() {
 <template>
   <div v-if="server">
     <h2>{{ server.name }}</h2>
-    <button @click="startServer()">Start</button>
-    <button @click="stopServer()">Stop</button>
-    <button @click="killServer()">Kill</button>
+    <button @click="startServer()" :disabled="!hasServerPermission(loginStatus, server, 'start')">Start</button>
+    <button @click="stopServer()" :disabled="!hasServerPermission(loginStatus, server, 'stop')">Stop</button>
+    <button @click="killServer()" :disabled="!hasServerPermission(loginStatus, server, 'kill')">Kill</button>
     <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
     <span class="server-status"><ServerStatus :server="server._id" /></span>
     <br />

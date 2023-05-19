@@ -5,6 +5,7 @@ import { getUser } from '../../util/getUsers';
 import { hasPermission, PermissionString, validPermissions } from "../../../../Share/Permission";
 import events from '../../util/event';
 import { useRouter } from 'vue-router';
+import sendRequest from '../../util/request';
 
 let loginStatus = inject("loginStatus") as Ref<User>;
 
@@ -23,19 +24,12 @@ onMounted(async () => {
 });
 
 async function togglePerm(perm: PermissionString) {
-    events.emit("sendPacket", {
-        type: "editUser",
+    user.value = (await sendRequest("editUser", {
         id: props.user,
         action: "setPermission",
         permission: perm,
         value: !user.value.permissions.includes(perm)
-    });
-    let resp = await events.awaitEvent("editUser-" + props.user);
-    if(!resp.success) {
-        alert("Error while toggling permission '" + perm + "': " + resp.message);
-        return;
-    }
-    user.value = resp.user;
+    })).user;
 }
 let router = useRouter();
 if(!hasPermission(loginStatus.value, "users.permissions.read")) {

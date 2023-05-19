@@ -17,12 +17,17 @@
             type: Boolean,
             required: false,
             default: false
+        },
+        forceDisabled: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     });
     let disabled = ref(!props.initialEditing);
     let emits = defineEmits(["set"]);
     function set() {
-        if(disabled.value) return;
+        if(disabled.value || props.forceDisabled) return;
         emits("set", text.value);
         disabled.value = true;
     }
@@ -36,7 +41,11 @@
     <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
         width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
     }" :type="props.password ? 'password' : 'text'">
-    <button v-if="disabled" @click="disabled = false">Edit</button>
+    <button v-if="disabled" @click="() => {if(!props.forceDisabled) disabled = false}" :style="
+    {
+        cursor: props.forceDisabled ? 'not-allowed' : 'pointer'
+    }
+    ">Edit</button>
     <button v-if="!disabled" @click="set">Set</button>
     <button v-if="!disabled" @click="reset">Cancel</button>
 </template>

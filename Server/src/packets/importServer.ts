@@ -48,7 +48,8 @@ export default class ImportServer extends Packet {
                     port: isNaN(port) ? 25565 : port,
                     software,
                     version
-                }
+                },
+                type: "autodetect"
             }
         }
         for (let requiredOption of ["name", "version", "mem", "software", "port"]) {
@@ -75,7 +76,8 @@ export default class ImportServer extends Packet {
             logger.log(`Could not change the port to the user specified one while importing the server ${server._id.toHexString()} (${server.name}), assuming the user is correct`, "server.import", LogLevel.WARNING);
         }
         return {
-            server: server.toJSON()
+            server: server.toJSON(),
+            type: "success"
         }
     }
 }

@@ -109,16 +109,22 @@ function initWS() {
 
 initWS();
 async function login(usingToken: boolean = false) {
-  let authResp: RequestResponses["auth"];
+  let authResp: void | RequestResponses["auth"];
   if(usingTokenLogin.value || usingToken) {
     authResp = await sendRequest("auth", {
       token: token.value
+    }).catch(() => {
+      showLoginScreen.value = true;
     });
   } else {
     authResp = await sendRequest("auth", {
       username: loginUsername.value,
       password: loginPassword.value
     })
+  }
+  if(!authResp) {
+    showLoginScreen.value = true;
+    return;
   }
   if (!authResp.user) {
     console.log("User doesn't exist, but login was successful. Probably already authenticated.");

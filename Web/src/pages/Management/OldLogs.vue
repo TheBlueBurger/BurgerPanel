@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { Server } from '../../../../Share/Server';
 import event from '../../util/event';
 import getServerByID from '../../util/getServerByID';
+import sendRequest from '../../util/request';
 let server = ref() as Ref<Server>;
 let cachedServers = inject("servers") as Ref<Server[]>;
 let props = defineProps({
@@ -14,14 +15,12 @@ let props = defineProps({
 })
 onMounted(async () => {
     server.value = await getServerByID(cachedServers.value, props.server);
-    event.emit("sendPacket", {
-        type: "serverLogs",
+    let resp = await sendRequest("serverLogs", {
         id: props.server,
         list: true
     });
-    let resp = await event.awaitEvent("serverLogs-list");
-    if (!resp.success) alert(resp.message);
-    else logs.value = resp.files;
+    if(resp.type != "list") return;
+    logs.value = resp.files;
 });
 let logs = ref([] as string[]);
 let logData = ref("");
@@ -38,15 +37,12 @@ async function getLogs(logName: string) {
     if(!logName) return;
     logData.value = "";
     if(!viewingLog) return;
-    event.emit("sendPacket", {
-        type: "serverLogs",
+    let resp = await sendRequest("serverLogs", {
         id: props.server,
         log: logName
     });
-    let resp = await event.awaitEvent("serverLogs-" + logName);
-    if(!resp.success) alert(resp.message);
-    logData.value = resp.log;
-    console.log(logData.value)
+    if(resp.type != "log") return;
+    logData.value = resp.log; //e
 }
 if(viewingLog) getLogs(viewingLog.value?.toString() || "");
 </script>

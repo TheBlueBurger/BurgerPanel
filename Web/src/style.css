@@ -59,6 +59,10 @@ button:hover {
     border-radius: 5px;
 }
 
+button:disabled {
+    cursor: not-allowed;
+}
+
 /* text input */
 
 input[type=text], input[type=password], input[type=number] {

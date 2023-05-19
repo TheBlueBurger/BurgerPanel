@@ -8,6 +8,7 @@ import { useRouter } from "vue-router";
 import { hasPermission } from "../../../Share/Permission";
 import getUsers from "../util/getUsers";
 import TextInput from "../components/TextInput.vue";
+import sendRequest from "../util/request";
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User>;
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
@@ -34,19 +35,13 @@ let cachedUsers = inject("users") as Ref<Map<string, User>>
 let creatingUser = ref(false);
 let newUsername = ref("");
 async function createUser() {
-    events.value.emit("sendPacket", {
-        type: "createUser",
+    let resp = await sendRequest("createUser", {
         username: newUsername.value
-    });
+    })
     newUsername.value = "";
     creatingUser.value = false;
-    let resp = await events.value.awaitEvent("createUser");
-    if (resp?.success) {
-        events.value.emit("createNotification", "User " + resp.user.username + " created");
-        getUsers(cachedUsers.value, true);
-    } else {
-        events.value.emit("createNotification", "Failed to create user: " + resp.message);
-    }
+    events.value.emit("createNotification", "User " + resp.user.username + " created");
+    getUsers(cachedUsers.value, true);
 }
 getUsers(cachedUsers.value, true);
 function showHelpForSetting(setting: string) {
@@ -54,33 +49,20 @@ function showHelpForSetting(setting: string) {
 }
 async function deleteUser(user: User) {
     if(!confirm("Are you sure you want to remove the user " + user.username + "?")) return;
-    events.value.emit("sendPacket", {
-        type: "deleteUser",
+    await sendRequest("deleteUser", {
         id: user._id
-    });
-    let resp = await events.value.awaitEvent("deleteUser");
-    if(!resp.success) {
-        alert(resp.message);
-    } else {
-        events.value.emit("createNotification", "Successfully deleted user");
-        getUsers(cachedUsers.value, true);
-    }
+    })
+    getUsers(cachedUsers.value, true);
 }
 
 let knownTokens: Ref<{[id: string]: string}> = ref({});
 let viewingToken = ref("");
 async function getToken(userID: string) {
-    await events.value.emit("sendPacket", {
-        type: "getUserToken",
+    let resp = await sendRequest("getUserToken", {
         id: userID
-    });
-    let resp = await events.value.awaitEvent("getUserToken-" + userID);
-    if (resp?.success) {
-        knownTokens.value[userID] = resp.token;
-        return resp.token;
-    } else {
-        throw new Error(resp.message);
-    }
+    })
+    knownTokens.value[userID] = resp.token;
+    return resp.token;
 }
 async function viewToken(userID: string, copy: boolean = false) {
     if (viewingToken.value == userID) {
@@ -113,14 +95,11 @@ let settingsAllowedToShow = computed(() => {
 async function resetToken(id: string) {
     if (!confirm("Sure? All sessions will be logged out. Auto-login will break for all sessions."))
         return;
-    events.value.emit("sendPacket", {
-        type: "editUser",
-        id: id,
+    await sendRequest("editUser", {
         action: "resetToken",
-    });
-    
-    let resp = await events.value.awaitEvent("editUser-" + id);
-    events.value.emit("createNotification", resp.success ? "Token has been reset!" : ("Error: " + resp.message));
+        id
+    })
+    events.value.emit("createNotification", "Token has been reset!");
 }
 </script>
 <template>

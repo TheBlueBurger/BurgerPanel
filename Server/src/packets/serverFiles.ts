@@ -37,7 +37,8 @@ export default class ServerFiles extends Packet {
                         }
                     }))).filter(e => e.status == "fulfilled")
                     // @ts-ignore I understand I shouldn't do this, but it is garantueed to exist and I use ?. just in case
-                    .map(e => e?.value)
+                    .map(e => e?.value),
+                    type: "filelist"
                 }
             case "read":
                 let statData = await fs.stat(pathToCheck);
@@ -51,7 +52,8 @@ export default class ServerFiles extends Packet {
                 }
                 let fileData = await fs.readFile(pathToCheck, "utf-8");
                 return {
-                    fileData
+                    fileData,
+                    type: "data"
                 }
         }
     }

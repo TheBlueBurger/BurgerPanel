@@ -106,6 +106,9 @@ export default class EditUser extends Packet {
 
         }
         await user?.save();
+        return {
+            user: filterUserData(user.toJSON())
+        }
     }
     sendUserUpdated(user: User | undefined) {
         if(!user) return;
@@ -114,7 +117,7 @@ export default class EditUser extends Packet {
             if (c.data.auth.user?._id == user._id) {
                 c.data.auth.user = user; // i think i know whats happening but what!?!? ill attach my debugger
                 c.json({
-                    type: "yourUserEdited",
+                    n: "yourUserEdited",
                     user: user,
                 });
             }

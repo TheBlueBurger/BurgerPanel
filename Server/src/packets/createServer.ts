@@ -40,7 +40,7 @@ export default class CreateServer extends Packet {
         if (!version) {
             version = await getSetting("defaultMCVersion");
         }
-        if(!await isValidMCVersion(version)) "Invalid version"
+        if(!await isValidMCVersion(version)) return "Invalid version"
         let software = data.software;
         if (!software) {
             software = await getSetting("defaultMCSoftware");
