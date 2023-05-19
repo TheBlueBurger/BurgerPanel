@@ -4,6 +4,7 @@ import { ServerPerformancePacketS2C } from '../../../Share/Perf';
 import {validPermissions, hasPermission} from '../../../Share/Permission';
 import { User } from '../../../Share/User';
 import EventEmitter from '../util/event';
+import sendRequest from '../util/request';
 let events = inject("events") as Ref<typeof EventEmitter>;
 let loginStatus = inject("loginStatus") as Ref<User | null>;
 let intervalID = -1;
@@ -13,10 +14,7 @@ onUnmounted(() => {
 let perf: Ref<ServerPerformancePacketS2C | null> = ref() as Ref<ServerPerformancePacketS2C | null>;
 async function getAndSetPerf() {
     if (typeof loginStatus?.value?.username == "string") { // logged in
-        events.value.emit("sendPacket", {
-            type: "serverPerformance"
-        });
-        perf.value = await events.value.awaitEvent("serverPerformance");
+        perf.value = await sendRequest("serverPerformance");
     }
 }
 getAndSetPerf();

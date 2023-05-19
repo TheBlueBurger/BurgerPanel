@@ -20,30 +20,24 @@ export default class Auth extends Packet {
         } else {
             if (!data.token) {
                 if(!data.username || !data.password) {
-                    return new Error("Missing username, password and token!");
+                    return "Missing username, password and token!";
                 }
                 if(typeof data.username != "string" || typeof data.password != "string") return;
                 try {
                     client.data.auth.user = (await users.findOne({ username: data.username, password: makeHash(data.password) }).exec())?.toJSON();
                 } catch {
-                    return new Error("Invalid username or password");
+                    return "Invalid username or password";
                 }
             } else {
                 try {
                     client.data.auth.user = (await users.findOne({ token: data.token }).exec())?.toJSON();
                 } catch {
-                    return new Error("Token is invalid");
+                    return "Token is invalid";
                 }
             }
             if (!client.data.auth.user) {
-                this.respond(client, {
-                    type: "auth",
-                    success: false,
-                    message: "Login failed",
-                    emits: ["loginFailed"]
-                });
                 logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);
-                return;
+                return "Login failed!";
             }
             if(lockdownMode && lockDownExcludedUser != client.data.auth.user._id) return;
             client.data.auth.authenticated = true;
@@ -68,8 +62,5 @@ export default class Auth extends Packet {
                 statuses
             }
         }
-    }
-    respond(client: OurClient, data: AuthS2C) {
-        client.json(data);
     }
 }

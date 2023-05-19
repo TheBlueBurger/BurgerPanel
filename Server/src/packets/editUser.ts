@@ -18,13 +18,8 @@ export default class EditUser extends Packet {
         switch (action) {
             case "setPermission":
                 if (!hasPermission(client.data.auth.user, {all: ["users.permissions.write", "users.view"]})) {
-                    client.json({
-                        success: false,
-                        emits: ["editUser-" + data.id],
-                        message: "No permission to use that action!"
-                    });
                     // illegal!!!!
-                    return;
+                    return "No permission to use that action!";
                 }
                 let permission = data.permission; //Gonna make frontend not allow you to edit perms you dont have access to
                 let value = data.value;
@@ -32,12 +27,7 @@ export default class EditUser extends Packet {
 
                 // make sure that the user has access to give that permission, otherwise they can give other users full access lol
                 if (!hasPermission(client.data.auth.user, permission)) {
-                    client.json({
-                        success: false,
-                        emits: ["editUser-" + data.id],
-                        message: "No permission to give that permission!"
-                    });
-                    return;
+                    return "No permission to give that permission!";
                 }
                 if(typeof value != "boolean") return;
                 if (value && permission) {
@@ -46,12 +36,12 @@ export default class EditUser extends Packet {
                         // Add the permission
                         user?.permissions.push(permission);
                     } else {
-                        return new Error("User has this permission already!");
+                        return "User has this permission already!"
                     }
                 } else if (!value && permission) {
                     await logger.log(`${client.data.auth.user?.username} is removing the permission ${permission} from ${user.username}`, "user.permission.change", LogLevel.WARNING)
                     if (!user?.permissions.includes(permission)) {
-                        return new Error("User does not have this permission!");
+                        return "User does not have this permission!"
                     } else {
                         user.permissions = user.permissions.filter(perm => perm != permission);
                     }
@@ -60,16 +50,16 @@ export default class EditUser extends Packet {
                 break;
             case "changePassword":
                 if(client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.password.change")) {
-                    return new Error("You do not have permission to edit this user's password");
+                    return "You do not have permission to edit this user's password"
                 }
                 let newPassword = data.password;
                 if(typeof newPassword != "string") return;
                 if(newPassword.length < 6) {
-                    return new Error("Too insecure!");
+                    return "Too insecure!"
                 }
                 let hashedPassword = makeHash(newPassword);
                 if(hashedPassword == user.password) {
-                    return new Error("That is already the password!")
+                    return "That is already the password!"
                 }
                 logger.log(`${client.data.auth.user?.username} is changing the password of ${user.username}!`, "user.password.changed", LogLevel.INFO);
                 user.password = hashedPassword;
@@ -77,9 +67,9 @@ export default class EditUser extends Packet {
                 break;
             case "changeUsername":
                 if (!hasPermission(client.data.auth.user, "users.username.change.all") && !(client.data.auth.user?._id == user._id.toHexString() && !hasPermission(client.data.auth.user, "users.username.change.self")))
-                    return new Error(`You do not have permission to edit the username of ${client.data.auth.user?._id == user._id.toHexString() ? "yourself" : "this person"}!`)
+                    return `You do not have permission to edit the username of ${client.data.auth.user?._id == user._id.toHexString() ? "yourself" : "this person"}!`;
                     
-                    if (typeof data.username != "string") return new Error("Not a string!");
+                    if (typeof data.username != "string") return "Not a string!";
                     
                     logger.log(`${client.data.auth.user?.username} is changing the username of ${user.username} to ${data.username}!`, "user.username.changed", LogLevel.INFO);
                     
@@ -93,7 +83,7 @@ export default class EditUser extends Packet {
                 if (!user.setupPending) return client.requestReload(); // desync
                     
                 if (typeof client.data.auth.user?.password != "string") {
-                    return new Error("Set a password first!")
+                    return "Set a password first!"
                 }
                 user.setupPending = false;
                 logger.log(`${client.data.auth.user?.username} finished setup!`, "user.username.changed", LogLevel.INFO);
@@ -113,7 +103,6 @@ export default class EditUser extends Packet {
                     user: filterUserData(user.toJSON()),
                     token: user.token
                 }
-                break;
 
         }
         await user?.save();

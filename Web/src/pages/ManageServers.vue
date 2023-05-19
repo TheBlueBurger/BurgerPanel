@@ -7,6 +7,7 @@ import { RouteLocationNormalized, useRouter } from 'vue-router';
 import { getSetting } from '../util/config';
 import { hasPermission } from '../../../Share/Permission';
 import ServerStatus from "../components/ServerStatus.vue";
+import sendRequest from '../util/request';
 
 let router = useRouter();
 let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
@@ -26,15 +27,7 @@ function showAllServers() {
 }
 async function checkIfAllServers(currentRoute: RouteLocationNormalized) {
     if (currentRoute.query.all == "true") {
-        events.value.emit("sendPacket", {
-            type: "getAllServers"
-        });
-        let resp = await events.value.awaitEvent("getAllServers");
-        if (resp?.success) {
-            servers.value = resp.servers;
-        } else {
-            alert("Failed to get servers: " + resp.message);
-        }
+        servers.value = (await sendRequest("getAllServers")).servers;
     }
 }
 onMounted(() => {

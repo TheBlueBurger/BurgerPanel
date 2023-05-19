@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router';
 import { hasServerPermission } from '../../../../Share/Permission';
 import { User } from '../../../../Share/User';
 import ServerStatus from '../../components/ServerStatus.vue';
+import sendRequest from '../../util/request';
 let router = useRouter();
 let props = defineProps<{
   server: string;
@@ -23,15 +24,10 @@ onMounted(async () => {
   loadingServerFromAPI.value = true;
   // Attach to server
   if (!attached.value) {
-    events.emit("sendPacket", {
-      type: "attachToServer",
-      _id: props.server
-    });
-    let resp = await events.awaitEvent("server-attached-" + props.server);
-    if (resp?.success) {
+    let resp = await sendRequest("attachToServer", {_id: props.server})
       server.value = resp.server;
       console.log("Attached to", resp.server.name);
-      logs.value = resp.lastLogs;
+      if(resp.lastLogs) logs.value = resp.lastLogs;
       attached.value = true;
       // Scroll to bottom
       setTimeout(() => { // there has to be a better way to do this, but this is what ill do and it works
@@ -43,15 +39,6 @@ onMounted(async () => {
           status: resp.status
         }
       })
-    } else {
-      if(resp.stay) {
-        server.value = resp.server;
-        logs.value = ["You do not have permission to attach to this server."];
-      } else {
-        alert("Failed to attach to server: " + resp.message);
-        router.push("/manage")
-      }
-    }
     loadingServerFromAPI.value = false;
   }
   events.on("serverOutput-" + props.server, data => {
@@ -69,10 +56,7 @@ let n = 0;
 let autoScrollInterrupted = ref(false);
 let ignoreNextScroll = ref(false);
 function startServer() {
-  events.emit("sendPacket", {
-    type: "startServer",
-    id: props.server
-  });
+  sendRequest("startServer", {id: props.server})
   logs.value = [];
 }
 events.on("serverExited-" + props.server, data => {
@@ -82,34 +66,20 @@ events.on("serverErrored-" + props.server, data => {
   logs.value.push("Server errored: " + data.error + "\n");
 });
 async function stopServer() {
-  if(confirm("Are you sure you want to stop the server? Unsaved data will be saved.")) events.emit("sendPacket", {
-    type: "stopServer",
-    id: props.server
-  });
-  let resp = await events.awaitEvent("server-stopping-" + props.server);
-  if(!resp.success) {
-    events.emit("createNotification", "Cannot stop server: " + resp.message)
-  }
+  if(confirm("Are you sure you want to stop the server? Unsaved data will be saved.")) await sendRequest("stopServer", {id: props.server})
 }
-function killServer() {
-  if(confirm("Are you sure you want to KILL this server? All unsaved data will be GONE.")) events.emit("sendPacket", {
-    type: "killServer",
-    id: props.server
-  });
+async function killServer() {
+  if(confirm("Are you sure you want to KILL this server? All unsaved data will be GONE.")) await sendRequest("killServer", {id: props.server})
 }
 onUnmounted(() => {
-  events.emit("sendPacket", {
-    type: "detachFromServer",
-    id: props.server
-  });
+  sendRequest("detachFromServer", {id: props.server})
 });
 let consoleInput = ref("");
 function sendCommand() {
-  events.emit("sendPacket", {
-    type: "writeToConsole",
+  sendRequest("writeToConsole", {
     id: props.server,
     command: consoleInput.value
-  });
+  })
   consoleInput.value = "";
 }
 let lastScroll = ref(0);

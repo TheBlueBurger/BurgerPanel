@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { hasPermission, hasServerPermission, Permission, ServerPermissions } from '../../../../Share/Permission';
-import { Server } from '../../../../Share/Server';
+import { hasPermission, hasServerPermission } from '../../../../Share/Permission';
+import { Server, ServerStatuses } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import events from '../../util/event';
 import getServerByID from '../../util/getServerByID';
 import getUsers from '../../util/getUsers';
 import TextInput from '../../components/TextInput.vue';
+import sendRequest from '../../util/request';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
@@ -15,6 +16,7 @@ let props = defineProps<{
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User | null>
 let users = inject("users") as Ref<Map<string, User>>;
+let serverStatuses = inject("statuses") as Ref<ServerStatuses>;
 onMounted(async () => {
     try {
         server.value = await getServerByID(null, props.server);
@@ -30,99 +32,45 @@ onMounted(async () => {
 });
 async function renameServer(newName: string) {
     if(newName) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            name: newName
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server name changed to '${newName}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server name: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, name: newName})).server;
+        events.emit("createNotification", `Server name changed to '${newName}'`)
     }
 }
 async function changeMemory(newMem: string) {
     if(newMem && !isNaN(parseInt(newMem))) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            mem: parseInt(newMem)
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server memory changed to '${newMem}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server memory: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, mem: parseInt(newMem)})).server;
+        events.emit("createNotification", `Server name changed to '${newMem}'`)
     }
 }
 async function changeVersion(newVersion: string) {
     if(newVersion) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            version: newVersion
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server version changed to '${newVersion}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server version: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, version: newVersion})).server;
+        events.emit("createNotification", `Server version changed to '${newVersion}'`)
     }
 }
 async function changeSoftware(newSoftware: string) {
     if(newSoftware) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            software: newSoftware
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server software changed to '${newSoftware}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server software: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, version: newSoftware})).server;
+        events.emit("createNotification", `Server software changed to '${newSoftware}'`)
     }
 }
 async function changePort(newPort: string) {
     if(newPort) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            port: newPort
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server port changed to '${newPort}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server port: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, port: newPort})).server;
+        events.emit("createNotification", `Server port changed to '${newPort}'`)
     }
 }
 async function removeUser(user: string) {
     if(server?.value?.allowedUsers?.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
     if(!confirm("Are you sure you want to remove this user from the server?")) return;
-    events.emit("sendPacket", {
-        type: "setServerOption",
+    let resp = await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
             action: "remove",
             user: user
         }
     });
-    let resp = await events.awaitEvent("setServerOption-" + props.server);
-    if(!resp.success) events.emit("createNotification", resp.message);
-    server.value = await getServerByID(null, props.server);
-    console.log(server.value)
+    server.value = resp.server;
 }
 async function addUser() {
     let newUserID: string | null | undefined = prompt("Enter the ID or username of the user you want to add.");
@@ -140,17 +88,14 @@ async function addUser() {
 }
 
 async function addUserByID(id: string) {
-    events.emit("sendPacket", {
-        type: "setServerOption",
+    let resp = await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
             action: "add",
             user: id
         }
-    });
-    let resp = await events.awaitEvent("setServerOption-" + props.server);
-    if(!resp.success) events.emit("createNotification", resp.message);
-    server.value = await getServerByID(null, props.server);
+    })
+    server.value = resp.server;
 }
 
 async function getUserlist() {

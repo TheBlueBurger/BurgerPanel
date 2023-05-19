@@ -3,9 +3,10 @@ import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import { IDs } from "../../../Share/Logging.js";
 import { getSetting, setSetting } from "../config.js";
+import { Request } from "../../../Share/Requests.js";
 
 export default class Logging extends Packet {
-    name: string = "logging";
+    name: Request = "logging";
     requiresAuth: boolean = true;
     permission: Permission = "settings.logging.set";
     async handle(client: OurClient, data: any) {
@@ -35,9 +36,5 @@ export default class Logging extends Packet {
             await logger.log(`${client.data.auth.user?.username} is changing the log location to ${data.location}`, "logging.change", LogLevel.WARNING);
             await setSetting("logging_logDir", data.location); // validation is in config.ts
         }
-        client.json({
-            type: "logging",
-            success: true,
-        });
     }
 }

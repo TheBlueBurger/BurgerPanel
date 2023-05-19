@@ -1,6 +1,6 @@
 var forcedChangeConfig: (keyof Config)[] = ["serverPath"];
 var cachedSettings: { [key in keyof Config]?: string | number | null } = {};
-import { defaultConfig, Config } from "../../Share/Config.js";
+import { defaultConfig, Config, ConfigValue } from "../../Share/Config.js";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { isValidPermissionString } from '../../Share/Permission.js';
@@ -9,7 +9,7 @@ import { IDs } from '../../Share/Logging.js';
 import { exists } from "./util/exists.js";
 import { allowedSoftwares } from "../../Share/Server.js";
 import isValidMCVersion from "./util/isValidMCVersion.js";
-export async function getSetting(key: keyof typeof defaultConfig, ignoreForcedChangeConfig?: boolean, errorIfNotSet?: boolean) {
+export async function getSetting(key: keyof typeof defaultConfig, ignoreForcedChangeConfig?: boolean, errorIfNotSet?: boolean): Promise<ConfigValue> {
     if (key in cachedSettings && !errorIfNotSet) {
         return cachedSettings[key];
     }
@@ -123,10 +123,10 @@ export async function setSetting<K extends keyof Config>(key: K, value: Config[K
     cachedSettings[key] = value;
     return value;
 }
-export async function getAllSettings() {
-    let result: { [key in keyof Config]?: string | number | null } = {};
+export async function getAllSettings(): Promise<{[key in keyof Config]: ConfigValue}> {
+    let result: { [key in keyof Config]?: ConfigValue } = {};
     for (let key in defaultConfig) {
         result[key as keyof Config] = await getSetting(key as keyof Config, true);
     }
-    return result;
+    return result as {[key in keyof Config]: ConfigValue};
 }

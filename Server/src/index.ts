@@ -67,11 +67,12 @@ class PacketHandler {
         }
     }
     async handle(client: OurClient, data: any) {
-        let packet = this.packets[data.type];
+        let packet = this.packets[data.n];
         if (!packet) {
-            logger.log(`User ${client.data.auth.user?.username || "(not logged in)"} attempted to use non-existing packet: ${data.type}`, "packet.invalid-packet", LogLevel.WARNING);
+            logger.log(`User ${client.data.auth.user?.username || "(not logged in)"} attempted to use non-existing packet: ${data.n}`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
+        if(typeof data.r != "number") return; // hm
         if (packet.requiresAuth && !client.data.auth.authenticated) {
             console.log("Packet requires auth: " + packet.name);
             logger.log(`User attempted to use packet: ${data.type} but isn't logged in!`, "packet.invalid-packet", LogLevel.WARNING);
@@ -88,13 +89,31 @@ class PacketHandler {
         }
         if(lockdownMode && lockDownExcludedUser != client.data.auth.user?._id && packet.name != "auth") return;
         try {
-            await packet.handle(client, data);
+            let packetResponse = await packet.handle(client, data.d);
+            if(typeof packetResponse == "string") {
+                client.json({
+                    r: data.r,
+                    e: packetResponse,
+                    n: data.n
+                });
+            } else {
+                client.json({
+                    r: data.r,
+                    d: packetResponse,
+                    n: data.n
+                });
+            }
         } catch (err) {
+            client.json({
+                r: data.r,
+                e: "Internal server error. Read the server logs for more details.",
+                n: data.n
+            });
             logger.log("Packet errored. " + data.type + " " + err, "error", LogLevel.ERROR);
         }
     }
 }
-export type ServerPacketResponse<T extends Request> = Promise<RequestResponses[T] | Error | undefined>;
+export type ServerPacketResponse<T extends Request> = Promise<RequestResponses[T] | string | undefined>;
 export class Packet {
     // @ts-expect-error
     name: Request = "EXAMPLE_DONT_USE";
@@ -139,7 +158,10 @@ wss.on('connection', (_client) => {
         }
         client.send(JSON.stringify(data));
     };
-    client.requestReload = () => client.json({type: "reload"});
+    client.requestReload = () => {
+        client.json({type: "reload"});
+        return undefined;
+    }
     clients.push(client);
     client.on('error', err => {
         console.log("WS error", err);
@@ -169,7 +191,10 @@ wss.on('connection', (_client) => {
         clients.splice(clients.indexOf(client), 1);
     });
 });
-async function exit(signal?: string) {
+let exiting = false;
+export async function exit(signal?: string) {
+    if(exiting) return;
+    exiting = true;
     logger.log(`${signal ? "Recieved SIG" + signal + " - " : ""}Stopping!`, "info", LogLevel.INFO);
     await serverManager.stopAllServers();
     logger.log("All servers have been stopped, exiting", "info", LogLevel.DEBUG, true, true, true);

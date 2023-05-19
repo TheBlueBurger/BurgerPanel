@@ -16,41 +16,41 @@ export default class CreateServer extends Packet {
     permission: Permission = "servers.create";
     async handle(client: OurClient, data: any): ServerPacketResponse<"createServer"> {
         if (!data.name || data.name === "") {
-            return new Error("No name provided");
+            return "No name provided"
         }
         // Ensure the server name is unique
         if ((await servers.countDocuments({
             name: data.name
         }).exec()) > 0) {
-            return new Error("Server name already taken");
+            return "Server name already taken"
         }
         if (data.name.length > 16) {
-            return new Error("Server name is too long. It must be 16 characters or less.")
+            return "Server name is too long. It must be 16 characters or less."
         }
         // Ensure the server name is valid
         if (!data.name.match(/^[a-zA-Z0-9_]+$/)) {
-            return new Error("Server name is invalid. Only alphanumeric characters and underscores are allowed.")
+            return "Server name is invalid. Only alphanumeric characters and underscores are allowed."
         }
         let serverPath;
         if (await getSetting("serverPath") == "") {
-            return new Error("Server path is not set. Please set it in the config.")
+            return "Server path is not set. Please set it in the config."
         }
         serverPath = path.join(await getSetting("serverPath") as string, data.name);
         let version = data.version;
         if (!version) {
             version = await getSetting("defaultMCVersion");
         }
-        if(!await isValidMCVersion(version)) return new Error("Invalid version");
+        if(!await isValidMCVersion(version)) "Invalid version"
         let software = data.software;
         if (!software) {
             software = await getSetting("defaultMCSoftware");
         }
         let port = data.port;
         if (!port || typeof port !== "number" || port > 65535) {
-            return new Error("Invalid port")
+            return "Invalid port"
         }
         if (!allowedSoftwares.includes(software)) {
-            return new Error("Invalid software");
+            return "Invalid software"
         }
         logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?.username}) is creating server ${data.name} at port ${port}`, "server.create", LogLevel.INFO);
         let server = await servers.create({
@@ -69,8 +69,5 @@ export default class CreateServer extends Packet {
         return {
             server: server.toJSON()
         }
-    }
-    respond(client: OurClient, data: CreateServerS2C) {
-        client.json(data);
     }
 }

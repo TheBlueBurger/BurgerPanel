@@ -34,3 +34,4 @@ export let descriptions: { [key in keyof Config]?: string } = {
 export let disabledEditingFrontend: string[] = ["logging_"]; // if it starts with this, it will be ignored on the frontend settings page
 // Array of keys that are allowed to be read by all users
 export let allUsersAllowedToRead: (keyof Config)[] = [];
+export type ConfigValue = string | number | null | undefined;

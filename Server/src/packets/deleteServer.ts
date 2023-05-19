@@ -13,16 +13,13 @@ export default class DeleteServer extends Packet {
         // Ensure the server exists
         let server = await servers.findById(data.id).exec();
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
-            return new Error("Server does not exist")
+            return "Server does not exist"
         }
         if(!hasServerPermission(client.data.auth.user, server.toJSON(), "delete")) {
-            return new Error("No permission");
+            return "No permission"
         }
         await server.deleteOne();
         await serverManager.stopServer(server.toJSON());
         serverManager.deleteServerFromCache(server.toJSON());
-    }
-    respond(client: OurClient, data: DeleteServerS2C) {
-        client.json(data);
     }
 }

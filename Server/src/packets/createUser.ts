@@ -12,22 +12,10 @@ export default class CreateUser extends Packet {
     permission: Permission = "users.create";
     async handle(client: OurClient, data: any): ServerPacketResponse<"createUser"> {
         if(!client.data.auth.user) return;
-        if (typeof data.username == "undefined") {
-            client.json({
-                type: "createUser",
-                success: false,
-                message: "Invalid request",
-            });
-            return;
-        }
+        if (typeof data.username == "undefined") return;
         let existingUser = await users.findOne({ username: data.username }).exec();
         if (existingUser) {
-            client.json({
-                type: "createUser",
-                success: false,
-                message: "Username already exists",
-            });
-            return;
+            return "Username already exists!"
         }
         let user = await users.create({
             username: data.username,

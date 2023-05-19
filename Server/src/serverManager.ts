@@ -231,8 +231,7 @@ enforce-secure-profile=false
     private updateStatus(server: Server) {
         let status = this.getStatus(server);
         clients.filter(c => hasServerPermission(c.data.auth?.user, server, "status")).forEach(c => c.json({
-            type: "serverStatusUpdate",
-            emits: ["serverStatusUpdate-" + server._id],
+            n: "serverStatusUpdate",
             status,
             server: server._id
         }))

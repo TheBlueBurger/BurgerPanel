@@ -1,4 +1,4 @@
-import { clients, OurClient, Packet } from "../index.js";
+import { clients, OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { users } from "../db.js";
 import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
@@ -8,11 +8,11 @@ export default class DeleteUser extends Packet {
     name: Request = "deleteUser";
     requiresAuth: boolean = true;
     permission: Permission = "users.delete";
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"deleteUser"> {
         if(!client.data.auth.user) return;
         let userToDelete = await users.findById(data.id).exec();
         if (!userToDelete) {
-            return new Error("User doesnt exist");
+            return "User doesnt exist";
         }
         await userToDelete.deleteOne();
         if (data.id === client.data.auth.user._id) {

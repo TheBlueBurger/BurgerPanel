@@ -12,7 +12,6 @@ services:
       - "27017:27017"
     expose:
       - 27017
-    command: --wiredTigerCacheSizeGB 0.5
 
 volumes:
   data:

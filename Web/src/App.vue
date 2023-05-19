@@ -4,6 +4,7 @@ import type { Server } from "../../Share/Server.js";
 import type { AuthS2C } from "../../Share/Auth.js";
 import { User } from "../../Share/User";
 import EventEmitter from "./util/event";
+import sendRequest from "./util/request";
 import "./style.css";
 import Navbar from "./components/Navbar.vue";
 import { Config } from "../../Share/Config";
@@ -11,6 +12,8 @@ import { _knownSettings } from "./util/config";
 import { RouteLocationNormalized, useRouter } from "vue-router";
 import { ServerStatuses } from '../../Share/Server';
 import event from "./util/event";
+import type {RequestResponses} from "../../Share/Requests";
+
 let router = useRouter();
 let events = ref(EventEmitter);
 event.once("reload", () => {
@@ -39,6 +42,7 @@ provide("events", events);
 let queuedPackets: any[] = [];
 events.value.on("sendPacket", (data: any) => {
   if (!connected.value) {
+    console.log("Not connected, putting request in queue...")
     queuedPackets.push(data);
     return;
   }
@@ -56,15 +60,12 @@ let ws: Ref<WebSocket> = ref() as Ref<WebSocket>;
 provide("ws", ws);
 let servers = ref([] as Server[]);
 provide("servers", servers);
-let debugMessage: Ref<AuthS2C> = ref() as Ref<AuthS2C>;
 let lastID = ref(null) as Ref<string | null>;
 let pingInterval: number;
 onMounted(() => {
   pingInterval = setInterval(() => { // if we're using cloudflare, we need to ping in order to make cloudflare not explode
     if (connected.value) {
-      events.value.emit("sendPacket", {
-        type: "ping"
-      });
+      sendRequest("ping")
     }
   }, 30_000);
 });
@@ -75,15 +76,16 @@ onUnmounted(() => {
 function initWS() {
   ws.value = new WebSocket(API_URL.replace("http", "ws"));
   ws.value.addEventListener("open", () => {
+    connected.value = true;
     console.log("open event: connected with readystate " + ws.value.readyState)
     events.value.emit("connected");
+    queuedPackets = [];
     if (localStorage.getItem("token")) {
       token.value = localStorage.getItem("token") || "";
       login(true);
     } else {
       showLoginScreen.value = true;
     }
-    connected.value = true;
   });
   ws.value.addEventListener("close", () => {
     connected.value = false;
@@ -95,55 +97,44 @@ function initWS() {
   ws.value.addEventListener("message", (e) => {
     let data = JSON.parse(e.data);
     events.value.emit("packetRecieved", data);
-    events.value.emit(data.type, data);
+    events.value.emit(data.r, data);
+    events.value.emit(data.n, data);
     if (data.emits) {
       for (let emit of data.emits) {
         events.value.emit(emit, data);
       }
     }
-    if (data.type == "auth") {
-      let authPacket = data as AuthS2C;
-      if (authPacket.success) {
-        if (!authPacket.user) {
-          console.log("User doesn't exist, but login was successful. Probably already authenticated.");
-          return;
-        }
-        queuedPackets.forEach(queuedPacket => {
-          ws.value.send(JSON.stringify(queuedPacket));
-        });
-        loginStatus.value = authPacket.user;
-        console.log("Logged in as " + authPacket.user.username);
-        localStorage.setItem("token", authPacket.user.token);
-        servers.value = authPacket.servers as any;
-        debugMessage.value = authPacket;
-        if (lastID.value != authPacket.user._id) createNotification("Welcome, " + authPacket.user.username + "!");
-        lastID.value = authPacket.user._id;
-        if (authPacket.statuses) serverStatuses.value = authPacket.statuses;
-      }
-    } else if (data.type == "error") {
-      alert("Error: " + data.message);
-    }
   });
 }
 
 initWS();
-function login(usingToken: boolean = false) {
+async function login(usingToken: boolean = false) {
+  let authResp: RequestResponses["auth"];
   if(usingTokenLogin.value || usingToken) {
-    ws.value.send(
-      JSON.stringify({
-        type: "auth",
-        token: token.value,
-      })
-    );
+    authResp = await sendRequest("auth", {
+      token: token.value
+    });
   } else {
-    ws.value.send(
-      JSON.stringify({
-        type: "auth",
-        username: loginUsername.value,
-        password: loginPassword.value
-      }));
-    
+    authResp = await sendRequest("auth", {
+      username: loginUsername.value,
+      password: loginPassword.value
+    })
   }
+  if (!authResp.user) {
+    console.log("User doesn't exist, but login was successful. Probably already authenticated.");
+    return;
+  }
+  loginStatus.value = authResp.user;
+  console.log("Logged in as " + authResp.user.username);
+  localStorage.setItem("token", authResp.user.token);
+  if(authResp.servers) servers.value = authResp.servers;
+  if (lastID.value != authResp.user._id) createNotification("Welcome, " + authResp.user.username + "!");
+  lastID.value = authResp.user._id;
+  if (authResp.statuses) serverStatuses.value = authResp.statuses;
+  queuedPackets.forEach(queuedPacket => {
+  console.log("Sending queued request", queuedPacket)
+    ws.value.send(JSON.stringify(queuedPacket));
+  });
 }
 let token = ref("");
 let loginStatus: Ref<User | null> = ref() as Ref<User | null>;
@@ -229,7 +220,7 @@ event.on("serverStatusUpdate", d => {
   }
 })
 event.on("getAllServers", data => {
-  serverStatuses.value = data.statuses;
+  serverStatuses.value = data.d.statuses;
 });
 watch(loginStatus, l => {
   if (l?.setupPending) {
@@ -242,7 +233,7 @@ let loginPassword = ref("");
 </script>
 
 <template>
-  <Navbar :events="events" :login-status="loginStatus" @logout="logout" />
+  <Navbar />
   <div v-if="loginStatus?.username">
     <RouterView></RouterView>
     <div class="notification" v-for="notification in notifications">
