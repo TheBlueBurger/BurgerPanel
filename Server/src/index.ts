@@ -159,7 +159,7 @@ wss.on('connection', (_client) => {
         client.send(JSON.stringify(data));
     };
     client.requestReload = () => {
-        client.json({type: "reload"});
+        client.json({n: "reload"});
         return undefined;
     }
     clients.push(client);
