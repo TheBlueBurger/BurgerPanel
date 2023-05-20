@@ -1,4 +1,4 @@
-import { OurClient, Packet } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import { IDs } from "../../../Share/Logging.js";
@@ -9,7 +9,7 @@ export default class Logging extends Packet {
     name: Request = "logging";
     requiresAuth: boolean = true;
     permission: Permission = "settings.logging.set";
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"logging"> {
         if(data.setLoggingTypeEnabled) {
             if(!IDs.includes(data.id)) return;
             if(typeof data.enabled != "boolean") return;

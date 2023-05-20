@@ -1,4 +1,4 @@
-import { OurClient, Packet } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { users } from "../db.js";
 import { User } from "../../../Share/User.js";
 import { Permission } from "../../../Share/Permission.js";
@@ -9,7 +9,7 @@ export default class GetUserToken extends Packet {
     name: Request = "getUserToken";
     requiresAuth: boolean = true;
     permission: Permission = "users.token.read";
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"getUserToken"> {
         let userID = data.id;
         if (!userID) return;
         let user: User | undefined;
