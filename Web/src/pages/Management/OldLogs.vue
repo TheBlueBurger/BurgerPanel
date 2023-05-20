@@ -15,7 +15,8 @@ let props = defineProps({
 })
 onMounted(async () => {
     server.value = await getServerByID(cachedServers.value, props.server);
-    if(viewingLog) getLogs(viewingLog.value?.toString() || "");
+    if(viewingLog.value) getLog(viewingLog.value?.toString() || "");
+    else titleManager.setTitle("Logs in " + server.value.name)
     let resp = await sendRequest("serverLogs", {
         id: props.server,
         list: true
@@ -32,10 +33,10 @@ let viewingLog = computed(() => {
 watch(() => viewingLog.value, async (val) => {
     let str = val?.toString();
     if(str) {
-        getLogs(str)
-    }
+        getLog(str)
+    } else titleManager.setTitle("Logs in " + server.value.name)
 });
-async function getLogs(logName: string) {
+async function getLog(logName: string) {
     titleManager.setTitle(`${logName} in ${server.value.name}`);
     console.log("Getting", logName)
     if(!logName) return;
