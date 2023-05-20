@@ -14,6 +14,7 @@ onUnmounted(() => {
 let perf: Ref<ServerPerformancePacketS2C | null> = ref() as Ref<ServerPerformancePacketS2C | null>;
 async function getAndSetPerf() {
     if (typeof loginStatus?.value?.username == "string") { // logged in
+        if(!hasPermission(loginStatus.value, "performance.view")) return;
         perf.value = await sendRequest("serverPerformance");
     }
 }
