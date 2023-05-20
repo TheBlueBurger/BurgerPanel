@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "buildRelease": "node makeRelease.mjs",
+    "releaseTest": "node makeRelease.mjs && cd _build && node burgerpanel.mjs",
     "start": "BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js",
     "dev": "npm run build && npm run startInspect",
     "startInspect": "NODE_OPTIONS=\"--inspect\" BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js"
