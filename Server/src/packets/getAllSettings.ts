@@ -1,27 +1,14 @@
-import { OurClient, Packet } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { getAllSettings } from "../config.js";
 import { Permission } from "../../../Share/Permission.js";
+import { Request } from "../../../Share/Requests.js";
 
 export default class GetAllSettings extends Packet {
-    name: string = "getAllSettings";
+    name: Request = "getAllSettings";
     requiresAuth: boolean = true;
     permission: Permission = "settings.read";
-    async handle(client: OurClient, data: any) {
-        let val;
-        try {
-            val = await getAllSettings();
-        } catch (err) {
-            client.json({
-                type: "getAllSettings",
-                success: false,
-                message: (err as any)?.message,
-            });
-            return;
-        }
-        client.json({
-            type: "getAllSettings",
-            success: true,
-            settings: val,
-        });
+    async handle(client: OurClient, data: any): ServerPacketResponse<"getAllSettings"> {
+        let val = await getAllSettings();
+        return val;
     }
 }

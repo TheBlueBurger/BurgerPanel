@@ -6,6 +6,7 @@ import TextInput from '../components/TextInput.vue';
 import event from '../util/event';
 import { Server } from '../../../Share/Server';
 import { hasPermission } from '../../../Share/Permission';
+import sendRequest from '../util/request';
 
 let router = useRouter();
 let servers = inject("servers") as Ref<Server[]>;
@@ -16,14 +17,12 @@ if(!user.value.setupPending) {
     });
 }
 async function changePassword(password: string) {
-    event.emit("sendPacket", {
-        type: "editUser",
+    await sendRequest("editUser", {
         id: user.value._id,
         action: "changePassword",
         password
-    });
-    let resp = await event.awaitEvent("editUser-" + user.value._id);
-    event.emit("createNotification", resp.success ? "Your password has been changed!" : ("Error: " + resp.message));
+    })
+    event.emit("createNotification", "Your password has been changed!");
 }
 let usedFormat: Ref<['days' | 'hour' | 'minute' | 'second', number]> = computed(() => { // there has to be a better way to do this
     let msDiff = Date.now() - new Date(user.value.createdAt).getTime();
@@ -44,19 +43,15 @@ let usedFormat: Ref<['days' | 'hour' | 'minute' | 'second', number]> = computed(
 function gotoCB() {
     let cbQuery = router.currentRoute.value.query.cb;
     if(cbQuery) cbQuery = cbQuery.toString();
+    console.log("Pushing",cbQuery ?? "/")
     router.push(cbQuery ?? "/");
 }
 async function finish() {
-    event.emit("sendPacket", {
-        type: "editUser",
+    await sendRequest("editUser", {
         id: user.value._id,
         action: "finishSetup"
     });
-    let resp = await event.awaitEvent("editUser-" + user.value._id);
-    if(!resp.success) {
-        event.emit("createNotification", resp.message);
-        return;
-    }
+    console.log("here")
     gotoCB();
 }
 </script>

@@ -4,7 +4,7 @@
     import getServerByID from '../../util/getServerByID';
     import event from '../../util/event';
     import { useRouter } from 'vue-router';
-    let i = ref(0);
+import sendRequest from '../../util/request';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -30,17 +30,13 @@
     })
     let fileData = ref("");
     async function readFile() {
-        i.value++;
         fileData.value = "Loading...";
-        event.emit("sendPacket", {
-            type: "serverFiles",
+        let resp = await sendRequest("serverFiles", {
             id: props.server,
             path: path.value,
             action: "read",
-            i: i.value
-        });
-        let resp = await event.awaitEvent("serverFiles-file-data-" + i.value);
-        if(!resp.success) event.emit("createNotification", resp.message);
+        })
+        if(resp.type != "data") return;
         fileData.value = resp.fileData;
     }
     let files = ref() as Ref<undefined | {
@@ -56,14 +52,12 @@
         finishedLoading.value = true;
     });
     async function getFiles() {
-        event.emit("sendPacket", {
-            type: "serverFiles",
+        let resp = await sendRequest("serverFiles", {
             id: props.server,
             path: path.value,
             action: "files"
         });
-        let resp = await event.awaitEvent("serverFiles");
-        if(!resp.success) return; // hmm
+        if(resp.type != "filelist") return;
         files.value = resp.files;
         files.value = files.value?.sort((file, lastFile) => {
             return (lastFile.folder?1:0) - (file.folder?1:0);

@@ -11,6 +11,7 @@ import { once } from "node:events";
 import serverManager from './serverManager.js';
 import { servers, users } from './db.js';
 import { Permission } from '../../Share/Permission.js';
+import { Request, RequestResponses } from '../../Share/Requests.js';
 import hasPermission from './util/permission.js';
 import logger, { LogLevel } from './logger.js';
 
@@ -22,19 +23,19 @@ if(!isProd) app.use((req, res, next) => {
 })
 let httpServer = http.createServer(app);
 let wss = new WebSocketServer({ server: httpServer });
-app.use((req, res, next) => {
+if(!isProd) app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     next();
 });
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 if(isProd) {
     app.use(express.static(path.join(__dirname, "Web")));
-    app.use((req, res) => {
+    app.use((_, res) => {
         res.sendFile(path.join(__dirname, "Web", "index.html"));
     });
 } else {
     app.use(express.static(path.join(__dirname, "..", "..", "..", "public")));
-    app.use((req, res) => {
+    app.use((_, res) => {
         res.sendFile(path.join(__dirname, "..", "..", "..", "public", "index.html"));
     })
 }
@@ -66,41 +67,63 @@ class PacketHandler {
         }
     }
     async handle(client: OurClient, data: any) {
-        let packet = this.packets[data.type];
+        let packet = this.packets[data.n];
         if (!packet) {
-            logger.log(`User ${client.data.auth.user?.username || "(not logged in)"} attempted to use non-existing packet: ${data.type}`, "packet.invalid-packet", LogLevel.WARNING);
+            logger.log(`User ${client.data.auth.user?.username || "(not logged in)"} attempted to use non-existing packet: ${data.n}`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
+        if(typeof data.r != "number") return; // hm
         if (packet.requiresAuth && !client.data.auth.authenticated) {
             console.log("Packet requires auth: " + packet.name);
-            logger.log(`User attempted to use packet: ${data.type} but isn't logged in!`, "packet.invalid-packet", LogLevel.WARNING);
+            logger.log(`User attempted to use packet: ${data.n} but isn't logged in!`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
         if(packet.permission && !hasPermission(client.data.auth?.user, packet.permission)) {
+            logger.log(`User attempted to use packet: ${data.n} but doesn't have the perm required!`, "packet.invalid-packet", LogLevel.WARNING);
             client.json({
-                type: data.type,
-                success: false,
-                message: "No permission",
+                r: data.r,
+                e: "You do not have permission to use this packet!",
+                n: data.n
             });
-            logger.log(`User attempted to use packet: ${data.type} but doesn't have the perm required!`, "packet.invalid-packet", LogLevel.WARNING);
             return;
         }
         if(lockdownMode && lockDownExcludedUser != client.data.auth.user?._id && packet.name != "auth") return;
         try {
-            await packet.handle(client, data);
+            let packetResponse = await packet.handle(client, data.d);
+            if(typeof packetResponse == "string") {
+                client.json({
+                    r: data.r,
+                    e: packetResponse,
+                    n: data.n
+                });
+            } else {
+                client.json({
+                    r: data.r,
+                    d: packetResponse,
+                    n: data.n
+                });
+            }
         } catch (err) {
+            client.json({
+                r: data.r,
+                e: "Internal server error. Read the server logs for more details.",
+                n: data.n
+            });
             logger.log("Packet errored. " + data.type + " " + err, "error", LogLevel.ERROR);
         }
     }
 }
+export type ServerPacketResponse<T extends Request> = Promise<RequestResponses[T] | string | undefined>;
 export class Packet {
-    name: string = "EXAMPLE_DONT_USE";
+    // @ts-expect-error
+    name: Request = "EXAMPLE_DONT_USE";
     requiresAuth: boolean = true;
     requiresAdmin: boolean = false;
     permission: Permission | null = null;
     constructor() {
     }
-    handle(client: OurClient, data: any) {
+    // @ts-expect-error
+    async handle(client: OurClient, data: any): ServerPacketResponse<""> {
         throw new Error("Packet not implemented");
     }
 }
@@ -114,6 +137,7 @@ export interface OurClient extends WebSocket {
         }
     },
     json: (data: any) => void,
+    requestReload: () => undefined
 };
 let packetHandler = new PacketHandler();
 let logging = false;
@@ -125,17 +149,20 @@ wss.on('connection', (_client) => {
     let client: OurClient = _client as OurClient;
     client.data = {
         auth: {
-            token: undefined,
             authenticated: false,
         }
     };
-    clients.push(client);
     client.json = (data: any) => {
         if (logging && !loggingIgnore.includes(data.type)) {
             console.log("SEND", data);
         }
         client.send(JSON.stringify(data));
     };
+    client.requestReload = () => {
+        client.json({n: "reload"});
+        return undefined;
+    }
+    clients.push(client);
     client.on('error', err => {
         console.log("WS error", err);
         serverManager.handleDisconnect(client);
@@ -164,7 +191,10 @@ wss.on('connection', (_client) => {
         clients.splice(clients.indexOf(client), 1);
     });
 });
-async function exit(signal?: string) {
+let exiting = false;
+export async function exit(signal?: string) {
+    if(exiting) return;
+    exiting = true;
     logger.log(`${signal ? "Recieved SIG" + signal + " - " : ""}Stopping!`, "info", LogLevel.INFO);
     await serverManager.stopAllServers();
     logger.log("All servers have been stopped, exiting", "info", LogLevel.DEBUG, true, true, true);

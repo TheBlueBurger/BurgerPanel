@@ -1,38 +1,22 @@
-import { OurClient, Packet } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { servers } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
+import { Request } from "../../../Share/Requests.js";
 
 export default class KillServer extends Packet {
-    name: string = "killServer";
+    name: Request = "killServer";
     requiresAuth: boolean = true;
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"killServer"> {
         let server = await servers.findById(data.id).exec();
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
-            client.json({
-                type: "killServer",
-                success: false,
-                message: "Server not found"
-            });
-            return;
+            return "Not found"
         }
         if(!hasServerPermission(client.data.auth.user, server.toJSON(), "kill")) {
-            client.json({
-                type: "stopServer",
-                success: false,
-                message: "You cannot kill this server.",
-                emits: ["server-killed-" + data.id]
-            });
-            return;
+            return "You cant kill this server";
         }
         logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is killing ${server.name} (${server._id})`, "server.kill", LogLevel.WARNING);
         await serverManager.killServer(server?.toJSON());
-        client.json({
-            type: "killServer",
-            success: true,
-            server,
-            emits: ["server-killed-" + data.id]
-        });
     }
 }

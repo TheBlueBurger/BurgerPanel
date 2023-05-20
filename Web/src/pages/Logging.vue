@@ -4,6 +4,7 @@
     import { IDs } from "../../../Share/Logging";
     import TextInput from '../components/TextInput.vue';
     import event from '../util/event';
+import sendRequest from '../util/request';
     let logPath = ref("");
     let webhookURL = ref("");
     let finishedLoading = ref(false);
@@ -21,36 +22,27 @@
         return disabledLogs.value.includes(id);
     }
     async function setWebhookURL(url: string) {
-        event.emit("sendPacket", {
-            type: "logging",
+        await sendRequest("logging", {
             setWebhookURL: true,
             url
-        });
+        }).catch(alert);
         initialEditing = false;
-        let resp = await event.awaitEvent("logging");
-        if(!resp) return alert(resp.message);
         await load(true);
     }
     async function setLogPath(path: string) {
-        event.emit("sendPacket", {
-            type: "logging",
+        await sendRequest("logging", {
             setLogFileLocation: true,
             location: path
-        });
+        }).catch(alert);
         initialEditing = false;
-        let resp = await event.awaitEvent("logging");
-        if(!resp) return alert(resp.message);
-        await load(true);
     }
     async function toggle(id: typeof IDs[number]) {
-        event.emit("sendPacket", {
-            type: "logging",
+        await sendRequest("logging", {
+            setLogFileLocation: true,
             setLoggingTypeEnabled: true,
             id,
             enabled: isDisabled(id)
-        });
-        let resp = await event.awaitEvent("logging");
-        if(!resp) return alert(resp.message);
+        }).catch(alert);
         await load(true);
     }
     let initialEditing = false;

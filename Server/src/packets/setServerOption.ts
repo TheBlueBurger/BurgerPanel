@@ -1,37 +1,26 @@
-import { OurClient, Packet } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { servers, users } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
 import { hasPermission, ServerPermissions, DefaultServerProfiles, _ServerPermissions } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
+import { Request } from "../../../Share/Requests.js";
 
 export default class SetServerOption extends Packet {
-    name: string = "setServerOption";
+    name: Request = "setServerOption";
     requiresAuth: boolean = true;
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"setServerOption"> {
         if (!data.id) return;
         let server = await servers.findById(data.id).exec();
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
-            client.json({
-                type: "setServerOption",
-                success: false,
-                message: "Server not found",
-                emits: ["setServerOption-" + data.id]
-            });
-            return;
+            return "Server not found";
         }
         if (data.name && typeof data.name == "string" && data.name.length < 25 && data.name.length > 0) {
             // Check if the name is already taken
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the name of ${server.name} (${server._id}) to ${data.name}`, "server.change-name");
             let serverWithSameName = await servers.findOne({ name: data.name }).exec();
             if (serverWithSameName) {
-                client.json({
-                    type: "setServerOption",
-                    success: false,
-                    message: "Server name already taken",
-                    emits: ["setServerOption-" + data.id]
-                });
-                return;
+                return "Already taken";
             }
             server.name = data.name;
         }
@@ -46,13 +35,7 @@ export default class SetServerOption extends Packet {
                         // Ensure it's a valid user and not already added
                         if(!data?.allowedUsers?.user) return;
                         if(server.allowedUsers.some(au => au.user == data?.allowedUsers?.user)) {
-                            client.json({
-                                type: "setServerOption",
-                                success: false,
-                                message: "Already added",
-                                emits: ["setServerOption-" + data.id]
-                            });
-                            return;
+                            return "Already added!"
                         }
                         let newUser = await users.findById(data.allowedUsers.user).exec();
                         if(!newUser) return;
@@ -70,13 +53,7 @@ export default class SetServerOption extends Packet {
                             return !hasServerPermission(client.data.auth.user, server.toJSON(), perm as ServerPermissions);
                         })) {
                             // user to remove has perms which the user trying to remove does not have, deny them
-                            client.json({
-                                type: "setServerOption",
-                                success: false,
-                                message: "Cannot remove user with higher perms than you",
-                                emits: ["setServerOption-" + data.id]
-                            });
-                            return;
+                            return "Cannot remove user with higher perms than you";
                         }
                         logger.log(`User ${client.data.auth.user?.username} removed user ${userToRemove.username} from the server ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
                         server.allowedUsers = server.allowedUsers.filter(au => au.user != userToRemove);
@@ -125,22 +102,9 @@ export default class SetServerOption extends Packet {
                         return au;
                     });
                     logger.log(`${client.data.auth.user?.username} set applied profile ${profileName} of ${userToApplyProfile.username} in ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
-                    client.json({
-                        type: "setServerOption",
-                        success: true,
-                        server: server.toJSON()
-                    });
             }
         }
-        if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port") && !serverManager.serverIsRunning(server.toJSON())) {
-            if(serverManager.serverIsRunning(server.toJSON())) {
-                client.json({
-                    type: "setServerOption",
-                    success: true,
-                    server: server.toJSON(),
-                    emits: ["setServerOption-" + server._id.toHexString()]
-                });
-            }
+        if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port")) {
             server.port = data.port;
         }
         if (typeof data.autoStart == "boolean" && hasServerPermission(client.data.auth.user, server.toJSON(), "set.autostart")) {
@@ -151,44 +115,21 @@ export default class SetServerOption extends Packet {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto restart of ${server.name} (${server._id}) to ${data.autoRestart}`, "server.autostart.change");
             server.autoRestart = data.autoRestart;
         }
-        try {
-            await server.save(); // DO NOT MOVE THIS LINE DOWN. FUNCTIONS BELOW WILL AUTOMATICALLY SAVE THE SERVER AND WILL CAUSE CHAOS
-        } catch(err) {
-            client.json({
-                type: "setServerOption",
-                success: false,
-                message: "Failed to save new server: " + (err as any)?.message,
-                emits: ["setServerOption-" + data.id]
-            });
-            return;
-        }
+        await server.save(); // DO NOT MOVE THIS LINE DOWN. FUNCTIONS BELOW WILL AUTOMATICALLY SAVE THE SERVER AND WILL CAUSE CHAOS
         if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port")) {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the port of ${server.name} (${server._id}) to ${data.port}`, "server.port", LogLevel.INFO);
             await serverManager.changePort(server.toJSON(), data.port);
         }
-        if (data.software) {
+        if (data.software && hasServerPermission(client.data.auth.user, server.toJSON(), "set.software")) {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the software of ${server.name} (${server._id}) to ${data.software}`, "server.software", LogLevel.INFO);
-            try {
-                await serverManager.editSoftware(server.toJSON(), data.software);
-            } catch(err) {
-                client.json({
-                    type: "setServerOption",
-                    success: false,
-                    server,
-                    message: err,
-                    emits: ["setServerOption-" + data.id]
-                });
-            }
+            await serverManager.editSoftware(server.toJSON(), data.software);
         }
-        if (data.version) {
+        if (data.version && hasServerPermission(client.data.auth.user, server.toJSON(), "set.version")) {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the version of ${server.name} (${server._id}) to ${data.version}`, "server.version", LogLevel.INFO);
             await serverManager.editVersion(server.toJSON(), data.version);
         }
-        client.json({
-            type: "setServerOption",
-            success: true,
-            server,
-            emits: ["setServerOption-" + data.id]
-        });
+        return {
+            server: server.toJSON()
+        }
     }
 }

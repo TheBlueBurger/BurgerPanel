@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { hasPermission, hasServerPermission, Permission, ServerPermissions } from '../../../../Share/Permission';
-import { Server } from '../../../../Share/Server';
+import { hasPermission, hasServerPermission } from '../../../../Share/Permission';
+import { Server, ServerStatuses } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import events from '../../util/event';
 import getServerByID from '../../util/getServerByID';
 import getUsers from '../../util/getUsers';
 import TextInput from '../../components/TextInput.vue';
+import sendRequest from '../../util/request';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
@@ -15,6 +16,7 @@ let props = defineProps<{
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User | null>
 let users = inject("users") as Ref<Map<string, User>>;
+let serverStatuses = inject("statuses") as Ref<ServerStatuses>;
 onMounted(async () => {
     try {
         server.value = await getServerByID(null, props.server);
@@ -30,99 +32,45 @@ onMounted(async () => {
 });
 async function renameServer(newName: string) {
     if(newName) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            name: newName
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server name changed to '${newName}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server name: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, name: newName})).server;
+        events.emit("createNotification", `Server name changed to '${newName}'`)
     }
 }
 async function changeMemory(newMem: string) {
     if(newMem && !isNaN(parseInt(newMem))) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            mem: parseInt(newMem)
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server memory changed to '${newMem}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server memory: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, mem: parseInt(newMem)})).server;
+        events.emit("createNotification", `Server name changed to '${newMem}'`)
     }
 }
 async function changeVersion(newVersion: string) {
     if(newVersion) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            version: newVersion
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server version changed to '${newVersion}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server version: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, version: newVersion})).server;
+        events.emit("createNotification", `Server version changed to '${newVersion}'`)
     }
 }
 async function changeSoftware(newSoftware: string) {
     if(newSoftware) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            software: newSoftware
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server software changed to '${newSoftware}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server software: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, version: newSoftware})).server;
+        events.emit("createNotification", `Server software changed to '${newSoftware}'`)
     }
 }
 async function changePort(newPort: string) {
     if(newPort) {
-        events.emit("sendPacket", {
-            type: "setServerOption",
-            id: props.server,
-            port: newPort
-        });
-        let resp = await events.awaitEvent("setServerOption-" + props.server);
-        if(resp?.success) {
-            events.emit("createNotification", `Server port changed to '${newPort}'`);
-            server.value = await getServerByID(null, props.server);
-        } else {
-            alert("Failed to change server port: " + resp.message);
-        }
+        server.value = (await sendRequest("setServerOption", {id: props.server, port: newPort})).server;
+        events.emit("createNotification", `Server port changed to '${newPort}'`)
     }
 }
 async function removeUser(user: string) {
     if(server?.value?.allowedUsers?.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
     if(!confirm("Are you sure you want to remove this user from the server?")) return;
-    events.emit("sendPacket", {
-        type: "setServerOption",
+    let resp = await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
             action: "remove",
             user: user
         }
     });
-    let resp = await events.awaitEvent("setServerOption-" + props.server);
-    if(!resp.success) events.emit("createNotification", resp.message);
-    server.value = await getServerByID(null, props.server);
-    console.log(server.value)
+    server.value = resp.server;
 }
 async function addUser() {
     let newUserID: string | null | undefined = prompt("Enter the ID or username of the user you want to add.");
@@ -140,17 +88,14 @@ async function addUser() {
 }
 
 async function addUserByID(id: string) {
-    events.emit("sendPacket", {
-        type: "setServerOption",
+    let resp = await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
             action: "add",
             user: id
         }
-    });
-    let resp = await events.awaitEvent("setServerOption-" + props.server);
-    if(!resp.success) events.emit("createNotification", resp.message);
-    server.value = await getServerByID(null, props.server);
+    })
+    server.value = resp.server;
 }
 
 async function getUserlist() {
@@ -163,50 +108,27 @@ function getUserInfo(id: string) {
 
 async function deleteServer() {
   if (prompt("Are you sure you want to delete this server and ALL files? This cannot be undone. Type 'DELETE' to delete.") == "DELETE") {
-    events.emit("sendPacket", {
-      type: "deleteServer",
-      id: props.server
+    await sendRequest("deleteServer", {
+        id: props.server
     });
-    let resp = await events.awaitEvent("server-deleted-" + props.server);
-    if (resp?.success) {
-      alert("Server deleted. For security reasons, you will need to delete the server folder manually. The folder is located at " + server.value?.path + ".");
-      events.emit("createNotification", `Server '${server.value?.name}' deleted.`);
-      router.push("/manage");
-    } else {
-      alert("Failed to delete server: " + resp.message);
-    }
+    alert("Server deleted. For security reasons, you will need to delete the server folder manually. The folder is located at " + server.value?.path + ".");
+    router.push("/manage");
   }
 }
 
 async function changeAutoStart() {
-    console.log(server.value?.autoStart);
-    events.emit("sendPacket", {
-        type: "setServerOption",
+    server.value = (await sendRequest("setServerOption", {
         id: props.server,
         autoStart: !server.value?.autoStart
-    });
-    let resp = await events.awaitEvent("setServerOption-" + props.server);
-    if (resp?.success) {
-        events.emit("createNotification", `Server auto start changed to '${!server.value?.autoStart}'`);
-        server.value = await getServerByID(null, props.server);
-    } else {
-        alert("Failed to change server auto start: " + resp.message);
-    }
+    })).server;
+    events.emit("createNotification", `Server auto start ${server.value.autoStart ? "enabled" : "disabled"}'`);
 }
 async function changeAutoRestart() {
-    console.log(server.value?.autoStart);
-    events.emit("sendPacket", {
-        type: "setServerOption",
+    server.value = (await sendRequest("setServerOption", {
         id: props.server,
         autoRestart: !server.value?.autoRestart
-    });
-    let resp = await events.awaitEvent("setServerOption-" + props.server);
-    if (resp?.success) {
-        events.emit("createNotification", `Server auto restart changed to '${!server.value?.autoRestart}'`);
-        server.value = await getServerByID(null, props.server);
-    } else {
-        alert("Failed to change server auto restart: " + resp.message);
-    }
+    })).server;
+    events.emit("createNotification", `Server auto restart ${server.value.autoRestart ? "enabled" : "disabled"}'`);
 }
 </script>
 
@@ -234,21 +156,21 @@ async function changeAutoRestart() {
     }">
         <button>Edit Files</button>
     </RouterLink><br/><hr/>
-    Server name: <TextInput :default="server.name" @set="renameServer" />
+    Server name: <TextInput :default="server.name" @set="renameServer" :force-disabled="!hasServerPermission(loginStatus, server, 'set.name')" />
     <br />
     Server path: {{ server.path }} (Read only)
     <br />
-    Memory (MB): <TextInput :default="server.mem.toString()" @set="changeMemory" />
+    Memory (MB): <TextInput :default="server.mem.toString()" @set="changeMemory" :force-disabled="!hasServerPermission(loginStatus, server, 'set.mem')" />
     <br />
-    Version: <TextInput :default="server.version" @set="changeVersion" />
+    Version: <TextInput :default="server.version" @set="changeVersion" :force-disabled="!hasServerPermission(loginStatus, server, 'set.version')" />
     <br />
-    Software: <TextInput :default="server.software" @set="changeSoftware" />
+    Software: <TextInput :default="server.software" @set="changeSoftware" :force-disabled="!hasServerPermission(loginStatus, server, 'set.software')" />
     <br />
-    Port: <TextInput :default="server.port.toString()" @set="changePort" />
+    Port: <TextInput :default="server.port.toString()" @set="changePort" :force-disabled="!hasServerPermission(loginStatus, server, 'set.port')" />
     <br />
-    Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart">Change</button>
+    Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart" :disabled="!hasServerPermission(loginStatus, server, 'set.autostart')">Change</button>
     <br />
-    Auto restart: {{ server.autoRestart ? "Yes" : "No" }} <button @click="changeAutoRestart">Change</button>
+    Auto restart: {{ server.autoRestart ? "Yes" : "No" }} <button @click="changeAutoRestart" :disabled="!hasServerPermission(loginStatus, server, 'set.autorestart')">Change</button>
     <div v-if="hasPermission(loginStatus, 'users.view')">
         <hr />
         <h3>Allowed users</h3>

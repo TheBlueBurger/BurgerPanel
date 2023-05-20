@@ -1,4 +1,4 @@
-import { OurClient, Packet, lockDownExcludedUser, lockdownMode } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse, lockDownExcludedUser, lockdownMode } from "../index.js";
 import { servers, users } from "../db.js";
 import type { AuthS2C } from "../../../Share/Auth.js"
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
@@ -6,64 +6,38 @@ import logger, { LogLevel } from "../logger.js";
 import { ServerStatuses } from "../../../Share/Server.js";
 import { hasServerPermission } from "../util/permission.js";
 import makeHash from "../util/makeHash.js";
+import { Request } from "../../../Share/Requests.js";
 
 export default class Auth extends Packet {
-    name: string = "auth";
+    name: Request = "auth";
     requiresAuth: boolean = false;
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"auth"> {
         if (client.data.auth?.authenticated) {
-            this.respond(client, {
-                type: "auth",
-                success: true,
-                alreadyAuthenticated: true
-            });
-            return;
+            if(!client.data.auth.user) throw new Error("Huh. client.data.auth.authenticated is true but client.data.auth.user doesn't exist?");
+            return {
+                user: client.data.auth.user
+            }
         } else {
             if (!data.token) {
                 if(!data.username || !data.password) {
-                    this.respond(client, {
-                        type: "auth",
-                        success: false,
-                        message: "Missing username, password and token!",
-                        emits: ["loginFailed"]
-                    });
+                    return "Missing username, password and token!";
                 }
                 if(typeof data.username != "string" || typeof data.password != "string") return;
                 try {
                     client.data.auth.user = (await users.findOne({ username: data.username, password: makeHash(data.password) }).exec())?.toJSON();
                 } catch {
-                    this.respond(client, {
-                        type: "auth",
-                        success: false,
-                        message: "Invalid username or password",
-                        emits: ["loginFailed"]
-                    });
-                    logger.log("Failed login attempt! (using name/pass) for name: " + data.username, "login.fail", LogLevel.WARNING);
-                    return;
+                    return "Invalid username or password";
                 }
             } else {
                 try {
                     client.data.auth.user = (await users.findOne({ token: data.token }).exec())?.toJSON();
                 } catch {
-                    this.respond(client, {
-                        type: "auth",
-                        success: false,
-                        message: "Invalid token",
-                        emits: ["loginFailed"]
-                    });
-                    logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);
-                    return;
+                    return "Token is invalid";
                 }
             }
             if (!client.data.auth.user) {
-                this.respond(client, {
-                    type: "auth",
-                    success: false,
-                    message: "Login failed",
-                    emits: ["loginFailed"]
-                });
                 logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);
-                return;
+                return "Login failed!";
             }
             if(lockdownMode && lockDownExcludedUser != client.data.auth.user._id) return;
             client.data.auth.authenticated = true;
@@ -81,17 +55,12 @@ export default class Auth extends Packet {
                     status: hasServerPermission(client.data.auth.user, server.toJSON(), "status") ? serverManager.getStatus(server.toJSON()) : "unknown"
                 }
             });
-            this.respond(client, {
-                type: "auth",
-                success: true,
+            logger.log(`User ${client.data.auth.user.username} (${client.data.auth.user._id}) logged in.`, "login.success", LogLevel.INFO);
+            return {
                 user: client.data.auth.user,
                 servers: allowedServers.map(s => s.toJSON()),
                 statuses
-            });
-            logger.log(`User ${client.data.auth.user.username} (${client.data.auth.user._id}) logged in.`, "login.success", LogLevel.INFO);
+            }
         }
-    }
-    respond(client: OurClient, data: AuthS2C) {
-        client.json(data);
     }
 }

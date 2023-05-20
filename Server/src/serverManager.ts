@@ -1,4 +1,4 @@
-import { allowedSoftwares, Server } from "../../Share/Server.js"
+import { allowedSoftwares, Server, ServerStatus } from "../../Share/Server.js"
 import { clients, OurClient } from "./index.js"
 import { ChildProcess, spawn } from "node:child_process"
 import { User } from "../../Share/User.js";
@@ -231,13 +231,12 @@ enforce-secure-profile=false
     private updateStatus(server: Server) {
         let status = this.getStatus(server);
         clients.filter(c => hasServerPermission(c.data.auth?.user, server, "status")).forEach(c => c.json({
-            type: "serverStatusUpdate",
-            emits: ["serverStatusUpdate-" + server._id],
+            n: "serverStatusUpdate",
             status,
             server: server._id
         }))
     }
-    getStatus(server: Server) {
+    getStatus(server: Server): ServerStatus {
         return this.servers[server._id.toString()]?.childProcess ? "running" : "stopped";
     }
     serverIsRunning(server: Server) {

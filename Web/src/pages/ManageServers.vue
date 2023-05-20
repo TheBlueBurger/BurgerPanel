@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted, watch } from 'vue';
-import { Server } from '../../../Share/Server';
+import { Server, allowedSoftwares } from '../../../Share/Server';
 import { User } from '../../../Share/User';
 import EventEmitter from '../util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
 import { getSetting } from '../util/config';
 import { hasPermission } from '../../../Share/Permission';
 import ServerStatus from "../components/ServerStatus.vue";
+import sendRequest from '../util/request';
 
 let router = useRouter();
 let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
@@ -26,15 +27,7 @@ function showAllServers() {
 }
 async function checkIfAllServers(currentRoute: RouteLocationNormalized) {
     if (currentRoute.query.all == "true") {
-        events.value.emit("sendPacket", {
-            type: "getAllServers"
-        });
-        let resp = await events.value.awaitEvent("getAllServers");
-        if (resp?.success) {
-            servers.value = resp.servers;
-        } else {
-            alert("Failed to get servers: " + resp.message);
-        }
+        servers.value = (await sendRequest("getAllServers")).servers;
     }
 }
 onMounted(() => {
@@ -48,22 +41,17 @@ async function createServer() {
     }
     serverCreating.value = true;
     events.value.emit("createNotification", "Creating server...")
-    events.value.emit("sendPacket", {
-        type: "createServer",
+    let resp = await sendRequest("createServer", {
         name: newServerName.value,
         mem: newServerMem.value,
         version: newMCServerVersion.value,
         software: newMCServerSoftware.value,
         port: newMCServerPort.value
-    });
-    let resp = await events.value.awaitEvent("createServer");
-    if (resp?.success) {
-        events.value.emit("createNotification", "Server successfully created!");
-        manageServer(resp.server._id)
-    } else {
-        events.value.emit("createNotification", "Failed to create server: " + resp.message);
+    }).catch(err => {
+        alert(err);
         serverCreating.value = false;
-    }
+    });
+    if(resp?.server) manageServer(resp.server._id);
 }
 function manageServer(id: string) {
     router.push({
@@ -83,11 +71,6 @@ function manageServer(id: string) {
 let agreesToEULA = ref(false);
 let serverCreating = ref(false);
 let newMCServerPort = ref(25565);
-function importServer() {
-    router.push({
-        name: "importServer"
-    });
-}
 </script>
 <template>
     <h1>Servers</h1>
@@ -100,7 +83,7 @@ function importServer() {
             Name: <input type="text" v-model="newServerName" /> <br/>
             Memory (MB): <input type="number" v-model="newServerMem" /> <br/>
             Version: <input type="text" v-model="newMCServerVersion" /> <br/>
-            Software: <input type="text" v-model="newMCServerSoftware" /> <br/>
+            Software: <select v-model="newMCServerSoftware"><option v-for="software in allowedSoftwares">{{ software }}</option></select> <br/>
             Port: <input type="number" v-model="newMCServerPort" /> <br/>
             I agree to the <a target="_blank" href="https://www.minecraft.net/en-us/eula">Minecraft End User License Agreement</a> <input type="checkbox" v-model="agreesToEULA"> <br/>
             <button type="submit" @click.prevent="createServer" :disabled="serverCreating">Create</button>

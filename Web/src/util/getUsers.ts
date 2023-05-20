@@ -1,6 +1,7 @@
 import { hasPermission } from "../../../Share/Permission";
 import { User } from "../../../Share/User";
 import event from "./event";
+import sendRequest from "./request";
 
 let allUsersAlreadyCached = false;
 // idont think we can inject outside of vue so i have  "legal" way to do it lol
@@ -8,16 +9,12 @@ export default async function getUsers(cachedUsers: Map<string, User>, refresh: 
     let user = await getCurrentUser();
     if(!hasPermission(user, "users.view")) throw new Error("Attempted to get user list but not authenticated.");
     if(allUsersAlreadyCached && !refresh) return cachedUsers;
-    event.emit("sendPacket", {
-        type: "getUsers",
+    let users = (await sendRequest("getUsers")).userList;
+    cachedUsers.clear();
+    users.forEach((u: User) => {
+        cachedUsers.set(u._id, u);
     });
-    let resp = await event.awaitEvent("getUsers");
-    if(resp.success) {
-        resp.userList.forEach((u: User) => {
-          cachedUsers.set(u._id, u);
-        });
-        allUsersAlreadyCached = true;
-    } else throw new Error(resp.message);
+    allUsersAlreadyCached = true;
     return cachedUsers;
 }
 
@@ -36,14 +33,7 @@ export async function getUser(userID: string, cachedUsers: Map<string, User>, re
     let cachedUser = cachedUsers.get(userID);
     if(cachedUser && !refresh) return cachedUser;
     // otherwise we get it from the api
-    event.emit("sendPacket", {
-        type: "getUserData",
-        id: userID
-    });
-    let resp = await event.awaitEvent("getUserData-"+userID);
-    if(resp.success) {
-        cachedUsers.set(resp.user._id, resp.user);
-        return resp.user;
-    }
-    throw new Error(resp.message);
+    let data = await sendRequest("getUserData", {id: userID})
+    cachedUsers.set(data.user._id, data.user);
+    return data.user;
 }

@@ -1,22 +1,18 @@
-import { clients, OurClient, Packet } from "../index.js";
+import { clients, OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { users } from "../db.js";
 import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
+import { Request } from "../../../Share/Requests.js";
 
 export default class DeleteUser extends Packet {
-    name: string = "deleteUser";
+    name: Request = "deleteUser";
     requiresAuth: boolean = true;
     permission: Permission = "users.delete";
-    async handle(client: OurClient, data: any) {
+    async handle(client: OurClient, data: any): ServerPacketResponse<"deleteUser"> {
         if(!client.data.auth.user) return;
         let userToDelete = await users.findById(data.id).exec();
         if (!userToDelete) {
-            client.json({
-                type: "deleteUser",
-                success: false,
-                message: "User does not exist",
-            });
-            return;
+            return "User doesnt exist";
         }
         await userToDelete.deleteOne();
         if (data.id === client.data.auth.user._id) {
@@ -28,11 +24,5 @@ export default class DeleteUser extends Packet {
             }
         });
         logger.log(client.data.auth?.user?.username + " (" + client.data.auth?.user?._id + ") is deleting the user " + userToDelete.username + " (" + userToDelete._id + ").", "user.delete", LogLevel.WARNING);
-        client.json({
-            type: "deleteUser",
-            success: true,
-            id: data.id,
-            username: userToDelete.username,
-        });
     }
 }

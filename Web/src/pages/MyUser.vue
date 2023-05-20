@@ -3,44 +3,38 @@ import { Ref, inject } from 'vue';
 import { User } from '../../../Share/User';
 import TextInput from '../components/TextInput.vue';
 import event from '../util/event';
+import sendRequest from '../util/request';
 
 let loginStatus = inject("loginStatus") as Ref<User>;
 
 async function resetToken() {
     if (!confirm("Sure? All sessions except this one will be logged out. Auto-login will break for other sessions."))
         return;
-    event.emit("sendPacket", {
-        type: "editUser",
+    let resp = await sendRequest("editUser", {
         id: loginStatus.value._id,
         action: "resetToken",
-    });
-    
-    let resp = await event.awaitEvent("editUser-" + loginStatus.value._id);
-    if(resp.success) localStorage.setItem("token", resp.newToken);
-    event.emit("createNotification", resp.success ? "Your token has been reset!" : ("Error: " + resp.message));
+    }).catch(alert)
+    if(resp?.token) localStorage.setItem("token", resp.token);
+    event.emit("createNotification", "Your token has been reset!");
 }
 
 async function setUsername(newName: string) {
-    event.emit("sendPacket", {
-        type: "editUser",
+    await sendRequest("editUser", {
         id: loginStatus.value._id,
         action: "changeUsername",
         username: newName
-    });
-    let resp = await event.awaitEvent("editUser-" + loginStatus.value._id);
-    event.emit("createNotification", resp.success ? "Your name has been changed!" : ("Error: " + resp.message));
+    })
+    event.emit("createNotification", "Your name has been changed!");
 }
 // my "Set" event triggers whenever u press enter or "Set"
 
 async function changePassword(password: string) {
-    event.emit("sendPacket", {
-        type: "editUser",
+    await sendRequest("editUser", {
         id: loginStatus.value._id,
         action: "changePassword",
         password
-    });
-    let resp = await event.awaitEvent("editUser-" + loginStatus.value._id);
-    event.emit("createNotification", resp.success ? "Your password has been changed!" : ("Error: " + resp.message));
+    })
+    event.emit("createNotification", "Your password has been changed!");
 } // copy pasted from usersetup
 // it does that already
 </script>

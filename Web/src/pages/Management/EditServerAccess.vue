@@ -7,6 +7,7 @@ import { User } from '../../../../Share/User';
 import event from '../../util/event';
 import getServerByID from '../../util/getServerByID';
 import { getUser } from '../../util/getUsers';
+import sendRequest from '../../util/request';
 
 let props = defineProps({
     server: {
@@ -45,8 +46,7 @@ let userInAllowedUsers = computed(() => {
     return server.value.allowedUsers.find(au => au.user == props.user);
 });
 async function togglePerm(perm: ServerPermissions) {
-    event.emit("sendPacket", {
-        type: "setServerOption",
+    server.value = (await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
             action: "changePerm",
@@ -54,31 +54,18 @@ async function togglePerm(perm: ServerPermissions) {
             permission: perm,
             user: props.user
         }
-    });
-    let resp = await event.awaitEvent("setServerOption-" + props.server);
-    if(!resp.success) {
-        alert(resp.message);
-    } else {
-        server.value = await getServerByID(null, props.server);
-    }
+    })).server;
 }
 async function applyProfile(profile: string) {
     if(isApplied(profile)) return;
-    event.emit("sendPacket", {
-        type: "setServerOption",
+    server.value = (await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
             action: "applyProfile",
             profile,
             user: props.user
         }
-    });
-    let resp = await event.awaitEvent("setServerOption-" + props.server);
-    if(!resp.success) {
-        alert(resp.message);
-    } else {
-        server.value = await getServerByID(null, props.server);
-    }
+    })).server;
 }
 function isApplied(profile: string) {
     return !_ServerPermissions.some(p => {
