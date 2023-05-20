@@ -30,7 +30,7 @@ export type RequestResponses = {
     },
     getAllServers: {
         servers: Server[],
-        statuses: ServerStatuses // yes im "documenting" all the packets with proper autocomplete
+        statuses: ServerStatuses
     },
     getAllSettings: {
         [key in keyof Config]: ConfigValue
