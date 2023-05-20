@@ -5,6 +5,7 @@ import { hasServerPermission } from "../util/permission.js";
 import { hasPermission, ServerPermissions, DefaultServerProfiles, _ServerPermissions } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import { Request } from "../../../Share/Requests.js";
+import isValidMCVersion from "../util/isValidMCVersion.js";
 
 export default class SetServerOption extends Packet {
     name: Request = "setServerOption";
@@ -125,6 +126,7 @@ export default class SetServerOption extends Packet {
             await serverManager.editSoftware(server.toJSON(), data.software);
         }
         if (data.version && hasServerPermission(client.data.auth.user, server.toJSON(), "set.version")) {
+            if(!await isValidMCVersion(data.version)) return "Invalid version!";
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the version of ${server.name} (${server._id}) to ${data.version}`, "server.version", LogLevel.INFO);
             await serverManager.editVersion(server.toJSON(), data.version);
         }

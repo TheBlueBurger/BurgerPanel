@@ -1,0 +1,18 @@
+export default new class TitleManager {
+    private titlePrefix: string = "";
+    private titleSuffix: string = " - BurgerPanel";
+    private defaultTitle: string = "BurgerPanel";
+    constructor() {
+
+    }
+    setTitle(title: string) {
+        this._setTitle(this.titlePrefix + title + this.titleSuffix);
+    }
+    private _setTitle(title: string) {
+        console.log("Setting title to", title)
+        document.title = title;
+    }
+    resetTitle() {
+        this._setTitle(this.defaultTitle);
+    }
+}

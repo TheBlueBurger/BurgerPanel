@@ -2,9 +2,9 @@
 import { computed, inject, onMounted, Ref, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Server } from '../../../../Share/Server';
-import event from '../../util/event';
 import getServerByID from '../../util/getServerByID';
 import sendRequest from '../../util/request';
+import titleManager from '../../util/titleManager';
 let server = ref() as Ref<Server>;
 let cachedServers = inject("servers") as Ref<Server[]>;
 let props = defineProps({
@@ -15,6 +15,7 @@ let props = defineProps({
 })
 onMounted(async () => {
     server.value = await getServerByID(cachedServers.value, props.server);
+    if(viewingLog) getLogs(viewingLog.value?.toString() || "");
     let resp = await sendRequest("serverLogs", {
         id: props.server,
         list: true
@@ -30,9 +31,12 @@ let viewingLog = computed(() => {
 });
 watch(() => viewingLog.value, async (val) => {
     let str = val?.toString();
-    str && getLogs(str);
+    if(str) {
+        getLogs(str)
+    }
 });
 async function getLogs(logName: string) {
+    titleManager.setTitle(`${logName} in ${server.value.name}`);
     console.log("Getting", logName)
     if(!logName) return;
     logData.value = "";
@@ -44,7 +48,6 @@ async function getLogs(logName: string) {
     if(resp.type != "log") return;
     logData.value = resp.log; //e
 }
-if(viewingLog) getLogs(viewingLog.value?.toString() || "");
 </script>
 <template>
     <RouterLink :to="{
@@ -68,7 +71,7 @@ if(viewingLog) getLogs(viewingLog.value?.toString() || "");
         </RouterLink>
     </div>
     <div v-else>
-        <h1>{{ viewingLog }}</h1><RouterLink :to="{
+        <h1>{{ viewingLog }} in {{ server.name }}</h1><RouterLink :to="{
             name: 'viewLogs',
             params: {
                 server: props.server

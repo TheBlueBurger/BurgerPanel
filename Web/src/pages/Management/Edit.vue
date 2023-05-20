@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, inject, ref, onMounted } from 'vue';
+import { Ref, inject, ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { hasPermission, hasServerPermission } from '../../../../Share/Permission';
 import { Server, ServerStatuses } from '../../../../Share/Server';
@@ -9,6 +9,7 @@ import getServerByID from '../../util/getServerByID';
 import getUsers from '../../util/getUsers';
 import TextInput from '../../components/TextInput.vue';
 import sendRequest from '../../util/request';
+import titleManager from '../../util/titleManager';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
@@ -17,6 +18,10 @@ let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User | null>
 let users = inject("users") as Ref<Map<string, User>>;
 let serverStatuses = inject("statuses") as Ref<ServerStatuses>;
+let thisServerStatus = computed(() => {
+    return serverStatuses.value[props.server]?.status;
+});
+let isRunning = computed(() => thisServerStatus.value == "running");
 onMounted(async () => {
     try {
         server.value = await getServerByID(null, props.server);
@@ -29,6 +34,7 @@ onMounted(async () => {
     } else {
         getUserlist();
     }
+    titleManager.setTitle("Editing " + server.value?.name)
 });
 async function renameServer(newName: string) {
     if(newName) {
@@ -162,11 +168,11 @@ async function changeAutoRestart() {
     <br />
     Memory (MB): <TextInput :default="server.mem.toString()" @set="changeMemory" :force-disabled="!hasServerPermission(loginStatus, server, 'set.mem')" />
     <br />
-    Version: <TextInput :default="server.version" @set="changeVersion" :force-disabled="!hasServerPermission(loginStatus, server, 'set.version')" />
+    Version: <TextInput :default="server.version" @set="changeVersion" :force-disabled="!hasServerPermission(loginStatus, server, 'set.version') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
-    Software: <TextInput :default="server.software" @set="changeSoftware" :force-disabled="!hasServerPermission(loginStatus, server, 'set.software')" />
+    Software: <TextInput :default="server.software" @set="changeSoftware" :force-disabled="!hasServerPermission(loginStatus, server, 'set.software') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
-    Port: <TextInput :default="server.port.toString()" @set="changePort" :force-disabled="!hasServerPermission(loginStatus, server, 'set.port')" />
+    Port: <TextInput :default="server.port.toString()" @set="changePort" :force-disabled="!hasServerPermission(loginStatus, server, 'set.port') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
     Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart" :disabled="!hasServerPermission(loginStatus, server, 'set.autostart')">Change</button>
     <br />
@@ -195,5 +201,8 @@ async function changeAutoRestart() {
 <style scoped>
 .button-red {
     background-color: #b13737;
+}
+.red-text {
+    color: #b13737;
 }
 </style>

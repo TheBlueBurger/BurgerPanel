@@ -13,6 +13,7 @@ import { RouteLocationNormalized, useRouter } from "vue-router";
 import { ServerStatuses } from '../../Share/Server';
 import event from "./util/event";
 import type {RequestResponses} from "../../Share/Requests";
+import titleManager from "./util/titleManager";
 
 let router = useRouter();
 let events = ref(EventEmitter);
@@ -113,7 +114,8 @@ async function login(usingToken: boolean = false) {
   if(usingTokenLogin.value || usingToken) {
     authResp = await sendRequest("auth", {
       token: token.value
-    }).catch(() => {
+    }).catch((err) => {
+      loginMsg.value = err;
       showLoginScreen.value = true;
     });
   } else {
@@ -151,16 +153,12 @@ function logout() {
   events.value.emit("logout");
   servers.value = [];
   loginStatus.value = null;
-  ws.value.send(
-    JSON.stringify({
-      type: "logout",
-    })
-  );
+  sendRequest("logout");
   showLoginScreen.value = true;
 }
 events.value.on("requestLogout", () => {
   logout();
-});// i dont know wdym so mabe
+});
 let users = ref(new Map<string, User>());
 provide("users", users);
 
@@ -188,7 +186,11 @@ function gotoSetup(_currentRoute?: RouteLocationNormalized) {
     }
   })
 }
-router.beforeEach(async guard => {
+router.beforeEach(async (guard, fromGuard) => {
+  if(guard.path != fromGuard.path) {
+    if(typeof guard.meta.title == "string") titleManager.setTitle(guard.meta.title);
+    else titleManager.resetTitle();
+  }
   if (guard.name != "userSetup" && loginStatus.value?.setupPending) {
     gotoSetup(guard);
   }
@@ -206,6 +208,7 @@ router.beforeEach(async guard => {
     console.log("Readystate is", ws.value.readyState)
     console.log("Connected, logging in...");
     token.value = guard.query.useToken as string;
+    showLoginScreen.value = false;
     login(true);
     console.log("Token used, removing from query.");
     router.push({

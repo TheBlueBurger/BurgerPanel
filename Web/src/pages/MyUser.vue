@@ -26,7 +26,6 @@ async function setUsername(newName: string) {
     })
     event.emit("createNotification", "Your name has been changed!");
 }
-// my "Set" event triggers whenever u press enter or "Set"
 
 async function changePassword(password: string) {
     await sendRequest("editUser", {

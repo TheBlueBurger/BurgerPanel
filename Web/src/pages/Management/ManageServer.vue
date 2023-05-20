@@ -7,6 +7,7 @@ import { hasServerPermission } from '../../../../Share/Permission';
 import { User } from '../../../../Share/User';
 import ServerStatus from '../../components/ServerStatus.vue';
 import sendRequest from '../../util/request';
+import titleManager from '../../util/titleManager';
 let router = useRouter();
 let props = defineProps<{
   server: string;
@@ -24,8 +25,13 @@ onMounted(async () => {
   loadingServerFromAPI.value = true;
   // Attach to server
   if (!attached.value) {
-    let resp = await sendRequest("attachToServer", {_id: props.server})
+    let resp = await sendRequest("attachToServer", {_id: props.server}).catch(err => {
+      alert(err);
+      router.push("/manage")
+      return err;
+    })
       server.value = resp.server;
+      titleManager.setTitle(`${resp.server.name} console`)
       console.log("Attached to", resp.server.name);
       if(resp.lastLogs) logs.value = resp.lastLogs;
       attached.value = true;

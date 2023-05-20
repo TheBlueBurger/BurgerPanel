@@ -10,75 +10,125 @@ const router = createRouter({
         {
             path: '/',
             component: () => import('./pages/Home.vue'),
-            name: "Home"
+            name: "Home",
+            meta: {
+                title: "Home"
+            }
         },
         {
             path: "/manage/user/:user/permissions",
             component: () => import("./pages/UserManagement/Permissions.vue"),
             props: true,
-            name: "editUserPermissions"
+            name: "editUserPermissions",
+            meta: {
+                title: "User Permissions"
+            }
         },
         {
             path: '/manage/server/:server',
             component: () => import('./pages/Management/ManageServer.vue'),
             props: true,
-            name: 'manageServer'
+            name: 'manageServer',
+            meta: {
+                title: "Server Console"
+            }
         },
         {
             path: '/manage/server/:server/edit',
             component: () => import('./pages/Management/Edit.vue'),
             props: true,
-            name: 'editServer'
+            name: 'editServer',
+            meta: {
+                title: "Edit server"
+            }
         },
         {
             path: '/manage/server/:server/logs',
             component: () => import('./pages/Management/OldLogs.vue'),
             props: true,
-            name: 'viewLogs'
+            name: 'viewLogs',
+            meta: {
+                title: "Server logs"
+            }
         },
         {
             path: '/manage/server/:server/edit/user-access/:user',
             component: () => import('./pages/Management/EditServerAccess.vue'),
             props: true,
-            name: "editServerAccess"
+            name: "editServerAccess",
+            meta: {
+                title: "Server Access"
+            }
         },
         {
             path: '/manage/server/:server/edit/files',
             component: () => import('./pages/Management/ServerFiles.vue'),
             props: true,
             name: "serverFiles",
+            meta: {
+                title: "Server Files"
+            }
         },
         {
             path: '/manage/server/import',
             component: () => import('./pages/Management/Import.vue'),
-            name: 'importServer'
+            name: 'importServer',
+            meta: {
+                title: "Import server"
+            }
         },
         {
             path: '/manage',
             component: () => import('./pages/ManageServers.vue'),
+            meta: {
+                title: "Servers"
+            }
         },
         {
             path: '/settings',
             component: () => import('./pages/Settings.vue'),
+            meta: {
+                title: "Settings"
+            }
         },
         {
             path: '/settings/logging',
             name: 'logging',
-            component: () => import('./pages/Logging.vue')
+            component: () => import('./pages/Logging.vue'),
+            meta: {
+                title: "Logging Settings"
+            }
         },
         {
             path: '/about',
             component: () => import('./pages/About.vue'),
+            meta: {
+                title: "About"
+            }
         },
         {
             path: '/user-setup',
             name: "userSetup",
-            component: () => import('./pages/UserSetup.vue')
+            component: () => import('./pages/UserSetup.vue'),
+            meta: {
+                title: "User Setup"
+            }
         },
         {
             path: '/me',
             name: "MyUser",
-            component: () => import("./pages/MyUser.vue")
+            component: () => import("./pages/MyUser.vue"),
+            meta: {
+                title: "Me"
+            }
+        },
+        {
+            name: "404",
+            path: '/:pathMatch(.*)*',
+            component: () => import("./pages/404.vue"),
+            meta: {
+                title: "404 Not Found"
+            }
         }
     ],
 })

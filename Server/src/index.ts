@@ -109,7 +109,7 @@ class PacketHandler {
                 e: "Internal server error. Read the server logs for more details.",
                 n: data.n
             });
-            logger.log("Packet errored. " + data.type + " " + err, "error", LogLevel.ERROR);
+            logger.log("Packet errored. " + data.n + " " + err, "error", LogLevel.ERROR);
         }
     }
 }

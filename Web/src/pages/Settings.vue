@@ -9,6 +9,7 @@ import { hasPermission } from "../../../Share/Permission";
 import getUsers from "../util/getUsers";
 import TextInput from "../components/TextInput.vue";
 import sendRequest from "../util/request";
+import titleManager from "../util/titleManager";
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User>;
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
@@ -101,6 +102,7 @@ async function resetToken(id: string) {
     })
     events.value.emit("createNotification", "Token has been reset!");
 }
+titleManager.setTitle("Settings")
 </script>
 <template>
     <div v-if="hasPermission(loginStatus, 'settings.read')">

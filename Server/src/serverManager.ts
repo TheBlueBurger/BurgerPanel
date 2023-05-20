@@ -204,7 +204,7 @@ enforce-secure-profile=false
         await fs.writeFile(server.path + "/server.properties", fileData);
     }
     async editVersion(server: Server, version: string) {
-        if(!isValidMCVersion(version)) return;
+        if(!await isValidMCVersion(version)) throw new Error("Invalid version!");
         let serverEntry = this.servers[server._id];
         if (serverEntry?.childProcess) throw new Error("Server is running. Please stop it before changing the version.");
         await fs.rm(server.path + "/server.jar", { force: true });

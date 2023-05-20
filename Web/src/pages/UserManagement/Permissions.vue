@@ -6,6 +6,7 @@ import { hasPermission, PermissionString, validPermissions } from "../../../../S
 import events from '../../util/event';
 import { useRouter } from 'vue-router';
 import sendRequest from '../../util/request';
+import titleManager from '../../util/titleManager';
 
 let loginStatus = inject("loginStatus") as Ref<User>;
 
@@ -20,7 +21,7 @@ let props = defineProps({
 
 onMounted(async () => {
     user.value = await getUser(props.user, cachedUsers.value);
-    
+    titleManager.setTitle(`${user.value.username}'s permissions`);
 });
 
 async function togglePerm(perm: PermissionString) {

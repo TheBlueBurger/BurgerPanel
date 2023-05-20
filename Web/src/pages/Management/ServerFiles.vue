@@ -5,6 +5,7 @@
     import event from '../../util/event';
     import { useRouter } from 'vue-router';
 import sendRequest from '../../util/request';
+import titleManager from '../../util/titleManager';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -29,8 +30,13 @@ import sendRequest from '../../util/request';
         }
     })
     let fileData = ref("");
+    let fileName = computed(() => {
+        if(!path.value) return;
+        return path.value.toString().split("/")[path.value.toString().split("/").length-1];
+    })
     async function readFile() {
         fileData.value = "Loading...";
+        titleManager.setTitle(`${fileName.value} in ${server.value?.name}`)
         let resp = await sendRequest("serverFiles", {
             id: props.server,
             path: path.value,
@@ -52,6 +58,7 @@ import sendRequest from '../../util/request';
         finishedLoading.value = true;
     });
     async function getFiles() {
+        titleManager.setTitle("Files in " + server.value?.name);
         let resp = await sendRequest("serverFiles", {
             id: props.server,
             path: path.value,
