@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import { servers } from "../db.js";
 import serverManager from "../serverManager.js";
 import path from "node:path";
-import { Permission } from "../../../Share/Permission.js";
+import { Permission, userHasAccessToServer } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import { Request } from "../../../Share/Requests.js";
 
@@ -57,6 +57,8 @@ export default class ImportServer extends Packet {
                 return "Missing " + requiredOption
             }
         }
+        let serverUsingSamePort = await servers.findOne({port: data.port});
+        if(serverUsingSamePort) return `Port is already in use${userHasAccessToServer(client.data.auth.user, serverUsingSamePort.toJSON()) ? " by " + serverUsingSamePort.name : ''}`
         logger.log("User" + client.data.auth.user?._id + " is importing " + data.path, "server.import", LogLevel.INFO)
         let server = await servers.create({
             name: data.name,

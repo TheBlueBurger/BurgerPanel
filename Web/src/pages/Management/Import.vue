@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { getSetting } from '../../util/config';
 import event from '../../util/event';
 import sendRequest from '../../util/request';
+import { allowedSoftwares } from '../../../../Share/Server';
 
 let router = useRouter();
 let serverPath = ref();
@@ -75,7 +76,7 @@ async function importServer() {
     Name: <input v-model="name" /> <br />
     Memory (MB): <input type="number" v-model="mem" /> MB <br />
     Version: <input v-model="version" /> <br />
-    Server software: <input v-model="software" /> <br />
+    Server software: <select v-model="software"><option v-for="software in allowedSoftwares">{{ software }}</option></select><br/>
     Port: <input type="number" v-model="port" /> <br />
     <button @click="importServer">Import</button>
 </template>

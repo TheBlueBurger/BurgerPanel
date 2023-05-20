@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted, watch } from 'vue';
-import { Server } from '../../../Share/Server';
+import { Server, allowedSoftwares } from '../../../Share/Server';
 import { User } from '../../../Share/User';
 import EventEmitter from '../util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
@@ -71,11 +71,6 @@ function manageServer(id: string) {
 let agreesToEULA = ref(false);
 let serverCreating = ref(false);
 let newMCServerPort = ref(25565);
-function importServer() {
-    router.push({
-        name: "importServer"
-    });
-}
 </script>
 <template>
     <h1>Servers</h1>
@@ -88,7 +83,7 @@ function importServer() {
             Name: <input type="text" v-model="newServerName" /> <br/>
             Memory (MB): <input type="number" v-model="newServerMem" /> <br/>
             Version: <input type="text" v-model="newMCServerVersion" /> <br/>
-            Software: <input type="text" v-model="newMCServerSoftware" /> <br/>
+            Software: <select v-model="newMCServerSoftware"><option v-for="software in allowedSoftwares">{{ software }}</option></select> <br/>
             Port: <input type="number" v-model="newMCServerPort" /> <br/>
             I agree to the <a target="_blank" href="https://www.minecraft.net/en-us/eula">Minecraft End User License Agreement</a> <input type="checkbox" v-model="agreesToEULA"> <br/>
             <button type="submit" @click.prevent="createServer" :disabled="serverCreating">Create</button>

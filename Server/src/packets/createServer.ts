@@ -5,7 +5,7 @@ import type { CreateServerS2C } from "../../../Share/CreateServer.js"
 import { getSetting, setSetting } from "../config.js";
 import serverManager from "../serverManager.js";
 import { allowedSoftwares } from "../../../Share/Server.js";
-import { Permission } from "../../../Share/Permission.js";
+import { Permission, userHasAccessToServer } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import isValidMCVersion from "../util/isValidMCVersion.js";
 import { Request, RequestResponses } from "../../../Share/Requests.js";
@@ -49,6 +49,8 @@ export default class CreateServer extends Packet {
         if (!port || typeof port !== "number" || port > 65535) {
             return "Invalid port"
         }
+        let serverUsingSamePort = await servers.findOne({port: data.port});
+        if(serverUsingSamePort) return `Port is already in use${userHasAccessToServer(client.data.auth.user, serverUsingSamePort.toJSON()) ? " by " + serverUsingSamePort.name : ''}`
         if (!allowedSoftwares.includes(software)) {
             return "Invalid software"
         }
