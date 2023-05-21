@@ -10,6 +10,8 @@ import getUsers from '../../util/getUsers';
 import TextInput from '../../components/TextInput.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
+import Modal from '../../components/Modal.vue';
+import { showInfoBox } from '../../util/modal';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
@@ -113,13 +115,11 @@ function getUserInfo(id: string) {
 }
 
 async function deleteServer() {
-  if (prompt("Are you sure you want to delete this server and ALL files? This cannot be undone. Type 'DELETE' to delete.") == "DELETE") {
-    await sendRequest("deleteServer", {
+    /*await sendRequest("deleteServer", {
         id: props.server
-    });
-    alert("Server deleted. For security reasons, you will need to delete the server folder manually. The folder is located at " + server.value?.path + ".");
+    });*/
+    await showInfoBox(`Server '${server.value?.name}' deleted.`, "For security reasons, you will need to delete the server folder manually.\nThe folder is located at " + server.value?.path + ".");
     router.push("/manage");
-  }
 }
 
 async function changeAutoStart() {
@@ -136,12 +136,17 @@ async function changeAutoRestart() {
     })).server;
     events.emit("createNotification", `Server auto restart ${server.value.autoRestart ? "enabled" : "disabled"}'`);
 }
+let showDeleteServerModal = ref(false);
+function deleteCallback(type: string) {
+    if(type == "YES") deleteServer();
+    showDeleteServerModal.value = false;
+}
 </script>
 
 <template>
 <div v-if="server">
     <h2>Editing {{ server.name }}</h2>
-    <button @click="deleteServer()" v-if="hasServerPermission(loginStatus, server, 'delete')" class="button-red">Delete</button>
+    <button @click="showDeleteServerModal = true" v-if="hasServerPermission(loginStatus, server, 'delete')" class="button-red">Delete</button>
     <RouterLink :to="{
         name: 'manageServer',
         params: {
@@ -193,6 +198,12 @@ async function changeAutoRestart() {
             }"><button>Edit</button></RouterLink>
         </div>
     </div>
+    <Modal button-type="CONFIRM" v-if="showDeleteServerModal" @done-clicked="deleteCallback" @close-btn-clicked="showDeleteServerModal = false" :reversed-button-colors="true" :gray-no="true">
+        <h1>Delete server?</h1>
+        <p>Are you sure you want to delete this server?</p>
+        <p>For security reasons, the server file will stay.</p>
+        <br/>
+    </Modal>
 </div>
 <div v-else>
     Loading server data...

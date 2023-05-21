@@ -14,6 +14,7 @@ import { ServerStatuses } from '../../Share/Server';
 import event from "./util/event";
 import type {RequestResponses} from "../../Share/Requests";
 import titleManager from "./util/titleManager";
+import Modal from "./components/Modal.vue";
 
 let router = useRouter();
 let events = ref(EventEmitter);
@@ -243,6 +244,7 @@ let loginPassword = ref("");
 
 <template>
   <Navbar />
+  <Modal :__is-default-modal="true" />
   <div v-if="loginStatus?.username">
     <RouterView></RouterView>
     <div class="notification" v-for="notification in notifications">
