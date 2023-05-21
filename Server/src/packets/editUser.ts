@@ -70,6 +70,8 @@ export default class EditUser extends Packet {
                     return `You do not have permission to edit the username of ${client.data.auth.user?._id == user._id.toHexString() ? "yourself" : "this person"}!`;
                     
                     if (typeof data.username != "string") return "Not a string!";
+
+                    if(data.username.length == 0) return "Cant be empty!";
                     
                     logger.log(`${client.data.auth.user?.username} is changing the username of ${user.username} to ${data.username}!`, "user.username.changed", LogLevel.INFO);
                     

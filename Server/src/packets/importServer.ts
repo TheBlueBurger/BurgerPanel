@@ -6,6 +6,9 @@ import path from "node:path";
 import { Permission, userHasAccessToServer } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import { Request } from "../../../Share/Requests.js";
+import { getSetting } from "../config.js";
+import isValidMCVersion from "../util/isValidMCVersion.js";
+import { allowedSoftwares } from "../../../Share/Server.js";
 
 export default class ImportServer extends Packet {
     name: Request = "importServer";
@@ -46,8 +49,8 @@ export default class ImportServer extends Packet {
             return {
                 autodetect: {
                     port: isNaN(port) ? 25565 : port,
-                    software,
-                    version
+                    software: software ? software.toLowerCase() : await getSetting("defaultMCSoftware"),
+                    version: version ?? await getSetting("defaultMCVersion")
                 },
                 type: "autodetect"
             }
@@ -59,6 +62,8 @@ export default class ImportServer extends Packet {
         }
         let serverUsingSamePort = await servers.findOne({port: data.port});
         if(serverUsingSamePort) return `Port is already in use${userHasAccessToServer(client.data.auth.user, serverUsingSamePort.toJSON()) ? " by " + serverUsingSamePort.name : ''}`
+        if(!await isValidMCVersion(data.version)) return "Invalid MC version!";
+        if(!allowedSoftwares.includes(data.software)) return "Invalid software!";
         logger.log("User" + client.data.auth.user?._id + " is importing " + data.path, "server.import", LogLevel.INFO)
         let server = await servers.create({
             name: data.name,
