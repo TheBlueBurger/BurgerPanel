@@ -118,6 +118,7 @@ async function deleteServer() {
     /*await sendRequest("deleteServer", {
         id: props.server
     });*/
+    // TODO: uncomment this when modals properly tested
     await showInfoBox(`Server '${server.value?.name}' deleted.`, "For security reasons, you will need to delete the server folder manually.\nThe folder is located at " + server.value?.path + ".");
     router.push("/manage");
 }

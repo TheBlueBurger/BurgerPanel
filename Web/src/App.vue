@@ -15,6 +15,7 @@ import event from "./util/event";
 import type {RequestResponses} from "../../Share/Requests";
 import titleManager from "./util/titleManager";
 import Modal from "./components/Modal.vue";
+import { showInfoBox } from "./util/modal";
 
 let router = useRouter();
 let events = ref(EventEmitter);
@@ -70,6 +71,10 @@ onMounted(() => {
       sendRequest("ping")
     }
   }, 30_000);
+  if(location.protocol == "http:" && !localStorage.getItem("ignore-unsecure-connection")) {
+    showInfoBox("HTTP Warning", "You are connecting over HTTP. Traffic will not be encrypted! You are recommended to use HTTPS for the best security\nYou will not be shown this warning again.");
+    localStorage.setItem("ignore-unsecure-connection", "1");
+  }
 });
 onUnmounted(() => {
   clearInterval(pingInterval);
