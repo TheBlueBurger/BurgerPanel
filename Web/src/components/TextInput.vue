@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { ref } from 'vue';
+    import { Ref, ref, watch } from 'vue';
     let props = defineProps({
         default: {
             type: String,
@@ -22,6 +22,11 @@
             type: Boolean,
             required: false,
             default: false
+        },
+        modelMode: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     });
     let disabled = ref(!props.initialEditing);
@@ -36,18 +41,21 @@
         text.value = props.default;
         disabled.value = true;
     }
+    watch(disabled, (newVal) => {
+        if(props.modelMode && newVal) disabled.value = false;
+    })
 </script>
 <template>
     <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
         width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
-    }" :type="props.password ? 'password' : 'text'">
-    <button v-if="disabled" @click="() => {if(!props.forceDisabled) disabled = false}" :style="
+    }" :type="props.password ? 'password' : 'text'" @input="e => $emit('set', text)">
+    <button v-if="disabled && !modelMode" @click="() => {if(!props.forceDisabled) disabled = false}" :style="
     {
         cursor: props.forceDisabled ? 'not-allowed' : 'pointer'
     }
     ">Edit</button>
-    <button v-if="!disabled" @click="set">Set</button>
-    <button v-if="!disabled" @click="reset">Cancel</button>
+    <button v-if="!disabled && !modelMode" @click="set">Set</button>
+    <button v-if="!disabled && !modelMode" @click="reset">Cancel</button>
 </template>
 <style scoped>
 input {

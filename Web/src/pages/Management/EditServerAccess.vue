@@ -42,7 +42,7 @@ onMounted(async () => {
         return;
     }
     titleManager.setTitle(`${user.value.username} in ${server.value.name}`)
-    if(!userHasAccessToServer(user.value, server.value)) {
+    if(!server.value.allowedUsers.some(a => a.user == user.value._id)) {
         showInfoBox("Hm", "This user doesn't have access to this server. Nothing will work");
     }
 });

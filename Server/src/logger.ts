@@ -86,7 +86,7 @@ export default new class Logger {
                 allowed_mentions: {
                     parse: []
                   }
-            } as any)
+            })
         }).then(async r => {
             if(!r.ok) this.log(`Error while sending to webhook: Server status code is not OK: ${r.status} ${r.statusText}: ${await r.text()}`, "error", LogLevel.ERROR, false);
         }).catch((err) => {

@@ -6,6 +6,7 @@
     import { useRouter } from 'vue-router';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
+import { confirmModal } from '../../util/modal';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -41,8 +42,15 @@ import titleManager from '../../util/titleManager';
             id: props.server,
             path: path.value,
             action: "read",
-        })
-        if(resp.type != "data") return;
+        }).catch(err => {
+            router.push({
+                query: {
+                    path: path.value.toString().split('/').slice(0, -1).join('/')
+                }
+            });
+            return undefined;
+        });
+        if(resp?.type != "data") return;
         fileData.value = resp.fileData;
     }
     let files = ref() as Ref<undefined | {
@@ -59,12 +67,32 @@ import titleManager from '../../util/titleManager';
     });
     async function getFiles() {
         titleManager.setTitle("Files in " + server.value?.name);
+        if(path.value.toString().startsWith("/logs")) {
+            if((await confirmModal("Open logs?", `Would you like to open the logs page of '${server.value?.name}'?\nYou cannot see log files in this page.`))) {
+                await router.push({
+                    name: "viewLogs",
+                    params: {
+                        server: props.server
+                    }
+                })
+            } else {
+                await router.push({
+                    query: {
+                        path: "/"
+                    }
+                })
+            }
+            return;
+        }
         let resp = await sendRequest("serverFiles", {
             id: props.server,
             path: path.value,
             action: "files"
+        }).catch(err => {
+            router.push({});
+            return undefined;
         });
-        if(resp.type != "filelist") return;
+        if(resp?.type != "filelist") return;
         files.value = resp.files;
         files.value = files.value?.sort((file, lastFile) => {
             return (lastFile.folder?1:0) - (file.folder?1:0);
@@ -77,33 +105,35 @@ import titleManager from '../../util/titleManager';
     </div>
     <div v-else-if="!readingFile">
         <h1>Files in {{ server.name }}</h1>
+        <RouterLink v-if="!['','/'].includes(path.toString())" :to="{
+                    query: {
+                        path: path.toString().split('/').slice(0, -1).join('/')
+                    }
+                }" class="link"><span class="entry folder">../</span></RouterLink>
         <div v-for="file in files">
             <div v-if="file.folder">
                 <RouterLink :to="{
-                    name: 'serverFiles',
-                    params: {
-                        server: props.server
-                    },
                     query: {
                         path: (path + '\/' + file.name).replaceAll('\/\/', '\/')
                     }
-                }">{{ file.name }}/</RouterLink>
+                }" class="link"><span class="entry folder">{{ file.name }}/</span></RouterLink>
             </div>
             <div v-else>
                 <RouterLink :to="{
-                    name: 'serverFiles',
-                    params: {
-                        server: props.server
-                    },
                     query: {
                         path: (path + '\/' + file.name).replaceAll('\/\/', '\/'),
                         type: 'read'
                     }
-                }">{{ file.name }}</RouterLink>
+                }" class="link"><span class="entry file">{{ file.name }}</span></RouterLink>
             </div>
         </div>
     </div>
     <div v-else>
+        <RouterLink :to="{
+            query: {
+                path: path.toString().split('/').slice(0, -1).join('/')
+            }
+        }"><button>Go back</button></RouterLink> <br/>
         <textarea v-model="fileData"></textarea>
     </div>
 </template>
@@ -117,5 +147,15 @@ textarea {
     height: calc(100vh - 100px);
     border: none;
     border-radius: 10px;
+}
+.link {
+    color: white;
+    text-decoration: none;
+}
+.entry {
+    margin-top: 10px;
+    display: block;
+    font-size: 1.25rem;
+    margin-left: 10px;
 }
 </style>

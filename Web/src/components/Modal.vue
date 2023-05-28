@@ -2,6 +2,7 @@
 import { ComputedRef, Ref, computed, onMounted, onUnmounted, ref } from 'vue';
 import event from '../util/event';
 import { ConfirmButtonType, ModalData, ModalInput } from '../util/modal';
+import TextInput from './TextInput.vue';
 
 let props = defineProps({
     modalID: {
@@ -45,7 +46,7 @@ let inputResponses = ref({}) as Ref<{
 onMounted(() => {
     if (props.__isDefaultModal) event.on("default-modalbox-show", d => {
         if(defaultModalShow.value) {
-            throw new Error(`Got request to show modal while modal is already showing! Old: ${defaultModalData.value}. New: ${d}`);
+            throw new Error(`Got request to show modal while modal is already showing! Old: ${JSON.stringify(defaultModalData.value)}. New: ${JSON.stringify(d)}`);
         }
         console.log("Creating (default) modal with data", d);
         inputResponses.value = {}
@@ -117,7 +118,8 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
                             <div v-if="__isDefaultModal">
                                 <div v-if="defaultModalData?.inputs" v-for="input in defaultModalData?.inputs">
                                     <div v-if="input.type == 'TextInput'">
-                                        <input :type="input.data.inputType" :placeholder="input.data.placeholder" v-model="inputResponses[input.id]">
+                                        <div v-if="input.data.inputType != 'number'"><TextInput :placeholder="input.data.placeholder" @set="v => inputResponses[input.id] = v" :default="''" :initial-editing="true" :model-mode="true" /></div>
+                                        <input v-else :type="input.data.inputType" :placeholder="input.data.placeholder" v-model="inputResponses[input.id]">
                                     </div>
                                 </div>
                             </div>

@@ -23,7 +23,7 @@ export default class ServerFiles extends Packet {
         try {
             await fs.stat(pathToCheck)
         } catch {
-            return; // very spooky
+            return "Invalid path"; // very spooky
         }
         // We should be safe now
         switch(data.action) {
@@ -48,7 +48,7 @@ export default class ServerFiles extends Packet {
                 }
                 let mimeData = mime.lookup(pathToCheck);
                 if(!allowedMimeTypes.includes(mimeData.toString()) && !allowedFileNames.includes(data.path)) {
-                    return "Disallowed types!"
+                    return "Disallowed type!"
                 }
                 let fileData = await fs.readFile(pathToCheck, "utf-8");
                 return {

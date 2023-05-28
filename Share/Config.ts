@@ -1,4 +1,4 @@
-import { allowedSoftwares } from "./Server";
+import { allowedSoftwares } from "./Server.js";
 
 export let defaultConfig: Config = {
     defaultMemory: 1024,

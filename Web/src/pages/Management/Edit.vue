@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { hasPermission, hasServerPermission } from '../../../../Share/Permission';
+import { hasPermission, hasServerPermission, userHasAccessToServer } from '../../../../Share/Permission';
 import { Server, ServerStatuses } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import events from '../../util/event';
@@ -10,8 +10,8 @@ import getUsers from '../../util/getUsers';
 import TextInput from '../../components/TextInput.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
+import { confirmModal, modalInput, requestModal, showInfoBox } from '../../util/modal';
 import Modal from '../../components/Modal.vue';
-import { confirmModal, requestModal, showInfoBox } from '../../util/modal';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
@@ -80,19 +80,9 @@ async function removeUser(user: string) {
     });
     server.value = resp.server;
 }
+let showAddUserModal = ref(false);
 async function addUser() {
-    let newUserID: string | null | undefined = prompt("Enter the ID or username of the user you want to add.");
-    if(newUserID) {
-        if(newUserID.match(/^[a-fA-F0-9]{24}$/)) {
-            if(!users.value.get(newUserID)) return events.emit("createNotification", "User with that ID not found.");
-        } else {
-            newUserID = [...users.value.values()].find(u => u.username.toLowerCase() == newUserID?.toLowerCase())?._id
-            if(!newUserID) return events.emit("createNotification", "User with that username not found.");
-        }
-        if(server.value?.allowedUsers.find(u => u.user == newUserID)) return events.emit("createNotification", "This user is already allowed to access this server.");
-    }
-    if(!newUserID) return;
-    await addUserByID(newUserID);
+    showAddUserModal.value = true;
 }
 
 async function addUserByID(id: string) {
@@ -114,6 +104,10 @@ function getUserInfo(id: string) {
     return users.value.get(id);
 }
 
+let notAddedUsers = computed(() => {
+    return [...users.value.values()].filter(u => !server.value?.allowedUsers.some(a => a.user == u._id));
+})
+
 async function deleteServer() {
     if((await requestModal({
         title: `Delete '${server.value?.name}'?`,
@@ -123,10 +117,9 @@ async function deleteServer() {
         reversedButtonColors: true,
         whiteLabels: true
     })).type == "YES") {
-        /*await sendRequest("deleteServer", {
+        await sendRequest("deleteServer", {
             id: props.server
-        });*/
-        // TODO: uncomment this when modals properly tested
+        });
         await showInfoBox(`Server '${server.value?.name}' deleted.`, "For security reasons, you will need to delete the server folder manually.\nThe folder is located at " + server.value?.path + ".");
         router.push("/manage");
     }
@@ -137,14 +130,14 @@ async function changeAutoStart() {
         id: props.server,
         autoStart: !server.value?.autoStart
     })).server;
-    events.emit("createNotification", `Server auto start ${server.value.autoStart ? "enabled" : "disabled"}'`);
+    events.emit("createNotification", `Server auto start ${server.value.autoStart ? "enabled" : "disabled"}`);
 }
 async function changeAutoRestart() {
     server.value = (await sendRequest("setServerOption", {
         id: props.server,
         autoRestart: !server.value?.autoRestart
     })).server;
-    events.emit("createNotification", `Server auto restart ${server.value.autoRestart ? "enabled" : "disabled"}'`);
+    events.emit("createNotification", `Server auto restart ${server.value.autoRestart ? "enabled" : "disabled"}`);
 }
 </script>
 
@@ -202,6 +195,20 @@ async function changeAutoRestart() {
                 }
             }"><button>Edit</button></RouterLink>
         </div>
+        <Modal v-if="showAddUserModal" button-type="" :white-buttons="false" @close-btn-clicked="showAddUserModal = false">
+            <h1>Add user</h1>
+            <br/>
+            <p>Choose all users you want to add</p>
+            <br/>
+            <div v-for="user of notAddedUsers" v-if="notAddedUsers.length != 0">
+                <button :disabled="server.allowedUsers.some(a => a.user == user._id)" @click="addUserByID(user._id)">{{ user.username }}</button> <i v-if="hasPermission(user, 'servers.all.view')">(Can view all servers)</i>
+            </div>
+            <div v-else>
+                There are no users without access
+            </div>
+            <br/>
+            <button @click="showAddUserModal = false">Close</button>
+        </Modal>
     </div>
 </div>
 <div v-else>

@@ -5,6 +5,8 @@ import { Server } from '../../../../Share/Server';
 import getServerByID from '../../util/getServerByID';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
+import { hasServerPermission } from '../../../../Share/Permission';
+import { User } from '../../../../Share/User';
 let server = ref() as Ref<Server>;
 let cachedServers = inject("servers") as Ref<Server[]>;
 let props = defineProps({
@@ -27,6 +29,7 @@ onMounted(async () => {
 let logs = ref([] as string[]);
 let logData = ref("");
 let router = useRouter();
+let loginStatus = inject("loginStatus") as Ref<User>;
 let viewingLog = computed(() => {
     return router.currentRoute.value.query.log
 });
@@ -57,6 +60,12 @@ async function getLog(logName: string) {
             server: props.server
         }
     }" v-if="!viewingLog"><button>Go back</button></RouterLink>
+        <RouterLink :to="{
+        name: 'serverFiles',
+        params: {
+            server: props.server
+        }
+    }" v-if="!viewingLog && server && hasServerPermission(loginStatus, server, 'serverfiles.read')"><button>View all files</button></RouterLink>
     <h1 v-if="!viewingLog">Logs for {{ server?.name }}</h1>
     <div v-for="log in logs" class="logname" v-if="!viewingLog">
         <RouterLink :to="{
@@ -86,20 +95,24 @@ async function getLog(logName: string) {
         margin-bottom: 10px;
     }
     textarea {
-  resize: none;
-  width: 95%;
-  height: calc(100vh - 190px);
-  overflow-y: scroll;
-  border-radius: 7px;
-  border-bottom-left-radius: 0px;
-  border-bottom-right-radius: 0px;
-  border: none;
-  /* Center */
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
-  /* Color */
-  background-color: #000000;
-  color: white;
-}
+    resize: none;
+    width: 95%;
+    height: calc(100vh - 190px);
+    overflow-y: scroll;
+    border-radius: 7px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border: none;
+    /* Center */
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    /* Color */
+    background-color: #000000;
+    color: white;
+    }
+    a {
+        text-decoration: none;
+        color: white;
+    }
 </style>

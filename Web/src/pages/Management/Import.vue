@@ -5,6 +5,7 @@ import { getSetting } from '../../util/config';
 import event from '../../util/event';
 import sendRequest from '../../util/request';
 import { allowedSoftwares } from '../../../../Share/Server';
+import { modalInput } from '../../util/modal';
 
 let router = useRouter();
 let serverPath = ref();
@@ -35,7 +36,14 @@ let updateServerPath = async () => {
 watch(router.currentRoute, updateServerPath);
 updateServerPath();
 async function changeServerPath() {
-    let newServerPath = prompt("Enter server path", serverPath.value);
+    let newServerPath = (await modalInput("Enter server path", [{
+        id: "path",
+        type: "TextInput",
+        data: {
+            placeholder: "Path",
+            inputType: "text"
+        }
+    }])).inputs.path;
     if (!newServerPath) return;
     router.push({
         query: {
