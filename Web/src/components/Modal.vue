@@ -212,6 +212,8 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
     margin-top: 5px;
     min-width: 300px;
     min-height: 50px;
+    max-height: 95vh;
+    overflow-y: auto;
 }
 
 .right {

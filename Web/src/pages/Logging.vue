@@ -35,6 +35,7 @@ import sendRequest from '../util/request';
             location: path
         });
         initialEditing = false;
+        await load(true);
     }
     async function toggle(id: typeof IDs[number]) {
         await sendRequest("logging", {

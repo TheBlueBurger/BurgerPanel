@@ -48,7 +48,7 @@
 <template>
     <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
         width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
-    }" :type="props.password ? 'password' : 'text'" @input="e => $emit('set', text)">
+    }" :type="props.password ? 'password' : 'text'" @input="e => {if(modelMode) $emit('set', text)}">
     <button v-if="disabled && !modelMode" @click="() => {if(!props.forceDisabled) disabled = false}" :style="
     {
         cursor: props.forceDisabled ? 'not-allowed' : 'pointer'
