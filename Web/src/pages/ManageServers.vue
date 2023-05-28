@@ -18,13 +18,6 @@ let newServerName = ref("");
 let newServerMem = ref(0);
 let newMCServerVersion = ref("");
 let newMCServerSoftware = ref("");
-function showAllServers() {
-    router.push({
-        query: {
-            all: "true"
-        }
-    })
-}
 async function checkIfAllServers(currentRoute: RouteLocationNormalized) {
     if (currentRoute.query.all == "true") {
         servers.value = (await sendRequest("getAllServers")).servers;
@@ -33,7 +26,8 @@ async function checkIfAllServers(currentRoute: RouteLocationNormalized) {
 onMounted(() => {
     checkIfAllServers(router.currentRoute.value);
 })
-watch(router.currentRoute, checkIfAllServers)
+watch(router.currentRoute, checkIfAllServers);
+
 async function createServer() {
     if(!agreesToEULA.value) {
         events.value.emit("createNotification", "You must agree to the EULA to create a server.");
@@ -48,7 +42,6 @@ async function createServer() {
         software: newMCServerSoftware.value,
         port: newMCServerPort.value
     }).catch(err => {
-        alert(err);
         serverCreating.value = false;
     });
     if(resp?.server) manageServer(resp.server._id);

@@ -9,6 +9,7 @@ import getServerByID from '../../util/getServerByID';
 import { getUser } from '../../util/getUsers';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
+import { showInfoBox } from '../../util/modal';
 
 let props = defineProps({
     server: {
@@ -30,7 +31,7 @@ onMounted(async () => {
         server.value = await getServerByID(null, props.server);
         user.value = await getUser(props.user, cachedUsers.value);
     } catch(err) {
-        alert(`${err}`);
+        showInfoBox("Couldnt get server/user", `${err}`)
         console.log(err);
         router.push({
             name: "editServer",
@@ -38,10 +39,11 @@ onMounted(async () => {
                 server: props.server
             }
         });
+        return;
     }
     titleManager.setTitle(`${user.value.username} in ${server.value.name}`)
     if(!userHasAccessToServer(user.value, server.value)) {
-        alert("This user does not have access to this server! Nothing here will work");
+        showInfoBox("Hm", "This user doesn't have access to this server. Nothing will work");
     }
 });
 let userInAllowedUsers = computed(() => {

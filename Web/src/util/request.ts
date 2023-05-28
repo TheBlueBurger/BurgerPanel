@@ -1,8 +1,9 @@
 import event from "./event";
 import type {Request, RequestResponses} from "../../../Share/Requests";
+import { showInfoBox } from "./modal";
 
 let currentRequestID = 0;
-export default async function sendRequest<T extends Request>(packetName: T, data: any = {}): Promise<RequestResponses[T]> {
+export default async function sendRequest<T extends Request>(packetName: T, data: any = {}, infoBoxIfError: boolean = true): Promise<RequestResponses[T]> {
     let thisRequestID = currentRequestID++;
     event.emit("sendPacket", {
         n: packetName,
@@ -11,6 +12,7 @@ export default async function sendRequest<T extends Request>(packetName: T, data
     });
     let resp = await event.awaitEvent(thisRequestID.toString());
     if(resp.e) {
+        if(infoBoxIfError) showInfoBox("Error in " + packetName, resp.e)
         throw new Error(resp.e);
     }
     return resp.d;

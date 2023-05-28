@@ -18,7 +18,6 @@ let updateServerPath = async () => {
         path: _serverPath,
         requestConfirmation: true
     }).catch(err => {
-        alert(err);
         router.push({
         query: {
             serverPath: undefined
@@ -73,10 +72,21 @@ async function importServer() {
 </script>
 <template>
     Path: {{ serverPath || "Unset" }} <button @click="changeServerPath">Change</button> <br />
-    Name: <input v-model="name" /> <br />
+    Name: <input v-model="name" type="text" /> <br />
     Memory (MB): <input type="number" v-model="mem" /> MB <br />
-    Version: <input v-model="version" /> <br />
+    Version: <input v-model="version" type="text" /> <br />
     Server software: <select v-model="software"><option v-for="software in allowedSoftwares">{{ software }}</option></select><br/>
     Port: <input type="number" v-model="port" /> <br />
     <button @click="importServer">Import</button>
 </template>
+<style scoped>
+button {
+    margin-bottom: 3px;
+}
+input {
+    margin-bottom: 3px;
+}
+select {
+    margin-bottom: 4px;
+}
+</style>

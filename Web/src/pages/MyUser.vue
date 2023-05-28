@@ -4,16 +4,17 @@ import { User } from '../../../Share/User';
 import TextInput from '../components/TextInput.vue';
 import event from '../util/event';
 import sendRequest from '../util/request';
+import { confirmModal } from '../util/modal';
 
 let loginStatus = inject("loginStatus") as Ref<User>;
 
 async function resetToken() {
-    if (!confirm("Sure? All sessions except this one will be logged out. Auto-login will break for other sessions."))
+    if (!await confirmModal("Reset your token?", "Sure? All sessions except this one will be logged out. Auto-login will break for other sessions."))
         return;
     let resp = await sendRequest("editUser", {
         id: loginStatus.value._id,
         action: "resetToken",
-    }).catch(alert)
+    });
     if(resp?.token) localStorage.setItem("token", resp.token);
     event.emit("createNotification", "Your token has been reset!");
 }

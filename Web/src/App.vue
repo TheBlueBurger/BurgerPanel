@@ -72,7 +72,7 @@ onMounted(() => {
     }
   }, 30_000);
   if(location.protocol == "http:" && !localStorage.getItem("ignore-unsecure-connection")) {
-    showInfoBox("HTTP Warning", "You are connecting over HTTP. Traffic will not be encrypted! You are recommended to use HTTPS for the best security\nYou will not be shown this warning again.");
+    showInfoBox("HTTP Warning", "You are connecting over HTTP. Traffic will not be encrypted! You are recommended to use HTTPS for the best security.\n\nYou will not be shown this warning again.");
     localStorage.setItem("ignore-unsecure-connection", "1");
   }
 });
@@ -120,7 +120,7 @@ async function login(usingToken: boolean = false) {
   if(usingTokenLogin.value || usingToken) {
     authResp = await sendRequest("auth", {
       token: token.value
-    }).catch((err) => {
+    }, false).catch((err) => {
       loginMsg.value = err;
       showLoginScreen.value = true;
     });
@@ -128,6 +128,9 @@ async function login(usingToken: boolean = false) {
     authResp = await sendRequest("auth", {
       username: loginUsername.value,
       password: loginPassword.value
+    }, false).catch((err) => {
+      loginMsg.value = err;
+      showLoginScreen.value = true;
     })
   }
   if(!authResp) {

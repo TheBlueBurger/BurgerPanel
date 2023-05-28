@@ -25,7 +25,7 @@ import sendRequest from '../util/request';
         await sendRequest("logging", {
             setWebhookURL: true,
             url
-        }).catch(alert);
+        });
         initialEditing = false;
         await load(true);
     }
@@ -33,7 +33,7 @@ import sendRequest from '../util/request';
         await sendRequest("logging", {
             setLogFileLocation: true,
             location: path
-        }).catch(alert);
+        });
         initialEditing = false;
     }
     async function toggle(id: typeof IDs[number]) {
@@ -42,7 +42,7 @@ import sendRequest from '../util/request';
             setLoggingTypeEnabled: true,
             id,
             enabled: isDisabled(id)
-        }).catch(alert);
+        });
         await load(true);
     }
     let initialEditing = false;

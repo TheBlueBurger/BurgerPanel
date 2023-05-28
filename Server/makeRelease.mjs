@@ -41,14 +41,14 @@ await build.write({
     format: "esm",
     dir: "_build",
     inlineDynamicImports: true,
-    minifyInternalExports: true
+    minifyInternalExports: true,
 });
 console.timeEnd("Rollup")
 console.time("ESBuild");
 await esbuild.build({
     entryPoints: ["_build/input.js"],
     minify: true,
-    outfile: "_build/burgerpanel.mjs"
+    outfile: "_build/burgerpanel.mjs",
 });
 console.timeEnd("ESBuild");
 fs.rmSync("_build/input.js");

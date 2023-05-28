@@ -21,7 +21,7 @@ async function changePassword(password: string) {
         id: user.value._id,
         action: "changePassword",
         password
-    }).catch(alert)
+    });
     event.emit("createNotification", "Your password has been changed!");
 }
 let usedFormat: Ref<['days' | 'hour' | 'minute' | 'second', number]> = computed(() => { // there has to be a better way to do this

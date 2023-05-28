@@ -10,6 +10,7 @@ import getUsers from "../util/getUsers";
 import TextInput from "../components/TextInput.vue";
 import sendRequest from "../util/request";
 import titleManager from "../util/titleManager";
+import { confirmModal, showInfoBox } from "../util/modal";
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User>;
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
@@ -27,7 +28,7 @@ async function changeOption(option: keyof typeof defaultConfig, newValue: string
         knownSettings.value = await getAllSettings();
         events.value.emit("createNotification", "Successfully changed option")
     } catch (e) {
-        alert("Failed to set option: " + e);
+        showInfoBox(`Could not change '${option}'`, `Error: ${e}`);
     }
 }
 getAllSettings();
@@ -45,11 +46,8 @@ async function createUser() {
     getUsers(cachedUsers.value, true);
 }
 getUsers(cachedUsers.value, true);
-function showHelpForSetting(setting: string) {
-    alert("Help for " + setting + ":\n" + descriptions[setting as keyof typeof defaultConfig]);
-}
 async function deleteUser(user: User) {
-    if(!confirm("Are you sure you want to remove the user " + user.username + "?")) return;
+    if(!await confirmModal("Delete user?", "Are you sure you want to remove the user " + user.username + "?")) return;
     await sendRequest("deleteUser", {
         id: user._id
     })
@@ -94,7 +92,7 @@ let settingsAllowedToShow = computed(() => {
     })
 });
 async function resetToken(id: string) {
-    if (!confirm("Sure? All sessions will be logged out. Auto-login will break for all sessions."))
+    if (!await confirmModal("Reset token", "All sessions will be logged out. Auto-login will break for all sessions."))
         return;
     await sendRequest("editUser", {
         action: "resetToken",
@@ -108,7 +106,7 @@ titleManager.setTitle("Settings")
     <div v-if="hasPermission(loginStatus, 'settings.read')">
         <h2>Settings</h2>
         <div v-for="option of settingsAllowedToShow">
-            <span class="setting-span" @click="showHelpForSetting(option)">{{ option }}</span>
+            <span class="setting-span" :title="descriptions[option as keyof typeof defaultConfig]">{{ option }}</span>
             <TextInput :default="knownSettings[option as keyof Config].toString()" @set="v => changeOption(option as keyof Config, v)" v-if="typeof knownSettings[option as keyof Config] != 'undefined'" />
         </div>
     </div>

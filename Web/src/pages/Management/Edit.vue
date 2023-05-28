@@ -11,7 +11,7 @@ import TextInput from '../../components/TextInput.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import Modal from '../../components/Modal.vue';
-import { showInfoBox } from '../../util/modal';
+import { confirmModal, requestModal, showInfoBox } from '../../util/modal';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
@@ -28,7 +28,7 @@ onMounted(async () => {
     try {
         server.value = await getServerByID(null, props.server);
     } catch(err) {
-        alert("Failed to get server details. " + (err as any)?.message || "No error message provided.");
+        showInfoBox("Couldn't get server", `${err}`);
         router.push("/manage");
     }
     if(!hasPermission(loginStatus.value, "users.view")) {
@@ -70,7 +70,7 @@ async function changePort(newPort: string) {
 }
 async function removeUser(user: string) {
     if(server?.value?.allowedUsers?.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
-    if(!confirm("Are you sure you want to remove this user from the server?")) return;
+    if(!await confirmModal("Remove access?", `Are you sure you want to remove ${user} from the server?`)) return;
     let resp = await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
@@ -115,12 +115,21 @@ function getUserInfo(id: string) {
 }
 
 async function deleteServer() {
-    /*await sendRequest("deleteServer", {
-        id: props.server
-    });*/
-    // TODO: uncomment this when modals properly tested
-    await showInfoBox(`Server '${server.value?.name}' deleted.`, "For security reasons, you will need to delete the server folder manually.\nThe folder is located at " + server.value?.path + ".");
-    router.push("/manage");
+    if((await requestModal({
+        title: `Delete '${server.value?.name}'?`,
+        description: `Are you sure you want to delete '${server.value?.name}'?\n `,
+        confirmButtonType: "CONFIRM",
+        grayNo: true,
+        reversedButtonColors: true,
+        whiteLabels: true
+    })).type == "YES") {
+        /*await sendRequest("deleteServer", {
+            id: props.server
+        });*/
+        // TODO: uncomment this when modals properly tested
+        await showInfoBox(`Server '${server.value?.name}' deleted.`, "For security reasons, you will need to delete the server folder manually.\nThe folder is located at " + server.value?.path + ".");
+        router.push("/manage");
+    }
 }
 
 async function changeAutoStart() {
@@ -137,17 +146,12 @@ async function changeAutoRestart() {
     })).server;
     events.emit("createNotification", `Server auto restart ${server.value.autoRestart ? "enabled" : "disabled"}'`);
 }
-let showDeleteServerModal = ref(false);
-function deleteCallback(type: string) {
-    if(type == "YES") deleteServer();
-    showDeleteServerModal.value = false;
-}
 </script>
 
 <template>
 <div v-if="server">
     <h2>Editing {{ server.name }}</h2>
-    <button @click="showDeleteServerModal = true" v-if="hasServerPermission(loginStatus, server, 'delete')" class="button-red">Delete</button>
+    <button @click="deleteServer()" v-if="hasServerPermission(loginStatus, server, 'delete')" class="button-red">Delete</button>
     <RouterLink :to="{
         name: 'manageServer',
         params: {
@@ -199,12 +203,6 @@ function deleteCallback(type: string) {
             }"><button>Edit</button></RouterLink>
         </div>
     </div>
-    <Modal button-type="CONFIRM" v-if="showDeleteServerModal" @done-clicked="deleteCallback" @close-btn-clicked="showDeleteServerModal = false" :reversed-button-colors="true" :gray-no="true">
-        <h1>Delete server?</h1>
-        <p>Are you sure you want to delete this server?</p>
-        <p>For security reasons, the server file will stay.</p>
-        <br/>
-    </Modal>
 </div>
 <div v-else>
     Loading server data...

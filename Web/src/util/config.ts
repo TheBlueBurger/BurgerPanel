@@ -5,7 +5,7 @@ export let _knownSettings = {} as { [key in keyof Config]: any };
 export async function setSetting(key: keyof Config, value: any) {
     if (!key) throw new Error("Missing key");
     if (!value) throw new Error("Missing value");
-    let resp = await sendRequest("setSetting", {key, value})
+    let resp = await sendRequest("setSetting", {key, value}, false)
     _knownSettings[key] = resp.value;
     events.emit("knownSettingsUpdated", _knownSettings);
     return resp.value;

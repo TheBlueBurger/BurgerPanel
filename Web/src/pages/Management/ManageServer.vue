@@ -8,6 +8,7 @@ import { User } from '../../../../Share/User';
 import ServerStatus from '../../components/ServerStatus.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
+import { confirmModal } from '../../util/modal';
 let router = useRouter();
 let props = defineProps<{
   server: string;
@@ -26,7 +27,6 @@ onMounted(async () => {
   // Attach to server
   if (!attached.value) {
     let resp = await sendRequest("attachToServer", {_id: props.server}).catch(err => {
-      alert(err);
       router.push("/manage")
       return err;
     })
@@ -72,10 +72,10 @@ events.on("serverErrored-" + props.server, data => {
   logs.value.push("Server errored: " + data.error + "\n");
 });
 async function stopServer() {
-  if(confirm("Are you sure you want to stop the server? Unsaved data will be saved.")) await sendRequest("stopServer", {id: props.server})
+  if(await confirmModal("Stop server", "Are you sure you want to stop the server? Unsaved data will be saved.", true, true, true)) await sendRequest("stopServer", {id: props.server})
 }
 async function killServer() {
-  if(confirm("Are you sure you want to KILL this server? All unsaved data will be GONE.")) await sendRequest("killServer", {id: props.server})
+  if(await confirmModal("Kill server", "Are you sure you want to KILL this server? All unsaved data will be GONE.", true, true, true)) await sendRequest("killServer", {id: props.server})
 }
 onUnmounted(() => {
   sendRequest("detachFromServer", {id: props.server})

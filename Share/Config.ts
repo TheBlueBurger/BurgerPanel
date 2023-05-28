@@ -1,3 +1,5 @@
+import { allowedSoftwares } from "./Server";
+
 export let defaultConfig: Config = {
     defaultMemory: 1024,
     webServerPort: 3001,
@@ -27,7 +29,7 @@ export let descriptions: { [key in keyof Config]?: string } = {
     webServerPort: "The port to run the web server on.\nNote: If you change this, you need to restart the web server.",
     serverPath: "The path to store servers in",
     defaultMCVersion: "The default Minecraft version to use when creating a server.",
-    defaultMCSoftware: "The default Minecraft software to use when creating a server. Can be either 'purpur', 'paper', or 'vanilla'.",
+    defaultMCSoftware: `The default Minecraft software to use when creating a server. Can be either ${allowedSoftwares.join(", ")}.`,
     stopServerTimeout: "The amount of time in milliseconds to wait for a server to stop before killing it.",
     defaultPermissions: "The permission to give a new user, separated by commas"
 }
