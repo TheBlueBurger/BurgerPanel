@@ -104,7 +104,12 @@ import { confirmModal } from '../../util/modal';
         {{ loadState }}
     </div>
     <div v-else-if="!readingFile">
-        <h1>Files in {{ server.name }}</h1>
+        <h1>Files in {{ server.name }} <RouterLink :to="{
+        name: 'editServer',
+        params: {
+            server: props.server
+        }
+    }"><button id="back-server-page-btn">Server Page</button></RouterLink></h1>
         <RouterLink v-if="!['','/'].includes(path.toString())" :to="{
                     query: {
                         path: path.toString().split('/').slice(0, -1).join('/')
@@ -153,9 +158,17 @@ textarea {
     text-decoration: none;
 }
 .entry {
-    margin-top: 10px;
+    margin-top: 3px;
+    border-radius: 10px;
+    padding: 10px;
     display: block;
     font-size: 1.25rem;
     margin-left: 10px;
+    background-color: #3b3a3a;
+}
+#back-server-page-btn {
+    margin-top: -50px;
+    position: relative;
+    top: -5px;
 }
 </style>

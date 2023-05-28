@@ -6,6 +6,7 @@ import path from "node:path";
 import mime from "mime-types";
 import { allowedFileNames, allowedMimeTypes } from "../../../Share/Server.js";
 import { Request } from "../../../Share/Requests.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class ServerFiles extends Packet {
     name: Request = "serverFiles";
@@ -50,6 +51,7 @@ export default class ServerFiles extends Packet {
                 if(!allowedMimeTypes.includes(mimeData.toString()) && !allowedFileNames.includes(data.path)) {
                     return "Disallowed type!"
                 }
+                logger.log(`${client.data.auth.user?.username} is reading ${data.path} in ${server.name}`, "server.file.read", LogLevel.INFO);
                 let fileData = await fs.readFile(pathToCheck, "utf-8");
                 return {
                     fileData,

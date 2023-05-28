@@ -35,7 +35,7 @@ export default class ServerLogs extends Packet {
                 return;
             }
             let fileData = await fs.readFile(logFile);
-            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?.username}) is reading ${data.log}`, "logs.read", LogLevel.INFO);
+            logger.log(`${client.data.auth.user?.username} is reading ${data.log} in ${server.name}`, "logs.read", LogLevel.INFO);
             if(logFile.endsWith(".gz")) {
                 let buff = await ourGunzip(fileData);
                 return {

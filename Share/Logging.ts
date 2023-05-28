@@ -34,6 +34,7 @@ export let IDs = [
     "packet.invalid-packet",
     "logging.change",
     "info",
+    "server.file.read"
 ] as const;
 // WARNING: Do not remove any of these before fixing the issue
 export type IDs = typeof IDs[number];
