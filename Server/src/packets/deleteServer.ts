@@ -4,6 +4,7 @@ import type { DeleteServerS2C } from "../../../Share/DeleteServer.js"
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
 import { Request } from "../../../Share/Requests.js";
+import logger, { LogLevel } from "../logger.js";
 
 export default class DeleteServer extends Packet {
     name: Request = "deleteServer";
@@ -18,6 +19,7 @@ export default class DeleteServer extends Packet {
         if(!hasServerPermission(client.data.auth.user, server.toJSON(), "delete")) {
             return "No permission"
         }
+        logger.log(`${client.data.auth.user.username} deleted ${server.name}`, "server.delete", LogLevel.WARNING);
         await server.deleteOne();
         await serverManager.stopServer(server.toJSON());
         serverManager.deleteServerFromCache(server.toJSON());
