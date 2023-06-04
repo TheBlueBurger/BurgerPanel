@@ -43,13 +43,15 @@ let shouldShow = computed(() => {
 let inputResponses = ref({}) as Ref<{
     [id: string]: string;
 }>;
+let currentID = -1;
 onMounted(() => {
     if (props.__isDefaultModal) event.on("default-modalbox-show", d => {
         if(defaultModalShow.value) {
             throw new Error(`Got request to show modal while modal is already showing! Old: ${JSON.stringify(defaultModalData.value)}. New: ${JSON.stringify(d)}`);
         }
         console.log("Creating (default) modal with data", d);
-        inputResponses.value = {}
+        inputResponses.value = {};
+        currentID = d.id;
         defaultModalData.value = d;
         defaultModalShow.value = true;
         if(defaultModalData.value?.inputs) defaultModalData.value.inputs.forEach(input => {
@@ -71,7 +73,7 @@ function closeModal() {
 }
 function defaultModalRespond(type: string) {
     defaultModalShow.value = false;
-    event.emit("default-modalbox-done", {
+    event.emit("default-modalbox-done-" + currentID, {
         type,
         inputs: inputResponses.value
     });

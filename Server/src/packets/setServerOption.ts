@@ -56,7 +56,7 @@ export default class SetServerOption extends Packet {
                             // user to remove has perms which the user trying to remove does not have, deny them
                             return "Cannot remove user with higher perms than you";
                         }
-                        logger.log(`User ${client.data.auth.user?.username} removed user ${userToRemove.username} from the server ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
+                        logger.log(`User ${client.data.auth.user?.username} removed user ${userToRemove} from the server ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
                         server.allowedUsers = server.allowedUsers.filter(au => au.user != userToRemove);
                     }
                     break;

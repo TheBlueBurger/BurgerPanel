@@ -123,13 +123,21 @@ const router = createRouter({
             }
         },
         {
+            name: "Debug",
+            path: '/debug',
+            component: () => import("./pages/Debug.vue"),
+            meta: {
+                title: "Debug"
+            }
+        },
+        {
             name: "404",
             path: '/:pathMatch(.*)*',
             component: () => import("./pages/404.vue"),
             meta: {
                 title: "404 Not Found"
             }
-        }
+        },
     ],
 })
 let app = createApp(App).use(router);

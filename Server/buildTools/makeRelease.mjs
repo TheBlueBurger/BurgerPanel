@@ -6,8 +6,9 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import esbuild from "esbuild";
 import path from "path";
-import { spawnSync } from "node:child_process";
-import packageJSON from "./package.json" assert {type: "json"}
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
+import packageJSON from "../package.json" assert {type: "json"}
 console.time("Total");
 try {
     fs.rmSync("_build", {recursive: true})
@@ -20,7 +21,12 @@ files.forEach((f) => {
 fileData += `export default [${files.map(f => f.replace(".ts", "")).join(", ")}];\n`;
 fs.writeFileSync("packets.mjs", fileData);
 console.time("Build TS");
-spawnSync("npm", ["run", "build"]);
+let backendBuild = spawn("npm", ["run", "build"]);
+let backendExitcode = await once(backendBuild, "exit");
+if(backendExitcode[0] != 0) {{
+    console.log("Backend build failed with code " + backendExitcode);
+    process.exit(1);
+}}
 console.timeEnd("Build TS");
 console.time("Rollup");
 let build = await rollup({
@@ -55,7 +61,12 @@ fs.rmSync("_build/input.js");
 fs.copyFileSync("../LICENSE", "_build/LICENSE.txt");
 fs.copyFileSync("../README.md", "_build/README.txt");
 console.time("Build Frontend");
-spawnSync("npm", ["run", "build"], {cwd: "../Web/"});
+let frontendResponse = spawn("npm", ["run", "build"], {cwd: "../Web/"});
+let frontendExitCode = await once(frontendResponse, "exit");
+if(frontendExitCode[0] != 0) {
+    console.log("Frontend failed");
+    process.exit(1);
+}
 fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
 console.timeEnd("Build Frontend");
 fs.writeFileSync("_build/mongodb_url.txt", "mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel");

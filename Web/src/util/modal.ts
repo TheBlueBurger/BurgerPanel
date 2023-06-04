@@ -4,6 +4,7 @@ export type ModalInputData<T extends keyof ModalInput> = {
     type: T,
     data: ModalInput[T]
 }
+let currentModalID = 0;
 export type ModalInput = {
     TextInput: {
         inputType: "text" | "password" | "number",
@@ -53,6 +54,10 @@ export async function confirmModal(title: string, description: string, grayNo: b
     })).type == "YES";
 }
 export async function requestModal(data: ModalData): Promise<ModalResp> {
-    event.emit("default-modalbox-show", data);
-    return await event.awaitEvent("default-modalbox-done");
+    let id = currentModalID++;
+    event.emit("default-modalbox-show", {
+        ...data,
+        id
+    });
+    return await event.awaitEvent("default-modalbox-done-" + id);
 }

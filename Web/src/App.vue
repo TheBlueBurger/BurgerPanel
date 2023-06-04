@@ -12,7 +12,7 @@ import { _knownSettings } from "./util/config";
 import { RouteLocationNormalized, useRouter } from "vue-router";
 import { ServerStatuses } from '../../Share/Server';
 import event from "./util/event";
-import type {RequestResponses} from "../../Share/Requests";
+import type { RequestResponses } from "../../Share/Requests";
 import titleManager from "./util/titleManager";
 import Modal from "./components/Modal.vue";
 import { showInfoBox } from "./util/modal";
@@ -71,7 +71,7 @@ onMounted(() => {
       sendRequest("ping")
     }
   }, 30_000);
-  if(location.protocol == "http:" && !localStorage.getItem("ignore-unsecure-connection")) {
+  if (location.protocol == "http:" && !localStorage.getItem("ignore-unsecure-connection")) {
     showInfoBox("HTTP Warning", "You are connecting over HTTP. Traffic will not be encrypted! You are recommended to use HTTPS for the best security.\n\nYou will not be shown this warning again.");
     localStorage.setItem("ignore-unsecure-connection", "1");
   }
@@ -117,7 +117,7 @@ function initWS() {
 initWS();
 async function login(usingToken: boolean = false) {
   let authResp: void | RequestResponses["auth"];
-  if(usingTokenLogin.value || usingToken) {
+  if (usingTokenLogin.value || usingToken) {
     authResp = await sendRequest("auth", {
       token: token.value
     }, false).catch((err) => {
@@ -133,7 +133,7 @@ async function login(usingToken: boolean = false) {
       showLoginScreen.value = true;
     })
   }
-  if(!authResp) {
+  if (!authResp) {
     showLoginScreen.value = true;
     return;
   }
@@ -144,12 +144,12 @@ async function login(usingToken: boolean = false) {
   loginStatus.value = authResp.user;
   console.log("Logged in as " + authResp.user.username);
   localStorage.setItem("token", authResp.user.token);
-  if(authResp.servers) servers.value = authResp.servers;
+  if (authResp.servers) servers.value = authResp.servers;
   if (lastID.value != authResp.user._id) createNotification("Welcome, " + authResp.user.username + "!");
   lastID.value = authResp.user._id;
   if (authResp.statuses) serverStatuses.value = authResp.statuses;
   queuedPackets.forEach(queuedPacket => {
-  console.log("Sending queued request", queuedPacket)
+    console.log("Sending queued request", queuedPacket)
     ws.value.send(JSON.stringify(queuedPacket));
   });
 }
@@ -196,8 +196,8 @@ function gotoSetup(_currentRoute?: RouteLocationNormalized) {
   })
 }
 router.beforeEach(async (guard, fromGuard) => {
-  if(guard.path != fromGuard.path) {
-    if(typeof guard.meta.title == "string") titleManager.setTitle(guard.meta.title);
+  if (guard.path != fromGuard.path) {
+    if (typeof guard.meta.title == "string") titleManager.setTitle(guard.meta.title);
     else titleManager.resetTitle();
   }
   if (guard.name != "userSetup" && loginStatus.value?.setupPending) {
@@ -254,28 +254,43 @@ let loginPassword = ref("");
   <Navbar />
   <Modal :__is-default-modal="true" />
   <div v-if="loginStatus?.username">
-    <RouterView></RouterView>
+    <RouterView v-slot="{ Component }">
+      <template v-if="Component">
+        <Suspense>
+          <!-- main content -->
+          <component :is="Component"></component>
+
+          <!-- loading state -->
+          <template #fallback>
+            <div id="login-div">
+              Loading '{{ router.currentRoute.value.meta.title ?? router.currentRoute.value.name ??
+                router.currentRoute.value.path }}'...
+            </div>
+          </template>
+        </Suspense>
+      </template>
+    </RouterView>
     <div class="notification" v-for="notification in notifications">
       {{ notification }}
     </div>
   </div>
   <div v-else id="login-div">
-      <span v-if="!connected">Connecting to server...</span>
-      <form @submit.prevent="login(false)" v-else-if="!loginStatus && showLoginScreen">
-        <h1>Login</h1>
-        <br/>
-        <div v-if="usingTokenLogin">
-          <input type="password" placeholder="Token" v-model="token" class="login-token-input" />
-        </div>
-        <div v-else>
-          <input type="text" placeholder="Username" v-model="loginUsername">
-          <input type="password" placeholder="Password" v-model="loginPassword">
-        </div>
-        <p v-if="loginMsg">{{ loginMsg }}</p>
-        <button type="submit">Login</button>
-        <br/>
-        <a href="#" @click.prevent="usingTokenLogin = !usingTokenLogin">Log in with {{ usingTokenLogin ? "username and password" : "token" }} instead</a>
-      </form>
+    <span v-if="!connected">Connecting to server...</span>
+    <form @submit.prevent="login(false)" v-else-if="!loginStatus && showLoginScreen">
+      <h1>Login</h1>
+      <br />
+      <div v-if="usingTokenLogin">
+        <input type="password" placeholder="Token" v-model="token" class="login-token-input" />
+      </div>
+      <div v-else>
+        <input type="text" placeholder="Username" v-model="loginUsername">
+        <input type="password" placeholder="Password" v-model="loginPassword">
+      </div>
+      <p v-if="loginMsg">{{ loginMsg }}</p>
+      <button type="submit">Login</button>
+      <br />
+      <a href="#" @click.prevent="usingTokenLogin = !usingTokenLogin">Log in with {{ usingTokenLogin ? "username and password" : "token" }} instead</a>
+    </form>
     <p v-else>Logging in...</p>
   </div>
 </template>
