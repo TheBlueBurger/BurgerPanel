@@ -19,10 +19,8 @@ let props = defineProps({
     }
 });
 
-onMounted(async () => {
-    user.value = await getUser(props.user, cachedUsers.value);
-    titleManager.setTitle(`${user.value.username}'s permissions`);
-});
+user.value = await getUser(props.user, cachedUsers.value);
+titleManager.setTitle(`${user.value.username}'s permissions`);
 
 async function togglePerm(perm: PermissionString) {
     user.value = (await sendRequest("editUser", {

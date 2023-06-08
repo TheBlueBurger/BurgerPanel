@@ -170,7 +170,7 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
     z-index: 1040;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(1px);
 }
 

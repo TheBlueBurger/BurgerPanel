@@ -57,6 +57,7 @@ export let users = db.model("User", new mongoose.Schema({
         }
     ]*/
 }));
+
 export let servers = db.model("Server", new mongoose.Schema({
     name: {
         type: String,

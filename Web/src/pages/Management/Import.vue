@@ -27,7 +27,7 @@ let updateServerPath = async () => {
     }); // is there a better way to do this?
     if(resp?.type !== "autodetect") return;
     if (resp.autodetect.version) version.value = resp.autodetect.version;
-    if (resp.autodetect.software) software.value = resp.autodetect.software;
+    if (resp.autodetect.software) software.value = resp.autodetect.software ?? await getSetting("defaultMCSoftware");
     if (resp.autodetect.port) port.value = resp.autodetect.port;
     let splitString = _serverPath.toString().split("/");
     let folderName = splitString[splitString.length-1];
@@ -56,9 +56,6 @@ let mem = ref(1024);
 let version = ref("");
 let software = ref();
 let port = ref(25565);
-onMounted(async () => {
-    if (software.value == "") software = ref(await getSetting("defaultMCSoftware"));
-});
 async function importServer() {
     let resp = await sendRequest("importServer", {
         path: serverPath.value,

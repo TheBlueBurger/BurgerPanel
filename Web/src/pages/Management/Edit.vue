@@ -24,20 +24,18 @@ let thisServerStatus = computed(() => {
     return serverStatuses.value[props.server]?.status;
 });
 let isRunning = computed(() => thisServerStatus.value == "running");
-onMounted(async () => {
-    try {
-        server.value = await getServerByID(null, props.server);
-    } catch(err) {
-        showInfoBox("Couldn't get server", `${err}`);
-        router.push("/manage");
-    }
-    if(!hasPermission(loginStatus.value, "users.view")) {
-        events.emit("createNotification", "You do not have user view permissions. User management has been disabled.");
-    } else {
-        getUserlist();
-    }
-    titleManager.setTitle("Editing " + server.value?.name)
-});
+try {
+    server.value = await getServerByID(null, props.server);
+} catch(err) {
+    showInfoBox("Couldn't get server", `${err}`);
+    router.push("/manage");
+}
+if(!hasPermission(loginStatus.value, "users.view")) {
+    events.emit("createNotification", "You do not have user view permissions. User management has been disabled.");
+} else {
+    await getUserlist();
+}
+titleManager.setTitle("Editing " + server.value?.name)
 async function renameServer(newName: string) {
     if(newName) {
         server.value = (await sendRequest("setServerOption", {id: props.server, name: newName})).server;

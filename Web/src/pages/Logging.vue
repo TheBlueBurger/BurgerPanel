@@ -14,10 +14,8 @@ import sendRequest from '../util/request';
         disabledLogs.value = (await getSetting("logging_DisabledIDs", reload)).split(",");
         logPath.value = await getSetting("logging_logDir", reload);
     }
-    onMounted(async () => {
-        await load();
-        finishedLoading.value = true;
-    });
+    await load();
+    finishedLoading.value = true;
     function isDisabled(id: typeof IDs[number]) {
         return disabledLogs.value.includes(id);
     }

@@ -57,14 +57,10 @@ import { confirmModal } from '../../util/modal';
         name: string;
         folder: boolean;
     }[]>;
-    let loadState = ref("Loading server data...");
-    onMounted(async () => {
-        server.value = await getServerByID(null, props.server);
-        loadState.value = "Loading server files...";
-        if(!isReading()) await getFiles();
-        else readFile();
-        finishedLoading.value = true;
-    });
+    server.value = await getServerByID(null, props.server);
+    if(!isReading()) await getFiles();
+    else readFile();
+    finishedLoading.value = true;
     async function getFiles() {
         titleManager.setTitle("Files in " + server.value?.name);
         if(path.value.toString().startsWith("/logs")) {
@@ -101,7 +97,7 @@ import { confirmModal } from '../../util/modal';
 </script>
 <template>
     <div v-if="!finishedLoading">
-        {{ loadState }}
+        
     </div>
     <div v-else-if="!readingFile">
         <h1>Files in {{ server.name }} <RouterLink :to="{

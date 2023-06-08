@@ -256,14 +256,14 @@ let loginPassword = ref("");
   <div v-if="loginStatus?.username">
     <RouterView v-slot="{ Component }">
       <template v-if="Component">
-        <Suspense>
-          <!-- main content -->
-          <component :is="Component"></component>
-
-          <!-- loading state -->
-          <template #fallback>
-            <div id="login-div">
-              Loading '{{ router.currentRoute.value.meta.title ?? router.currentRoute.value.name ??
+          <Suspense>
+            <!-- main content -->
+            <component :is="Component"></component>
+            
+            <!-- loading state -->
+            <template #fallback>
+              <div id="login-div">
+                Loading '{{ router.currentRoute.value.meta.title ?? router.currentRoute.value.name ??
                 router.currentRoute.value.path }}'...
             </div>
           </template>

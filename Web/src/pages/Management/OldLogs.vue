@@ -14,25 +14,24 @@ let props = defineProps({
         required: true,
         type: String
     }
-})
-onMounted(async () => {
-    server.value = await getServerByID(cachedServers.value, props.server);
-    if(viewingLog.value) getLog(viewingLog.value?.toString() || "");
-    else titleManager.setTitle("Logs in " + server.value.name)
-    let resp = await sendRequest("serverLogs", {
-        id: props.server,
-        list: true
-    });
-    if(resp.type != "list") return;
-    logs.value = resp.files;
 });
-let logs = ref([] as string[]);
-let logData = ref("");
 let router = useRouter();
 let loginStatus = inject("loginStatus") as Ref<User>;
 let viewingLog = computed(() => {
     return router.currentRoute.value.query.log
 });
+server.value = await getServerByID(cachedServers.value, props.server);
+if(viewingLog.value) getLog(viewingLog.value?.toString() || "");
+else titleManager.setTitle("Logs in " + server.value.name)
+let resp = await sendRequest("serverLogs", {
+    id: props.server,
+    list: true
+});
+let logs = ref([] as string[]);
+if(resp.type == "list") {
+    logs.value = resp.files;
+}
+let logData = ref("");
 watch(() => viewingLog.value, async (val) => {
     let str = val?.toString();
     if(str) {

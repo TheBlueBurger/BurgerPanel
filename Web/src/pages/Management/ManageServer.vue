@@ -27,41 +27,39 @@ let loginStatus = inject("loginStatus") as Ref<User | null>;
 let setServerStatuses = inject("setServerStatuses") as Function;
 let statuses = inject("statuses") as Ref<ServerStatuses>;
 
-onMounted(async () => {
-  loadingServerFromAPI.value = true;
-  // Attach to server
-  if (!attached.value) {
-    let resp = await sendRequest("attachToServer", {_id: props.server}).catch(err => {
-      router.push("/manage")
-      return err;
-    })
-      server.value = resp.server;
-      titleManager.setTitle(`${resp.server.name} console`)
-      console.log("Attached to", resp.server.name);
-      if(resp.lastLogs) logs.value = resp.lastLogs;
-      attached.value = true;
-      // Scroll to bottom
-      setTimeout(() => { // there has to be a better way to do this, but this is what ill do and it works
-        serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
-      }, 50);
-      setServerStatuses({
-        ...statuses.value,
-        [props.server]: {
-          status: resp.status
-        }
-      })
-    loadingServerFromAPI.value = false;
-  }
-  events.on("serverOutput-" + props.server, data => {
-    n++;
-    let thisID = n;
-    ignoreNextScroll.value = true;
-    logs.value.push(data.data);
-    if(!autoScrollInterrupted.value) serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
-    setTimeout(() => {
-      if (thisID == n) ignoreNextScroll.value = false;
-    }, 250);
+loadingServerFromAPI.value = true;
+// Attach to server
+if (!attached.value) {
+  let resp = await sendRequest("attachToServer", {_id: props.server}).catch(err => {
+    router.push("/manage")
+    return err;
   })
+    server.value = resp.server;
+    titleManager.setTitle(`${resp.server.name} console`)
+    console.log("Attached to", resp.server.name);
+    if(resp.lastLogs) logs.value = resp.lastLogs;
+    attached.value = true;
+    // Scroll to bottom
+    setTimeout(() => { // there has to be a better way to do this, but this is what ill do and it works
+      serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
+    }, 50);
+    setServerStatuses({
+      ...statuses.value,
+      [props.server]: {
+        status: resp.status
+      }
+    })
+  loadingServerFromAPI.value = false;
+}
+events.on("serverOutput-" + props.server, data => {
+  n++;
+  let thisID = n;
+  ignoreNextScroll.value = true;
+  logs.value.push(data.data);
+  if(!autoScrollInterrupted.value) serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
+  setTimeout(() => {
+    if (thisID == n) ignoreNextScroll.value = false;
+  }, 250);
 });
 let n = 0;
 let autoScrollInterrupted = ref(false);

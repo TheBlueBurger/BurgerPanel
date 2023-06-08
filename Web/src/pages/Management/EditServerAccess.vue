@@ -26,26 +26,23 @@ let user = ref() as Ref<User>;
 let loginStatus = inject("loginStatus") as Ref<User | null>;
 let cachedUsers = inject("users") as Ref<Map<string, User>>;
 let router = useRouter();
-onMounted(async () => {
-    try {
-        server.value = await getServerByID(null, props.server);
-        user.value = await getUser(props.user, cachedUsers.value);
-    } catch(err) {
-        showInfoBox("Couldnt get server/user", `${err}`)
-        console.log(err);
-        router.push({
-            name: "editServer",
-            params: {
-                server: props.server
-            }
-        });
-        return;
-    }
-    titleManager.setTitle(`${user.value.username} in ${server.value.name}`)
-    if(!server.value.allowedUsers.some(a => a.user == user.value._id)) {
-        showInfoBox("Hm", "This user doesn't have access to this server. Nothing will work");
-    }
-});
+try {
+    server.value = await getServerByID(null, props.server);
+    user.value = await getUser(props.user, cachedUsers.value);
+} catch(err) {
+    showInfoBox("Couldnt get server/user", `${err}`)
+    console.log(err);
+    router.push({
+        name: "editServer",
+        params: {
+            server: props.server
+        }
+    });
+}
+titleManager.setTitle(`${user.value.username} in ${server.value.name}`)
+if(!server.value.allowedUsers.some(a => a.user == user.value._id)) {
+    showInfoBox("Hm", "This user doesn't have access to this server. Nothing will work");
+}
 let userInAllowedUsers = computed(() => {
     return server.value.allowedUsers.find(au => au.user == props.user);
 });
