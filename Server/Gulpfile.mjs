@@ -75,7 +75,7 @@ async function runESBuild() {
 }
 
 async function zip() {
-    let filename = process.env.EXCLUDE_VERSION == 1 ? "BurgerPanel.zip" : `../BurgerPanel-${packageJSON.version}.zip`
+    let filename = process.env.EXCLUDE_VERSION == 1 ? "../BurgerPanel.zip" : `../BurgerPanel-${packageJSON.version}.zip`
     spawnSync("7z", ["a", filename, "*"], {cwd: path.join(process.cwd(), "_build")})
 }
 
