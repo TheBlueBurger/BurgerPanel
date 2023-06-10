@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && node buildTools/packetsToFile.mjs",
-    "buildRelease": "node buildTools/makeRelease.mjs",
-    "releaseTest": "node buildTools/makeRelease.mjs && cd _build && node burgerpanel.mjs",
+    "buildRelease": "gulp",
+    "releaseTest": "npm run buildRelease && cd _build && node burgerpanel.mjs",
     "start": "BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js",
     "dev": "npm run build && npm run startInspect",
     "startInspect": "NODE_OPTIONS=\"--inspect\" BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js"
@@ -24,6 +24,7 @@
     "@types/mime-types": "^2.1.1",
     "@types/ws": "^8.5.4",
     "esbuild": "^0.17.15",
+    "gulp": "^4.0.2",
     "rollup": "^3.20.2",
     "typescript": "^5.0.2"
   },
@@ -34,6 +35,5 @@
     "mime-types": "^2.1.35",
     "mongoose": "^7.0.3",
     "ws": "^8.13.0"
-  },
-  "packageManager": "pnpm@8.3.1"
+  }
 }

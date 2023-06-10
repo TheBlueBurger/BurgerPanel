@@ -100,7 +100,7 @@ import { confirmModal } from '../../util/modal';
         
     </div>
     <div v-else-if="!readingFile">
-        <h1>Files in {{ server.name }} <RouterLink :to="{
+        <h1>Files in {{ server.name }}{{ path }} <RouterLink :to="{
         name: 'editServer',
         params: {
             server: props.server
