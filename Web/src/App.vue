@@ -17,6 +17,7 @@ import type { RequestResponses } from "../../Share/Requests";
 import titleManager from "./util/titleManager";
 import Modal from "./components/Modal.vue";
 import { showInfoBox } from "./util/modal";
+import { useServers } from "./stores/servers";
 
 let router = useRouter();
 let events = ref(EventEmitter);
@@ -63,8 +64,6 @@ let connected = ref(false);
 // Connect with WS
 let ws: Ref<WebSocket> = ref() as Ref<WebSocket>;
 provide("ws", ws);
-let servers = ref([] as Server[]);
-provide("servers", servers);
 let lastID = ref(null) as Ref<string | null>;
 let pingInterval: number;
 onMounted(() => {
@@ -116,6 +115,7 @@ function initWS() {
   });
 }
 
+
 initWS();
 async function login(usingToken: boolean = false) {
   let authResp: void | RequestResponses["auth"];
@@ -146,10 +146,11 @@ async function login(usingToken: boolean = false) {
   user.user = authResp.user;
   console.log("Logged in as " + authResp.user.username);
   localStorage.setItem("token", authResp.user.token);
-  if (authResp.servers) servers.value = authResp.servers;
+  let servers = useServers();
+  if (authResp.servers) servers.addServers(authResp.servers);
   if (lastID.value != authResp.user._id) createNotification("Welcome, " + authResp.user.username + "!");
   lastID.value = authResp.user._id;
-  if (authResp.statuses) serverStatuses.value = authResp.statuses;
+  if (authResp.statuses) servers.addStatuses(authResp.statuses);
   queuedPackets.forEach(queuedPacket => {
     console.log("Sending queued request", queuedPacket)
     ws.value.send(JSON.stringify(queuedPacket));
@@ -218,17 +219,6 @@ router.beforeEach(async (guard, fromGuard) => {
   }
 });
 
-let serverStatuses = ref({} as ServerStatuses);
-provide("statuses", serverStatuses);
-provide("setServerStatuses", (v: any) => serverStatuses.value = v);
-event.on("serverStatusUpdate", d => {
-  serverStatuses.value[d.server] = {
-    status: d.status
-  }
-})
-event.on("getAllServers", data => {
-  serverStatuses.value = data.d.statuses;
-});
 user.$subscribe((_, newUser) => {
   if(newUser.user?.setupPending) {
     setTimeout(() => gotoSetup(), 100); // stupid hack

@@ -2,12 +2,12 @@
 import { computed, inject, onMounted, Ref, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Server } from '../../../../Share/Server';
-import getServerByID from '../../util/getServerByID';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { hasServerPermission } from '../../../../Share/Permission';
 import { User } from '../../../../Share/User';
 import { useUser } from '../../stores/user';
+import { useServers } from '../../stores/servers';
 let server = ref() as Ref<Server>;
 let cachedServers = inject("servers") as Ref<Server[]>;
 let props = defineProps({
@@ -21,7 +21,8 @@ let user = useUser();
 let viewingLog = computed(() => {
     return router.currentRoute.value.query.log
 });
-server.value = await getServerByID(cachedServers.value, props.server);
+let servers = useServers();
+server.value = await servers.getServerByID(props.server);
 if(viewingLog.value) getLog(viewingLog.value?.toString() || "");
 else titleManager.setTitle("Logs in " + server.value.name)
 let resp = await sendRequest("serverLogs", {

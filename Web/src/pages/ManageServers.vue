@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, inject, ref, onMounted, watch } from 'vue';
+import { Ref, inject, ref, onMounted, watch, computed } from 'vue';
 import { Server, allowedSoftwares } from '../../../Share/Server';
 import { User } from '../../../Share/User';
 import EventEmitter from '../util/event';
@@ -9,19 +9,27 @@ import { hasPermission } from '../../../Share/Permission';
 import ServerStatus from "../components/ServerStatus.vue";
 import sendRequest from '../util/request';
 import { useUser } from '../stores/user';
+import { useServers } from '../stores/servers';
 
 let router = useRouter();
 let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
-let servers: Ref<Server[]> = inject('servers') as Ref<Server[]>;
+let servers = useServers();
 let user = useUser();
 let serverCreatorOpen = ref(false);
 let newServerName = ref("");
 let newServerMem = ref(0);
 let newMCServerVersion = ref("");
 let newMCServerSoftware = ref("");
+let allServers = ref([] as Server[]);
+let usedServers = computed(() => {
+    if(router.currentRoute.value.query.all == "true" && allServers.value) {
+        return allServers.value;
+    }
+    return servers.assignedServers;
+})
 async function checkIfAllServers(currentRoute: RouteLocationNormalized) {
     if (currentRoute.query.all == "true") {
-        servers.value = (await sendRequest("getAllServers")).servers;
+        allServers.value = (await servers.getAllServers());
     }
 }
 onMounted(() => {
@@ -69,6 +77,7 @@ let newMCServerPort = ref(25565);
 <template>
     <h1>Servers</h1>
         <RouterLink :to="{query: {all: 'true'}}"><button v-if="!(router.currentRoute.value.query.all == 'true') && user.hasPermission('servers.all.view')">Show all servers</button></RouterLink>
+        <RouterLink v-if="router.currentRoute.value.query.all == 'true'" :to="{query: {}}"><button>Show only my servers</button></RouterLink>
         <button @click="serverCreatorOpen = !serverCreatorOpen" v-if="user.hasPermission('servers.create')">Create server {{ serverCreatorOpen ? "∧" : "V" }}</button>
         <RouterLink :to="{name: 'importServer'}"><button v-if="user.hasPermission('servers.import')">Import server</button></RouterLink>
     <div id="create-server" v-if="serverCreatorOpen && user.hasPermission('servers.create')">
@@ -83,7 +92,7 @@ let newMCServerPort = ref(25565);
             <button type="submit" @click.prevent="createServer" :disabled="serverCreating">Create</button>
         </form>
     </div>
-    <div v-if="servers.length != 0">
+    <div v-if="usedServers.length != 0">
         <table>
             <tr>
                 <th>Name</th>
@@ -93,7 +102,7 @@ let newMCServerPort = ref(25565);
                 <th>Status</th>
                 <th>Manage</th>
             </tr>
-            <tr v-for="server in servers">
+            <tr v-for="server in usedServers">
                 <td>{{ server.name }}</td>
                 <td>{{ server.mem }} MB</td>
                 <td>{{ server.path }}</td>
@@ -103,7 +112,7 @@ let newMCServerPort = ref(25565);
             </tr>
         </table>
     </div>
-    <p v-if="servers.length === 0">There are no servers for you to manage.</p>
+    <p v-if="usedServers.length === 0">There are no servers for you to manage.{{ (!(router.currentRoute.value.query.all == 'true') && user.hasPermission('servers.all.view')) ? " You can click 'Show all servers' to see all servers on the server." : '' }}</p>
 </template>
 
 <style scoped>

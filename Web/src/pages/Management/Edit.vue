@@ -5,7 +5,6 @@ import { hasPermission, hasServerPermission, userHasAccessToServer } from '../..
 import { Server, ServerStatuses } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import events from '../../util/event';
-import getServerByID from '../../util/getServerByID';
 import getUsers from '../../util/getUsers';
 import TextInput from '../../components/TextInput.vue';
 import sendRequest from '../../util/request';
@@ -13,6 +12,7 @@ import titleManager from '../../util/titleManager';
 import { confirmModal, modalInput, requestModal, showInfoBox } from '../../util/modal';
 import Modal from '../../components/Modal.vue';
 import { useUser } from '../../stores/user';
+import { useServers } from '../../stores/servers';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
@@ -25,8 +25,9 @@ let thisServerStatus = computed(() => {
     return serverStatuses.value[props.server]?.status;
 });
 let isRunning = computed(() => thisServerStatus.value == "running");
+let servers = useServers();
 try {
-    server.value = await getServerByID(null, props.server);
+    server.value = await servers.getServerByID(props.server);
 } catch(err) {
     showInfoBox("Couldn't get server", `${err}`);
     router.push("/manage");

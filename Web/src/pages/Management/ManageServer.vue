@@ -10,16 +10,16 @@ import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { confirmModal } from '../../util/modal';
 import { useUser } from '../../stores/user';
+import { useServers } from '../../stores/servers';
 let router = useRouter();
 let props = defineProps<{
   server: string;
 }>();
-let serverStatuses = inject("statuses") as Ref<ServerStatuses>;
+let servers = useServers();
 let thisServerStatus = computed(() => {
-    return serverStatuses.value[props.server]?.status;
+    return servers.statuses[props.server]?.status;
 });
 let isRunning = computed(() => thisServerStatus.value == "running");
-let servers: Ref<Server[]> = inject('servers') as Ref<Server[]>;
 let server = ref(null as Server | null);
 let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);

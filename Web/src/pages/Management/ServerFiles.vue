@@ -1,12 +1,12 @@
 <script setup lang="ts">
     import { Ref, computed, onMounted, ref, watch } from 'vue';
     import { Server } from '../../../../Share/Server';
-    import getServerByID from '../../util/getServerByID';
     import event from '../../util/event';
     import { useRouter } from 'vue-router';
-import sendRequest from '../../util/request';
-import titleManager from '../../util/titleManager';
-import { confirmModal } from '../../util/modal';
+    import sendRequest from '../../util/request';
+    import titleManager from '../../util/titleManager';
+    import { confirmModal } from '../../util/modal';
+import { useServers } from '../../stores/servers';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -57,7 +57,8 @@ import { confirmModal } from '../../util/modal';
         name: string;
         folder: boolean;
     }[]>;
-    server.value = await getServerByID(null, props.server);
+    let servers = useServers();
+    server.value = await servers.getServerByID(props.server);
     if(!isReading()) await getFiles();
     else readFile();
     finishedLoading.value = true;

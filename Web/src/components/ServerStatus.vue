@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, inject, Ref, watch } from 'vue';
-import { ServerStatuses } from '../../../Share/Server';
+import { useServers } from '../stores/servers';
 let props = defineProps({
     server: {
         type: String,
         required: true
     }
 });
-let statuses = inject("statuses") as Ref<ServerStatuses>;
+let servers = useServers();
 let status: Ref<"running" | "stopped" | "unknown"> = computed(() => {
-    return statuses.value[props.server]?.status || "unknown";
+    return servers.statuses[props.server]?.status || "unknown";
 });
 </script>
 
