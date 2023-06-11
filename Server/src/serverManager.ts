@@ -75,6 +75,7 @@ enforce-secure-profile=false
         }
     }
     attachClientToServer(client: OurClient, server: Server) {
+        if(client.type != "Websocket") throw new Error("This isnt a real client!");
         if (!this.servers[server._id]) this.createServerEntry(server);
         this.servers[server._id].clientsAttached.push(client);
         return {
@@ -178,6 +179,7 @@ enforce-secure-profile=false
         await Promise.all(Object.values(this.servers).map(s => this.stopServer(s.server)));
     }
     detachFromServer(client: OurClient, server: string) {
+        if(client.type != "Websocket") throw new Error("This isnt a real client!");
         let serverEntry = this.servers[server];
         if (!serverEntry) return;
         serverEntry.clientsAttached = serverEntry.clientsAttached.filter(c => c !== client);

@@ -21,7 +21,7 @@ jobs:
             - name: Server dependencies
               run: pnpm i
               working-directory: ./Server
-            - name: Server dependencies
+            - name: Web dependencies
               run: pnpm i
               working-directory: ./Web
             - name: Build

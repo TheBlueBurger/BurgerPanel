@@ -27,6 +27,49 @@ if(!isProd) app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     next();
 });
+app.use(express.json());
+app.post("/api/request/:name", async (req, res, next) => {
+    if(!packetHandler.packets[req.params.name]) return next();
+    if(req.headers["content-type"] != "application/json") return res.status(400).json({
+        error: "No JSON"
+    });
+    let token = req.headers?.authorization;
+    if(!token) return res.status(400).json({
+        error: "Missing token"
+    });
+    let user = await users.findOne({token}).exec();
+    if(!user) return res.status(401).json({
+        error: "Invalid token"
+    });
+    let client: OurClient = {
+        json(data) {
+            if(data.e) {
+                res.status(500).json({
+                    error: data.e
+                })
+            } else if(data.d) {
+                res.json(data.d);
+            } else {
+                res.json({});
+            }
+        },
+        data: {
+            auth: {
+                authenticated: true,
+                token,
+                user: user.toJSON()
+            }
+        },
+        type: "APIRequest"
+    };
+    logger.log(`User ${client.data.auth.user?.username} is using ${req.params.name} through the API.`, "api", LogLevel.DEBUG);
+    packetHandler.handle(client, {
+        n: req.params.name,
+        r: 0,
+        d: req.body
+    });
+});
+
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 if(isProd) {
     app.use(express.static(path.join(__dirname, "Web")));
@@ -128,7 +171,7 @@ export class Packet {
     }
 }
 
-export interface OurClient extends WebSocket {
+export interface OurClient {
     data: {
         auth: {
             token?: string,
@@ -137,31 +180,33 @@ export interface OurClient extends WebSocket {
         }
     },
     json: (data: any) => void,
-    requestReload: () => undefined
+    type: "APIRequest" | string
 };
+
+export interface OurWebsocketClient extends OurClient,WebSocket {
+    type: "Websocket"
+}
+
 let packetHandler = new PacketHandler();
 let logging = false;
 let loggingIgnore: string[] = [];
 export let lockdownMode = false;
 export let lockDownExcludedUser = "";
-export const clients: OurClient[] = [];
+export const clients: OurWebsocketClient[] = [];
 wss.on('connection', (_client) => {
-    let client: OurClient = _client as OurClient;
+    let client: OurWebsocketClient = _client as OurWebsocketClient;
     client.data = {
         auth: {
             authenticated: false,
         }
     };
+    client.type = "Websocket";
     client.json = (data: any) => {
         if (logging && !loggingIgnore.includes(data.type)) {
             console.log("SEND", data);
         }
-        client.send(JSON.stringify(data));
+        _client.send(JSON.stringify(data));
     };
-    client.requestReload = () => {
-        client.json({n: "reload"});
-        return undefined;
-    }
     clients.push(client);
     client.on('error', err => {
         console.log("WS error", err);

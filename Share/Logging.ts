@@ -35,7 +35,8 @@ export let IDs = [
     "logging.change",
     "info",
     "server.file.read",
-    "server.delete"
+    "server.delete",
+    "api"
 ] as const;
 // WARNING: Do not remove any of these before fixing the issue
 export type IDs = typeof IDs[number];

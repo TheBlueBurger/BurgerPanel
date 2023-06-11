@@ -1,4 +1,4 @@
-import { clients, OurClient, Packet, ServerPacketResponse } from "../index.js";
+import { clients, OurClient, OurWebsocketClient, Packet, ServerPacketResponse } from "../index.js";
 import { users } from "../db.js";
 import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
@@ -16,7 +16,7 @@ export default class DeleteUser extends Packet {
         }
         await userToDelete.deleteOne();
         if (data.id === client.data.auth.user._id) {
-            client.close();
+            if(client.type == "Websocket") (client as OurWebsocketClient).close();
         }
         clients.forEach(c => {
             if (c.data.auth.user?._id.toString() === data.id) {

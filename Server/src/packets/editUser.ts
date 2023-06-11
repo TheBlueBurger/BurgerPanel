@@ -81,8 +81,6 @@ export default class EditUser extends Packet {
                 break;
             case "finishSetup":
                 if (user._id.toHexString() != client.data.auth.user?._id) return; //impossible
-                
-                if (!user.setupPending) return client.requestReload(); // desync
                     
                 if (typeof client.data.auth.user?.password != "string") {
                     return "Set a password first!"
