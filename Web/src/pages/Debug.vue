@@ -7,8 +7,9 @@ import getUsers from '../util/getUsers';
 import sendRequest from '../util/request';
 import { requestModal, showInfoBox } from '../util/modal';
 import { RequestResponses } from '../../../Share/Requests';
+import { useUser } from '../stores/user';
 let showWarning = ref(true);
-let loginStatus = inject("loginStatus");
+const user = useUser();
 let settings: Ref<Awaited<ReturnType<typeof getAllSettings>> | undefined> = ref();
 let users: Ref<Map<string, User> | undefined> = ref();
 let cachedUsers = inject("users") as Ref<Map<string, User>>;
@@ -61,7 +62,7 @@ async function showUsers() {
 </div>
 <div v-else>
     <h2>My user</h2>
-    <pre>{{ loginStatus }}</pre>
+    <pre>{{ user.user }}</pre>
     <hr/>
     <h2>Settings</h2>
     <div v-if="settings">

@@ -9,6 +9,7 @@ import ServerStatus from '../../components/ServerStatus.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { confirmModal } from '../../util/modal';
+import { useUser } from '../../stores/user';
 let router = useRouter();
 let props = defineProps<{
   server: string;
@@ -23,7 +24,7 @@ let server = ref(null as Server | null);
 let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);
 let attached = ref(false);
-let loginStatus = inject("loginStatus") as Ref<User | null>;
+let user = useUser();
 let setServerStatuses = inject("setServerStatuses") as Function;
 let statuses = inject("statuses") as Ref<ServerStatuses>;
 
@@ -112,9 +113,9 @@ function onScrolled() {
 <template>
   <div v-if="server">
     <h2>{{ server.name }}</h2>
-    <button @click="startServer()" :disabled="!hasServerPermission(loginStatus, server, 'start') || isRunning">Start</button>
-    <button @click="stopServer()" :disabled="!hasServerPermission(loginStatus, server, 'stop') || !isRunning">Stop</button>
-    <button @click="killServer()" :disabled="!hasServerPermission(loginStatus, server, 'kill') || !isRunning">Kill</button>
+    <button @click="startServer()" :disabled="!user.hasServerPermission(server, 'start') || isRunning">Start</button>
+    <button @click="stopServer()" :disabled="!user.hasServerPermission(server, 'stop') || !isRunning">Stop</button>
+    <button @click="killServer()" :disabled="!user.hasServerPermission(server, 'kill') || !isRunning">Kill</button>
     <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
     <span class="server-status"><ServerStatus :server="server._id" /></span>
     <br />

@@ -10,6 +10,7 @@ import { getUser } from '../../util/getUsers';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { showInfoBox } from '../../util/modal';
+import { useUser } from '../../stores/user';
 
 let props = defineProps({
     server: {
@@ -23,7 +24,7 @@ let props = defineProps({
 });
 let server = ref() as Ref<Server>;
 let user = ref() as Ref<User>;
-let loginStatus = inject("loginStatus") as Ref<User | null>;
+const myUser = useUser();
 let cachedUsers = inject("users") as Ref<Map<string, User>>;
 let router = useRouter();
 try {
@@ -88,7 +89,7 @@ function isApplied(profile: string) {
             params: {
                 user: props.user
             }
-        }" v-if="hasPermission(loginStatus, 'users.permissions.read')"><button>Manage global user permissions</button></RouterLink>
+        }" v-if="myUser.hasPermission('users.permissions.read')"><button>Manage global user permissions</button></RouterLink>
         <br/>
         <h2>Profiles</h2>
         <div v-for="profile in Object.keys(DefaultServerProfiles)">
@@ -101,7 +102,7 @@ function isApplied(profile: string) {
         <br/>
         <h2>Permissions</h2>
         <div v-for="perm in _ServerPermissions" v-if="userInAllowedUsers">
-            {{ perm }} - <span :class="(userInAllowedUsers.permissions.includes(perm) ? 'green' : 'red')">{{  userInAllowedUsers.permissions.includes(perm) ? "Yes" : "No" }}</span> <button v-if="hasServerPermission(loginStatus, server, perm) && hasServerPermission(loginStatus, server, 'set.allowedUsers.permissions.write')" @click="togglePerm(perm)">Toggle</button>
+            {{ perm }} - <span :class="(userInAllowedUsers.permissions.includes(perm) ? 'green' : 'red')">{{  userInAllowedUsers.permissions.includes(perm) ? "Yes" : "No" }}</span> <button v-if="myUser.hasServerPermission(server, perm) && myUser.hasServerPermission(server, 'set.allowedUsers.permissions.write')" @click="togglePerm(perm)">Toggle</button>
         </div>
         <div v-else>
             Could not find user in allowedUsers, weird

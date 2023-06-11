@@ -8,11 +8,12 @@ import { getSetting } from '../util/config';
 import { hasPermission } from '../../../Share/Permission';
 import ServerStatus from "../components/ServerStatus.vue";
 import sendRequest from '../util/request';
+import { useUser } from '../stores/user';
 
 let router = useRouter();
 let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
 let servers: Ref<Server[]> = inject('servers') as Ref<Server[]>;
-let loginStatus: Ref<User> = inject('loginStatus') as Ref<User>;
+let user = useUser();
 let serverCreatorOpen = ref(false);
 let newServerName = ref("");
 let newServerMem = ref(0);
@@ -55,7 +56,7 @@ function manageServer(id: string) {
     });
 }
 (async() => {
-    if(hasPermission(loginStatus.value, "settings.read")) {
+    if(user.hasPermission("settings.read")) {
         newServerMem.value = await getSetting("defaultMemory");
         newMCServerVersion.value = await getSetting("defaultMCVersion");
         newMCServerSoftware.value = await getSetting("defaultMCSoftware");
@@ -67,10 +68,10 @@ let newMCServerPort = ref(25565);
 </script>
 <template>
     <h1>Servers</h1>
-        <RouterLink :to="{query: {all: 'true'}}"><button v-if="!(router.currentRoute.value.query.all == 'true') && hasPermission(loginStatus, 'servers.all.view')">Show all servers</button></RouterLink>
-        <button @click="serverCreatorOpen = !serverCreatorOpen" v-if="hasPermission(loginStatus, 'servers.create')">Create server {{ serverCreatorOpen ? "∧" : "V" }}</button>
-        <RouterLink :to="{name: 'importServer'}"><button v-if="hasPermission(loginStatus, 'servers.import')">Import server</button></RouterLink>
-    <div id="create-server" v-if="serverCreatorOpen && hasPermission(loginStatus, 'servers.create')">
+        <RouterLink :to="{query: {all: 'true'}}"><button v-if="!(router.currentRoute.value.query.all == 'true') && user.hasPermission('servers.all.view')">Show all servers</button></RouterLink>
+        <button @click="serverCreatorOpen = !serverCreatorOpen" v-if="user.hasPermission('servers.create')">Create server {{ serverCreatorOpen ? "∧" : "V" }}</button>
+        <RouterLink :to="{name: 'importServer'}"><button v-if="user.hasPermission('servers.import')">Import server</button></RouterLink>
+    <div id="create-server" v-if="serverCreatorOpen && user.hasPermission('servers.create')">
         <h2>Create server</h2>
         <form>
             Name: <input type="text" v-model="newServerName" /> <br/>

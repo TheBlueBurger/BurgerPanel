@@ -1,24 +1,17 @@
 <script setup lang="ts">
-import { inject, Ref } from 'vue';
-import { hasPermission } from '../../../Share/Permission';
-import { User } from '../../../Share/User';
-import EventEmitter from '../util/event';
-let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
-let loginStatus: Ref<User | null> = inject('loginStatus') as Ref<User | null>;
-function logout() {
-    events.value.emit("requestLogout");
-}
+import { useUser } from '../stores/user';
+let user = useUser();
 </script>
 <template>
     <div id="navbar">
         <span id="title"><RouterLink to="/" class="no-text-dec">Burgerpanel</RouterLink></span>
-        <div v-if="loginStatus?.username" class="loggedin-only">
+        <div v-if="user.user?.username" class="loggedin-only">
             <span class="item link"><RouterLink to="/manage">Servers</RouterLink></span>
-          <span class="item link" v-if="hasPermission(loginStatus, 'settings.read') || hasPermission(loginStatus, 'users.view')"><RouterLink to="/settings">Settings</RouterLink></span>
+          <span class="item link" v-if="user.hasPermission('settings.read') || user.hasPermission('users.view')"><RouterLink to="/settings">Settings</RouterLink></span>
           <span class="item link"><RouterLink to="/about">About</RouterLink></span>
-         <span id="user" class="item" v-if="loginStatus?.username"><RouterLink :to="{
+         <span id="user" class="item" v-if="user.user?.username"><RouterLink :to="{
             name: 'MyUser'
-         }" style="color: white; text-decoration: none;">{{ loginStatus?.username}}</RouterLink> <button @click="logout">Log out</button></span>
+         }" style="color: white; text-decoration: none;">{{ user.user?.username}}</RouterLink> <button @click="user.logout">Log out</button></span>
         </div>
     </div>
 </template>

@@ -7,8 +7,9 @@ import events from '../../util/event';
 import { useRouter } from 'vue-router';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
+import { useUser } from '../../stores/user';
 
-let loginStatus = inject("loginStatus") as Ref<User>;
+let myUser = useUser();
 
 let cachedUsers = inject("users") as Ref<Map<string, User>>;
 let user = ref() as Ref<User>;
@@ -31,7 +32,7 @@ async function togglePerm(perm: PermissionString) {
     })).user;
 }
 let router = useRouter();
-if(!hasPermission(loginStatus.value, "users.permissions.read")) {
+if(!myUser.hasPermission("users.permissions.read")) {
     router.push({
         name: "manageUser",
         params: {
@@ -51,7 +52,7 @@ if(!hasPermission(loginStatus.value, "users.permissions.read")) {
                 <th>Enabled</th>
                 <th>Toggle</th>
             </tr>
-            <tr v-for="perm of validPermissions" v-if="hasPermission(loginStatus, 'users.permissions.read')" :key="perm">
+            <tr v-for="perm of validPermissions" v-if="myUser.hasPermission('users.permissions.read')" :key="perm">
                 <td>
                     {{  perm  }}
                 </td> 
@@ -59,7 +60,7 @@ if(!hasPermission(loginStatus.value, "users.permissions.read")) {
                     {{  user.permissions.includes(perm) ? "Yes" : "No" }}
                 </td>
                 <td>
-                    <button v-if="hasPermission(loginStatus, perm) && hasPermission(loginStatus, 'users.permissions.write')" @click="togglePerm(perm)">Toggle</button>
+                    <button v-if="myUser.hasPermission(perm) && myUser.hasPermission('users.permissions.write')" @click="togglePerm(perm)">Toggle</button>
                 </td>
             </tr>
         </table>

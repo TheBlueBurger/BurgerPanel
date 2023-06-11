@@ -12,12 +12,13 @@ import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { confirmModal, modalInput, requestModal, showInfoBox } from '../../util/modal';
 import Modal from '../../components/Modal.vue';
+import { useUser } from '../../stores/user';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
 }>();
 let router = useRouter();
-let loginStatus = inject("loginStatus") as Ref<User | null>
+const user = useUser();
 let users = inject("users") as Ref<Map<string, User>>;
 let serverStatuses = inject("statuses") as Ref<ServerStatuses>;
 let thisServerStatus = computed(() => {
@@ -30,7 +31,7 @@ try {
     showInfoBox("Couldn't get server", `${err}`);
     router.push("/manage");
 }
-if(!hasPermission(loginStatus.value, "users.view")) {
+if(!user.hasPermission("users.view")) {
     events.emit("createNotification", "You do not have user view permissions. User management has been disabled.");
 } else {
     await getUserlist();
@@ -142,7 +143,7 @@ async function changeAutoRestart() {
 <template>
 <div v-if="server">
     <h2>Editing {{ server.name }}</h2>
-    <button @click="deleteServer()" v-if="hasServerPermission(loginStatus, server, 'delete')" class="button-red">Delete</button>
+    <button @click="deleteServer()" v-if="user.hasServerPermission(server, 'delete')" class="button-red">Delete</button>
     <RouterLink :to="{
         name: 'manageServer',
         params: {
@@ -163,33 +164,33 @@ async function changeAutoRestart() {
     }">
         <button>Edit Files</button>
     </RouterLink><br/><hr/>
-    Server name: <TextInput :default="server.name" @set="renameServer" :force-disabled="!hasServerPermission(loginStatus, server, 'set.name')" />
+    Server name: <TextInput :default="server.name" @set="renameServer" :force-disabled="!user.hasServerPermission(server, 'set.name')" />
     <br />
     Server path: {{ server.path }} (Read only)
     <br />
-    Memory (MB): <TextInput :default="server.mem.toString()" @set="changeMemory" :force-disabled="!hasServerPermission(loginStatus, server, 'set.mem')" />
+    Memory (MB): <TextInput :default="server.mem.toString()" @set="changeMemory" :force-disabled="!user.hasServerPermission(server, 'set.mem')" />
     <br />
-    Version: <TextInput :default="server.version" @set="changeVersion" :force-disabled="!hasServerPermission(loginStatus, server, 'set.version') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
+    Version: <TextInput :default="server.version" @set="changeVersion" :force-disabled="!user.hasServerPermission(server, 'set.version') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
-    Software: <TextInput :default="server.software" @set="changeSoftware" :force-disabled="!hasServerPermission(loginStatus, server, 'set.software') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
+    Software: <TextInput :default="server.software" @set="changeSoftware" :force-disabled="!user.hasServerPermission(server, 'set.software') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
-    Port: <TextInput :default="server.port.toString()" @set="changePort" :force-disabled="!hasServerPermission(loginStatus, server, 'set.port') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
+    Port: <TextInput :default="server.port.toString()" @set="changePort" :force-disabled="!user.hasServerPermission(server, 'set.port') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
-    Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart" :disabled="!hasServerPermission(loginStatus, server, 'set.autostart')">Change</button>
+    Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart" :disabled="!user.hasServerPermission(server, 'set.autostart')">Change</button>
     <br />
-    Auto restart: {{ server.autoRestart ? "Yes" : "No" }} <button @click="changeAutoRestart" :disabled="!hasServerPermission(loginStatus, server, 'set.autorestart')">Change</button>
-    <div v-if="hasPermission(loginStatus, 'users.view')">
+    Auto restart: {{ server.autoRestart ? "Yes" : "No" }} <button @click="changeAutoRestart" :disabled="!user.hasServerPermission(server, 'set.autorestart')">Change</button>
+    <div v-if="user.hasPermission('users.view')">
         <hr />
         <h3>Allowed users</h3>
-        <button @click="addUser" v-if="hasServerPermission(loginStatus, server, 'set.allowedUsers.add')">Add user</button>
-        <button v-if="!server.allowedUsers.find(u => u.user == loginStatus?._id) && hasPermission(loginStatus, 'server.all.set.allowedUsers.add')" @click="loginStatus?._id ? addUserByID(loginStatus._id) : 0">Add yourself</button>
+        <button @click="addUser" v-if="user.hasServerPermission(server, 'set.allowedUsers.add')">Add user</button>
+        <button v-if="!server.allowedUsers.find(u => u.user == user.user?._id) && user.hasPermission('server.all.set.allowedUsers.add')" @click="user.user?._id ? addUserByID(user.user._id) : 0">Add yourself</button>
         <br/>
-        <div v-for="user in server.allowedUsers" :key="user.user">
-            {{ getUserInfo(user.user)?.username || "<Unknown>" }} [{{ user.permissions.join(", ") }}] <button @click="removeUser(user.user)" v-if="hasServerPermission(loginStatus, server, 'set.allowedUsers.remove')">Remove</button> <RouterLink :to="{
+        <div v-for="_user in server.allowedUsers" :key="_user.user">
+            {{ getUserInfo(_user.user)?.username || "<Unknown>" }} [{{ _user.permissions.join(", ") }}] <button @click="removeUser(_user.user)" v-if="user.hasServerPermission(server, 'set.allowedUsers.remove')">Remove</button> <RouterLink :to="{
                 name: 'editServerAccess',
                 params: {
                     server: props.server,
-                    user: user.user
+                    user: _user.user
                 }
             }"><button>Edit</button></RouterLink>
         </div>

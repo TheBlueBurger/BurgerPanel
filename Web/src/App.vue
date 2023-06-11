@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, provide, Ref, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, provide, Ref, ref, watch } from "vue";
 import type { Server } from "../../Share/Server.js";
 import type { AuthS2C } from "../../Share/Auth.js";
 import { User } from "../../Share/User";
+import { useUser } from "./stores/user";
 import EventEmitter from "./util/event";
 import sendRequest from "./util/request";
 import "./style.css";
@@ -36,6 +37,7 @@ function createNotification(text: string) {
     }
   }, 5000);
 }
+const user = useUser();
 events.value.on("createNotification", createNotification);
 events.value.on("knownSettingsUpdated", (settings: any) => {
   knownSettings.value = settings;
@@ -96,7 +98,7 @@ function initWS() {
   });
   ws.value.addEventListener("close", () => {
     connected.value = false;
-    loginStatus.value = null;
+    user.user = undefined;
     setTimeout(() => {
       initWS();
     }, 1000);
@@ -141,7 +143,7 @@ async function login(usingToken: boolean = false) {
     console.log("User doesn't exist, but login was successful. Probably already authenticated.");
     return;
   }
-  loginStatus.value = authResp.user;
+  user.user = authResp.user;
   console.log("Logged in as " + authResp.user.username);
   localStorage.setItem("token", authResp.user.token);
   if (authResp.servers) servers.value = authResp.servers;
@@ -154,19 +156,9 @@ async function login(usingToken: boolean = false) {
   });
 }
 let token = ref("");
-let loginStatus: Ref<User | null> = ref() as Ref<User | null>;
-provide("loginStatus", loginStatus);
 
-function logout() {
-  localStorage.removeItem("token");
-  events.value.emit("logout");
-  servers.value = [];
-  loginStatus.value = null;
-  sendRequest("logout");
-  showLoginScreen.value = true;
-}
-events.value.on("requestLogout", () => {
-  logout();
+events.value.on("logout", () => {
+  showLoginScreen.value = false;
 });
 let users = ref(new Map<string, User>());
 provide("users", users);
@@ -177,11 +169,8 @@ events.value.on("loginFailed", (data: AuthS2C) => {
   loginMsg.value = data.message as string;
   showLoginScreen.value = true;
 });
-events.value.on("getLoginStatus", () => {
-  events.value.emit("getLoginStatus-resp", loginStatus.value)
-});
 events.value.on("yourUserEdited", newUser => {
-  loginStatus.value = newUser.user;
+  user.user = newUser.user;
 });
 let showLoginScreen = ref(false);
 function gotoSetup(_currentRoute?: RouteLocationNormalized) {
@@ -200,13 +189,13 @@ router.beforeEach(async (guard, fromGuard) => {
     if (typeof guard.meta.title == "string") titleManager.setTitle(guard.meta.title);
     else titleManager.resetTitle();
   }
-  if (guard.name != "userSetup" && loginStatus.value?.setupPending) {
+  if (guard.name != "userSetup" && user.user?.setupPending) {
     gotoSetup(guard);
   }
   // Logs in with the token provided in the ?useToken= query
   if (guard.query.useToken) {
     console.log("Using token from query.");
-    if (loginStatus.value?.username) {
+    if (user.user) {
       console.log("Already logged in, ignoring token.")
       return;
     }
@@ -240,11 +229,11 @@ event.on("serverStatusUpdate", d => {
 event.on("getAllServers", data => {
   serverStatuses.value = data.d.statuses;
 });
-watch(loginStatus, l => {
-  if (l?.setupPending) {
-    setTimeout(() => gotoSetup(), 100); // i know this is stupid
+user.$subscribe((_, newUser) => {
+  if(newUser.user?.setupPending) {
+    setTimeout(() => gotoSetup(), 100); // stupid hack
   }
-});
+})
 let usingTokenLogin = ref(false);
 let loginUsername = ref("");
 let loginPassword = ref("");
@@ -253,7 +242,7 @@ let loginPassword = ref("");
 <template>
   <Navbar />
   <Modal :__is-default-modal="true" />
-  <div v-if="loginStatus?.username">
+  <div v-if="user.user">
     <RouterView v-slot="{ Component }">
       <template v-if="Component">
           <Suspense>
@@ -276,7 +265,7 @@ let loginPassword = ref("");
   </div>
   <div v-else id="login-div">
     <span v-if="!connected">Connecting to server...</span>
-    <form @submit.prevent="login(false)" v-else-if="!loginStatus && showLoginScreen">
+    <form @submit.prevent="login(false)" v-else-if="!user.user && showLoginScreen">
       <h1>Login</h1>
       <br />
       <div v-if="usingTokenLogin">

@@ -11,10 +11,11 @@ import TextInput from "../components/TextInput.vue";
 import sendRequest from "../util/request";
 import titleManager from "../util/titleManager";
 import { confirmModal, showInfoBox } from "../util/modal";
+import { useUser } from "../stores/user";
 let router = useRouter();
-let loginStatus = inject("loginStatus") as Ref<User>;
+const user = useUser();
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
-if (!hasPermission(loginStatus.value, "settings.read") && !hasPermission(loginStatus.value, "users.view")) {
+if (!user.hasPermission("settings.read") && !user.hasPermission("users.view")) {
     events.value.emit("createNotification", "You do not have permission! Get out of here!");
     router.push({
         path: "/"
@@ -103,19 +104,19 @@ async function resetToken(id: string) {
 titleManager.setTitle("Settings")
 </script>
 <template>
-    <div v-if="hasPermission(loginStatus, 'settings.read')">
+    <div v-if="user.hasPermission('settings.read')">
         <h2>Settings</h2>
         <div v-for="option of settingsAllowedToShow">
             <span class="setting-span" :title="descriptions[option as keyof typeof defaultConfig]">{{ option }}</span>
             <TextInput :default="knownSettings[option as keyof Config].toString()" @set="v => changeOption(option as keyof Config, v)" v-if="typeof knownSettings[option as keyof Config] != 'undefined'" />
         </div>
     </div>
-    <div v-if="hasPermission(loginStatus, 'settings.logging.set')">
+    <div v-if="user.hasPermission('settings.logging.set')">
         <RouterLink :to="{
             name: 'logging'
         }"><button>Logging Settings</button></RouterLink>
     </div>
-    <hr v-if="hasPermission(loginStatus, 'users.view')" />
+    <hr v-if="user.hasPermission('users.view')" />
     <h3>Users</h3>
     <div>
         <button @click="creatingUser = !creatingUser">{{ !creatingUser ? "Add user" : "Close" }}</button>
@@ -133,24 +134,24 @@ titleManager.setTitle("Settings")
             <th>Created At</th>
             <th>Token</th>
             <th>Permissions</th>
-            <th v-if="hasPermission(loginStatus, 'users.delete')">Delete</th>
+            <th v-if="user.hasPermission('users.delete')">Delete</th>
         </tr>
-        <tr v-for="user in sortedUsers" :key="user._id">
-            <td>{{ user._id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ new Date(user.createdAt).toLocaleString() }}</td>
+        <tr v-for="_user in sortedUsers" :key="_user._id">
+            <td>{{ _user._id }}</td>
+                <td>{{ _user.username }}</td>
+                <td>{{ new Date(_user.createdAt).toLocaleString() }}</td>
                 <td>
-                    {{ viewingToken == user._id ? knownTokens[user._id] : "<Hidden>" }} <button @click="viewToken(user._id)">{{viewingToken == user._id ? "Hide" : "View" }}
-                token</button> <button @click="viewToken(user._id, true)">Copy to clipboard</button> <button @click="copyLoginURL(user._id)">Generate login url</button> <button @click="resetToken(user._id)" v-if="hasPermission(loginStatus, 'users.token.reset')">Reset Token</button>
+                    {{ viewingToken == _user._id ? knownTokens[_user._id] : "<Hidden>" }} <button @click="viewToken(_user._id)">{{viewingToken == _user._id ? "Hide" : "View" }}
+                token</button> <button @click="viewToken(_user._id, true)">Copy to clipboard</button> <button @click="copyLoginURL(_user._id)">Generate login url</button> <button @click="resetToken(_user._id)" v-if="user.hasPermission('users.token.reset')">Reset Token</button>
                 </td>
                 <td><RouterLink :to="{
                 name: 'editUserPermissions',
                 params: {
-                    user: user._id
+                    user: _user._id
                 }
             }"><button>Edit permissions</button></RouterLink></td>
             <td>
-                <button @click="deleteUser(user)" v-if="hasPermission(loginStatus, 'users.delete')">Delete</button>
+                <button @click="deleteUser(_user)" v-if="user">Delete</button>
             </td>
         </tr>
     </table>

@@ -5,14 +5,15 @@ import TextInput from '../components/TextInput.vue';
 import event from '../util/event';
 import sendRequest from '../util/request';
 import { confirmModal } from '../util/modal';
+import { useUser } from '../stores/user';
 
-let loginStatus = inject("loginStatus") as Ref<User>;
+const user = useUser();
 
 async function resetToken() {
     if (!await confirmModal("Reset your token?", "Sure? All sessions except this one will be logged out. Auto-login will break for other sessions."))
         return;
     let resp = await sendRequest("editUser", {
-        id: loginStatus.value._id,
+        id: user.user?._id,
         action: "resetToken",
     });
     if(resp?.token) localStorage.setItem("token", resp.token);
@@ -21,7 +22,7 @@ async function resetToken() {
 
 async function setUsername(newName: string) {
     await sendRequest("editUser", {
-        id: loginStatus.value._id,
+        id: user.user?._id,
         action: "changeUsername",
         username: newName
     })
@@ -30,7 +31,7 @@ async function setUsername(newName: string) {
 
 async function changePassword(password: string) {
     await sendRequest("editUser", {
-        id: loginStatus.value._id,
+        id: user.user?._id,
         action: "changePassword",
         password
     })
@@ -39,7 +40,7 @@ async function changePassword(password: string) {
 // it does that already
 </script>
 <template>
-    <TextInput class="username" @set="setUsername" :default="loginStatus.username" placeholder="Username"></TextInput>
+    <TextInput class="username" @set="setUsername" :default="user.user?.username || ''" placeholder="Username"></TextInput>
     <br/>
     <TextInput :default="''" :password="true" @set="changePassword" placeholder="Password"></TextInput>
     <br/>

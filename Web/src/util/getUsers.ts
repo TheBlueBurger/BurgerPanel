@@ -1,5 +1,6 @@
 import { hasPermission } from "../../../Share/Permission";
 import { User } from "../../../Share/User";
+import { useUser } from "../stores/user";
 import event from "./event";
 import sendRequest from "./request";
 
@@ -19,11 +20,9 @@ export default async function getUsers(cachedUsers: Map<string, User>, refresh: 
 }
 
 async function getCurrentUser(): Promise<User> {
-    setTimeout(() => {
-        event.emit("getLoginStatus");
-    });
-    let resp = await event.awaitEvent("getLoginStatus-resp");
-    return resp; // legal?
+    let user = useUser().user;
+    if(!user) throw new Error("Not logged in and trying to get users in getUsers.ts!!!");
+    return user;
 }
 // now we use that to check perms
 export async function getUser(userID: string, cachedUsers: Map<string, User>, refresh: boolean = false) {

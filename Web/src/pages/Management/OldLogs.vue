@@ -7,6 +7,7 @@ import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { hasServerPermission } from '../../../../Share/Permission';
 import { User } from '../../../../Share/User';
+import { useUser } from '../../stores/user';
 let server = ref() as Ref<Server>;
 let cachedServers = inject("servers") as Ref<Server[]>;
 let props = defineProps({
@@ -16,7 +17,7 @@ let props = defineProps({
     }
 });
 let router = useRouter();
-let loginStatus = inject("loginStatus") as Ref<User>;
+let user = useUser();
 let viewingLog = computed(() => {
     return router.currentRoute.value.query.log
 });
@@ -64,7 +65,7 @@ async function getLog(logName: string) {
         params: {
             server: props.server
         }
-    }" v-if="!viewingLog && server && hasServerPermission(loginStatus, server, 'serverfiles.read')"><button>View all files</button></RouterLink>
+    }" v-if="!viewingLog && server && user.hasServerPermission(server, 'serverfiles.read')"><button>View all files</button></RouterLink>
     <h1 v-if="!viewingLog">Logs for {{ server?.name }}</h1>
     <div v-for="log in logs" class="logname" v-if="!viewingLog">
         <RouterLink :to="{

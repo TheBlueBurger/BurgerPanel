@@ -134,6 +134,7 @@ enforce-secure-profile=false
                     code: c,
                 })
             });
+            this.updateStatus(server);
             this.handleAutorestart(server, 10_000);
         });
         this.updateStatus(server);
