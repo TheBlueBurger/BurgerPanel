@@ -25,8 +25,6 @@ let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);
 let attached = ref(false);
 let user = useUser();
-let setServerStatuses = inject("setServerStatuses") as Function;
-let statuses = inject("statuses") as Ref<ServerStatuses>;
 
 loadingServerFromAPI.value = true;
 // Attach to server

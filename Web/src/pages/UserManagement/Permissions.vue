@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { inject, Ref, onMounted, ref } from 'vue';
 import { User } from '../../../../Share/User';
-import { getUser } from '../../util/getUsers';
 import { PermissionString, validPermissions } from "../../../../Share/Permission";
 import { useRouter } from 'vue-router';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { useUser } from '../../stores/user';
+import { useUsers } from '../../stores/users';
 
 let myUser = useUser();
 
-let cachedUsers = inject("users") as Ref<Map<string, User>>;
 let user = ref() as Ref<User>;
 let props = defineProps({
     user: {
@@ -18,8 +17,8 @@ let props = defineProps({
         type: String
     }
 });
-
-user.value = await getUser(props.user, cachedUsers.value);
+let users = useUsers();
+user.value = await users.getUserByID(props.user);
 titleManager.setTitle(`${user.value.username}'s permissions`);
 
 async function togglePerm(perm: PermissionString) {

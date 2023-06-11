@@ -4,12 +4,12 @@ import { useRouter } from 'vue-router';
 import { _ServerPermissions, userHasAccessToServer, hasServerPermission, ServerPermissions, DefaultServerProfiles, hasPermission, serverProfilesDescriptions } from '../../../../Share/Permission';
 import { Server } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
-import { getUser } from '../../util/getUsers';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { showInfoBox } from '../../util/modal';
 import { useUser } from '../../stores/user';
 import { useServers } from '../../stores/servers';
+import { useUsers } from '../../stores/users';
 
 let props = defineProps({
     server: {
@@ -24,12 +24,12 @@ let props = defineProps({
 let server = ref() as Ref<Server>;
 let user = ref() as Ref<User>;
 const myUser = useUser();
-let cachedUsers = inject("users") as Ref<Map<string, User>>;
 let router = useRouter();
 let servers = useServers();
+let users = useUsers();
 try {
     server.value = await servers.getServerByID(props.server);
-    user.value = await getUser(props.user, cachedUsers.value);
+    user.value = await users.getUserByID(props.user);
 } catch(err) {
     showInfoBox("Couldnt get server/user", `${err}`)
     console.log(err);

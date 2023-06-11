@@ -12,6 +12,7 @@ import sendRequest from "../util/request";
 import titleManager from "../util/titleManager";
 import { confirmModal, showInfoBox } from "../util/modal";
 import { useUser } from "../stores/user";
+import { useUsers } from "../stores/users";
 let router = useRouter();
 const user = useUser();
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
@@ -33,7 +34,11 @@ async function changeOption(option: keyof typeof defaultConfig, newValue: string
     }
 }
 getAllSettings();
-let cachedUsers = inject("users") as Ref<Map<string, User>>
+let users = useUsers();
+let allUsers = ref([] as User[]);
+if(user.hasPermission("users.view")) {
+    allUsers.value = await users.getAllUsers();
+}
 
 let creatingUser = ref(false);
 let newUsername = ref("");
@@ -44,15 +49,14 @@ async function createUser() {
     newUsername.value = "";
     creatingUser.value = false;
     events.value.emit("createNotification", "User " + resp.user.username + " created");
-    getUsers(cachedUsers.value, true);
+    users.users.push(resp.user);
 }
-getUsers(cachedUsers.value, true);
 async function deleteUser(user: User) {
     if(!await confirmModal("Delete user?", "Are you sure you want to remove the user " + user.username + "?")) return;
     await sendRequest("deleteUser", {
         id: user._id
     })
-    getUsers(cachedUsers.value, true);
+    users.users = users.users.filter(u => u._id != user._id);
 }
 
 let knownTokens: Ref<{[id: string]: string}> = ref({});
@@ -83,7 +87,7 @@ function copyToClip(text: string) {
     events.value.emit("createNotification", "Copied to clipboard");
 }
 let sortedUsers = computed(() => {
-    return [...cachedUsers.value.values()].sort((a,b) => {
+    return allUsers.value.sort((a,b) => {
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     })
 });

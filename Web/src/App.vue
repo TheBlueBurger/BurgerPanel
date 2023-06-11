@@ -11,7 +11,6 @@ import Navbar from "./components/Navbar.vue";
 import { Config } from "../../Share/Config";
 import { _knownSettings } from "./util/config";
 import { RouteLocationNormalized, useRouter } from "vue-router";
-import { ServerStatuses } from '../../Share/Server';
 import event from "./util/event";
 import type { RequestResponses } from "../../Share/Requests";
 import titleManager from "./util/titleManager";
@@ -45,6 +44,10 @@ events.value.on("knownSettingsUpdated", (settings: any) => {
 });
 provide("knownSettings", knownSettings);
 provide("events", events);
+let servers = useServers();
+events.value.on("serverStatusUpdate", (d) => {
+  servers.statuses[d.server] = {status: d.status}
+})
 let queuedPackets: any[] = [];
 events.value.on("sendPacket", (data: any) => {
   if (!connected.value) {

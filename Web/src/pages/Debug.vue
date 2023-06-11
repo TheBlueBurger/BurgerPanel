@@ -3,16 +3,16 @@ import { Ref, inject, ref } from 'vue';
 import { getAllSettings } from '../util/config';
 import { User } from '../../../Share/User';
 import packets from '../../../Share/Packets';
-import getUsers from '../util/getUsers';
 import sendRequest from '../util/request';
 import { requestModal, showInfoBox } from '../util/modal';
 import { RequestResponses } from '../../../Share/Requests';
 import { useUser } from '../stores/user';
+import { useUsers } from '../stores/users';
 let showWarning = ref(true);
 const user = useUser();
+const users = useUsers();
 let settings: Ref<Awaited<ReturnType<typeof getAllSettings>> | undefined> = ref();
-let users: Ref<Map<string, User> | undefined> = ref();
-let cachedUsers = inject("users") as Ref<Map<string, User>>;
+let allUsers: Ref<User[]> = ref([]);
 let packetName: Ref<typeof packets[number] | undefined> = ref();
 let packetData = ref(`{
 
@@ -46,7 +46,7 @@ async function showSettings() {
     settings.value = await getAllSettings();
 }
 async function showUsers() {
-    users.value = await getUsers(cachedUsers.value);
+    allUsers.value = await users.getAllUsers();
 }
 </script>
 
@@ -73,7 +73,7 @@ async function showUsers() {
     </div>
     <hr/>
     <h1>Users</h1>
-    <div v-if="users" v-for="user in users">
+    <div v-if="allUsers" v-for="user in allUsers">
         <pre>{{ user }}</pre>
     </div>
     <div v-else>

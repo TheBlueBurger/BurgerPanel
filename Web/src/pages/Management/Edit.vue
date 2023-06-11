@@ -5,7 +5,6 @@ import { hasPermission, hasServerPermission, userHasAccessToServer } from '../..
 import { Server, ServerStatuses } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import events from '../../util/event';
-import getUsers from '../../util/getUsers';
 import TextInput from '../../components/TextInput.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
@@ -13,29 +12,31 @@ import { confirmModal, modalInput, requestModal, showInfoBox } from '../../util/
 import Modal from '../../components/Modal.vue';
 import { useUser } from '../../stores/user';
 import { useServers } from '../../stores/servers';
+import { useUsers } from '../../stores/users';
 let server = ref<Server | null>(null);
 let props = defineProps<{
   server: string;
 }>();
 let router = useRouter();
 const user = useUser();
-let users = inject("users") as Ref<Map<string, User>>;
-let serverStatuses = inject("statuses") as Ref<ServerStatuses>;
+let servers = useServers();
+let serverStatuses = servers.statuses;
 let thisServerStatus = computed(() => {
-    return serverStatuses.value[props.server]?.status;
+    return serverStatuses[props.server]?.status;
 });
 let isRunning = computed(() => thisServerStatus.value == "running");
-let servers = useServers();
+let users = useUsers();
 try {
     server.value = await servers.getServerByID(props.server);
 } catch(err) {
     showInfoBox("Couldn't get server", `${err}`);
     router.push("/manage");
 }
+let allUsers: Ref<User[]> = ref([]);
 if(!user.hasPermission("users.view")) {
     events.emit("createNotification", "You do not have user view permissions. User management has been disabled.");
 } else {
-    await getUserlist();
+    allUsers.value = await users.getAllUsers();
 }
 titleManager.setTitle("Editing " + server.value?.name)
 async function renameServer(newName: string) {
@@ -96,16 +97,8 @@ async function addUserByID(id: string) {
     server.value = resp.server;
 }
 
-async function getUserlist() {
-    return [...((await getUsers(users.value, false)).values())];
-}
-
-function getUserInfo(id: string) {
-    return users.value.get(id);
-}
-
 let notAddedUsers = computed(() => {
-    return [...users.value.values()].filter(u => !server.value?.allowedUsers.some(a => a.user == u._id));
+    return allUsers.value.filter(u => !server.value?.allowedUsers.some(a => a.user == u._id));
 })
 
 async function deleteServer() {
@@ -187,7 +180,7 @@ async function changeAutoRestart() {
         <button v-if="!server.allowedUsers.find(u => u.user == user.user?._id) && user.hasPermission('server.all.set.allowedUsers.add')" @click="user.user?._id ? addUserByID(user.user._id) : 0">Add yourself</button>
         <br/>
         <div v-for="_user in server.allowedUsers" :key="_user.user">
-            {{ getUserInfo(_user.user)?.username || "<Unknown>" }} [{{ _user.permissions.join(", ") }}] <button @click="removeUser(_user.user)" v-if="user.hasServerPermission(server, 'set.allowedUsers.remove')">Remove</button> <RouterLink :to="{
+            {{ allUsers.find(a => a._id == _user.user)?.username || "<Unknown>" }} [{{ _user.permissions.join(", ") }}] <button @click="removeUser(_user.user)" v-if="user.hasServerPermission(server, 'set.allowedUsers.remove')">Remove</button> <RouterLink :to="{
                 name: 'editServerAccess',
                 params: {
                     server: props.server,
