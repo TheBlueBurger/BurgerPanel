@@ -28,9 +28,9 @@ jobs:
               run: pnpm buildRelease
               working-directory: ./Server
               env:
-                EXCLUDE_VERSION: 1
+                SKIP_ZIP: 1
             - name: Artifact
               uses: actions/upload-artifact@v3
               with:
                 name: BurgerPanel.zip
-                path: Server/BurgerPanel.zip
+                path: Server/_build/

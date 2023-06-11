@@ -75,6 +75,7 @@ async function runESBuild() {
 }
 
 async function zip() {
+    if(process.env.SKIP_ZIP == "1") return;
     let filename = process.env.EXCLUDE_VERSION == 1 ? "../BurgerPanel.zip" : `../BurgerPanel-${packageJSON.version}.zip`
     spawnSync("7z", ["a", filename, "*"], {cwd: path.join(process.cwd(), "_build")})
 }
@@ -115,6 +116,7 @@ async function copyFiles() {
     fs.copyFileSync("../LICENSE", "_build/LICENSE.txt");
     fs.copyFileSync("../README.md", "_build/README.txt");
     fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
+    fs.writeFileSync("_build/mongodb_url.txt", "mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel");
 }
 
 function buildAndBundle() {
