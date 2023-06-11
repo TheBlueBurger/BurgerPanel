@@ -32,5 +32,5 @@ jobs:
             - name: Artifact
               uses: actions/upload-artifact@v3
               with:
-                name: BurgerPanel.zip
+                name: BurgerPanel
                 path: Server/_build/
