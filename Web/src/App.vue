@@ -158,7 +158,7 @@ async function login(usingToken: boolean = false) {
 let token = ref("");
 
 events.value.on("logout", () => {
-  showLoginScreen.value = false;
+  showLoginScreen.value = true;
 });
 let users = ref(new Map<string, User>());
 provide("users", users);
