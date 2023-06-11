@@ -44,12 +44,7 @@ if (!attached.value) {
     setTimeout(() => { // there has to be a better way to do this, but this is what ill do and it works
       serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
     }, 50);
-    setServerStatuses({
-      ...statuses.value,
-      [props.server]: {
-        status: resp.status
-      }
-    })
+    servers.statuses[props.server] = {status: resp.status}
   loadingServerFromAPI.value = false;
 }
 events.on("serverOutput-" + props.server, data => {

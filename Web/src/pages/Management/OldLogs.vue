@@ -9,7 +9,6 @@ import { User } from '../../../../Share/User';
 import { useUser } from '../../stores/user';
 import { useServers } from '../../stores/servers';
 let server = ref() as Ref<Server>;
-let cachedServers = inject("servers") as Ref<Server[]>;
 let props = defineProps({
     server: {
         required: true,

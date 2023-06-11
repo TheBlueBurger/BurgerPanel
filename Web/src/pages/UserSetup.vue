@@ -7,9 +7,10 @@ import event from '../util/event';
 import { Server } from '../../../Share/Server';
 import sendRequest from '../util/request';
 import { useUser } from '../stores/user';
+import { useServers } from '../stores/servers';
 
 let router = useRouter();
-let servers = inject("servers") as Ref<Server[]>;
+let servers = useServers();
 let user = useUser();
 if(!user.user?.setupPending) {
     router.push({
@@ -64,9 +65,9 @@ async function finish() {
     <TextInput :default="''" @set="changePassword" placeholder="Password" :password="true" />
     <br/>
     <br/>
-    <div v-if="servers.length != 0">
-        <h3>You have access to {{ servers.length }} server{{ servers.length == 1 ? "" : "s" }}!</h3>
-        <div v-for="server of servers">
+    <div v-if="servers.assignedServers.length != 0">
+        <h3>You have access to {{ servers.assignedServers }} server{{ servers.assignedServers.length == 1 ? "" : "s" }}!</h3>
+        <div v-for="server of servers.assignedServers">
             {{ server.name }}
         </div>
     </div>
