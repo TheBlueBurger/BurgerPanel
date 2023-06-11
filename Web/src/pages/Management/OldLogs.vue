@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, Ref, ref, watch } from 'vue';
+import { computed, Ref, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Server } from '../../../../Share/Server';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
-import { hasServerPermission } from '../../../../Share/Permission';
-import { User } from '../../../../Share/User';
 import { useUser } from '../../stores/user';
 import { useServers } from '../../stores/servers';
 let server = ref() as Ref<Server>;
@@ -50,7 +48,7 @@ async function getLog(logName: string) {
         log: logName
     });
     if(resp.type != "log") return;
-    logData.value = resp.log; //e
+    logData.value = resp.log;
 }
 </script>
 <template>

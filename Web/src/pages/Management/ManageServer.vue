@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { Ref, inject, onMounted, ref, onUnmounted, computed } from 'vue';
-import { Server, ServerStatuses } from '../../../../Share/Server';
+import { Ref, ref, onUnmounted, computed } from 'vue';
+import { Server } from '../../../../Share/Server';
 import events from '../../util/event';
 import { useRouter } from 'vue-router';
-import { hasServerPermission } from '../../../../Share/Permission';
-import { User } from '../../../../Share/User';
 import ServerStatus from '../../components/ServerStatus.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';

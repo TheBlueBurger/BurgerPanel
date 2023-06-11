@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Ref, inject, ref, onMounted, computed } from 'vue';
+import { Ref, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { hasPermission, hasServerPermission, userHasAccessToServer } from '../../../../Share/Permission';
-import { Server, ServerStatuses } from '../../../../Share/Server';
+import { hasPermission } from '../../../../Share/Permission';
+import { Server } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import events from '../../util/event';
 import TextInput from '../../components/TextInput.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
-import { confirmModal, modalInput, requestModal, showInfoBox } from '../../util/modal';
+import { confirmModal, requestModal, showInfoBox } from '../../util/modal';
 import Modal from '../../components/Modal.vue';
 import { useUser } from '../../stores/user';
 import { useServers } from '../../stores/servers';

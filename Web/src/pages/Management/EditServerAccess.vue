@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, Ref, inject, computed } from 'vue';
+import { ref, Ref, inject, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { _ServerPermissions, userHasAccessToServer, hasServerPermission, ServerPermissions, DefaultServerProfiles, hasPermission, serverProfilesDescriptions } from '../../../../Share/Permission';
+import { _ServerPermissions, ServerPermissions, DefaultServerProfiles, serverProfilesDescriptions } from '../../../../Share/Permission';
 import { Server } from '../../../../Share/Server';
 import { User } from '../../../../Share/User';
 import sendRequest from '../../util/request';

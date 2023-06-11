@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { Ref, computed, inject } from 'vue';
-import type { User } from "../../../Share/User";
 import { useRouter } from 'vue-router';
 import TextInput from '../components/TextInput.vue';
 import event from '../util/event';
-import { Server } from '../../../Share/Server';
 import sendRequest from '../util/request';
 import { useUser } from '../stores/user';
 import { useServers } from '../stores/servers';

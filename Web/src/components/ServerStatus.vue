@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, Ref, watch } from 'vue';
+import { computed, Ref } from 'vue';
 import { useServers } from '../stores/servers';
 let props = defineProps({
     server: {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { Ref, ref, watch } from 'vue';
+    import { ref, watch } from 'vue';
     let props = defineProps({
         default: {
             type: String,

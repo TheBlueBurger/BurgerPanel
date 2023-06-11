@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ComputedRef, Ref, computed, onMounted, onUnmounted, ref } from 'vue';
 import event from '../util/event';
-import { ConfirmButtonType, ModalData, ModalInput } from '../util/modal';
+import { ConfirmButtonType, ModalData } from '../util/modal';
 import TextInput from './TextInput.vue';
 
 let props = defineProps({

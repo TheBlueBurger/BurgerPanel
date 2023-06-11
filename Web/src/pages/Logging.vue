@@ -1,10 +1,9 @@
 <script setup lang="ts">
-    import { onMounted, ref } from 'vue';
+    import { ref } from 'vue';
     import { getSetting } from '../util/config';
     import { IDs } from "../../../Share/Logging";
     import TextInput from '../components/TextInput.vue';
-    import event from '../util/event';
-import sendRequest from '../util/request';
+    import sendRequest from '../util/request';
     let logPath = ref("");
     let webhookURL = ref("");
     let finishedLoading = ref(false);

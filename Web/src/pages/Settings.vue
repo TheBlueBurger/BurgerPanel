@@ -5,8 +5,6 @@ import { User } from "../../../Share/User.js";
 import { setSetting, getAllSettings } from "../util/config";
 import EventEmitter from "../util/event";
 import { useRouter } from "vue-router";
-import { hasPermission } from "../../../Share/Permission";
-import getUsers from "../util/getUsers";
 import TextInput from "../components/TextInput.vue";
 import sendRequest from "../util/request";
 import titleManager from "../util/titleManager";

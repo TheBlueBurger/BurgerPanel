@@ -1,12 +1,11 @@
 <script setup lang="ts">
-    import { Ref, computed, onMounted, ref, watch } from 'vue';
+    import { Ref, computed, ref, watch } from 'vue';
     import { Server } from '../../../../Share/Server';
-    import event from '../../util/event';
     import { useRouter } from 'vue-router';
     import sendRequest from '../../util/request';
     import titleManager from '../../util/titleManager';
     import { confirmModal } from '../../util/modal';
-import { useServers } from '../../stores/servers';
+    import { useServers } from '../../stores/servers';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({

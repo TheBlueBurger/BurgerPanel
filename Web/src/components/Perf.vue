@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onUnmounted, onMounted, Ref, ref, inject } from 'vue';
+import { onUnmounted, onMounted, Ref, ref } from 'vue';
 import { ServerPerformancePacketS2C } from '../../../Share/Perf';
 import { hasPermission} from '../../../Share/Permission';
 import { useUser } from '../stores/user';

@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted, watch, computed } from 'vue';
 import { Server, allowedSoftwares } from '../../../Share/Server';
-import { User } from '../../../Share/User';
 import EventEmitter from '../util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
 import { getSetting } from '../util/config';
-import { hasPermission } from '../../../Share/Permission';
 import ServerStatus from "../components/ServerStatus.vue";
 import sendRequest from '../util/request';
 import { useUser } from '../stores/user';

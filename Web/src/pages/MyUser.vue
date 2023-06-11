@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { Ref, inject } from 'vue';
-import { User } from '../../../Share/User';
 import TextInput from '../components/TextInput.vue';
 import event from '../util/event';
 import sendRequest from '../util/request';
@@ -40,7 +38,7 @@ async function changePassword(password: string) {
 // it does that already
 </script>
 <template>
-    <TextInput class="username" @set="setUsername" :default="user.user?.username || ''" placeholder="Username"></TextInput>
+    <TextInput @set="setUsername" :default="user.user?.username || ''" placeholder="Username"></TextInput>
     <br/>
     <TextInput :default="''" :password="true" @set="changePassword" placeholder="Password"></TextInput>
     <br/>
