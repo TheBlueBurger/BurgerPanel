@@ -42,31 +42,36 @@ titleManager.setTitle("Editing " + server.value?.name)
 async function renameServer(newName: string) {
     if(newName) {
         server.value = (await sendRequest("setServerOption", {id: props.server, name: newName})).server;
+        servers.updateServer(server.value);
         events.emit("createNotification", `Server name changed to '${newName}'`)
     }
 }
 async function changeMemory(newMem: string) {
     if(newMem && !isNaN(parseInt(newMem))) {
         server.value = (await sendRequest("setServerOption", {id: props.server, mem: parseInt(newMem)})).server;
-        events.emit("createNotification", `Server name changed to '${newMem}'`)
+        servers.updateServer(server.value);
+        events.emit("createNotification", `Server memory changed to '${newMem}'`)
     }
 }
 async function changeVersion(newVersion: string) {
     if(newVersion) {
         server.value = (await sendRequest("setServerOption", {id: props.server, version: newVersion})).server;
         events.emit("createNotification", `Server version changed to '${newVersion}'`)
+        servers.updateServer(server.value);
     }
 }
 async function changeSoftware(newSoftware: string) {
     if(newSoftware) {
         server.value = (await sendRequest("setServerOption", {id: props.server, version: newSoftware})).server;
         events.emit("createNotification", `Server software changed to '${newSoftware}'`)
+        servers.updateServer(server.value);
     }
 }
 async function changePort(newPort: string) {
     if(newPort) {
         server.value = (await sendRequest("setServerOption", {id: props.server, port: newPort})).server;
         events.emit("createNotification", `Server port changed to '${newPort}'`)
+        servers.updateServer(server.value);
     }
 }
 async function removeUser(user: string) {
@@ -79,6 +84,7 @@ async function removeUser(user: string) {
             user: user
         }
     });
+    servers.updateServer(resp.server);
     server.value = resp.server;
 }
 let showAddUserModal = ref(false);
@@ -95,6 +101,7 @@ async function addUserByID(id: string) {
         }
     })
     server.value = resp.server;
+    servers.updateServer(resp.server);
 }
 
 let notAddedUsers = computed(() => {
@@ -115,6 +122,7 @@ async function deleteServer() {
         });
         await showInfoBox(`Server '${server.value?.name}' deleted.`, "For security reasons, you will need to delete the server folder manually.\nThe folder is located at " + server.value?.path + ".");
         router.push("/manage");
+        if(server.value) servers.removeServerFromCache(server.value);
     }
 }
 
@@ -124,6 +132,7 @@ async function changeAutoStart() {
         autoStart: !server.value?.autoStart
     })).server;
     events.emit("createNotification", `Server auto start ${server.value.autoStart ? "enabled" : "disabled"}`);
+    servers.updateServer(server.value);
 }
 async function changeAutoRestart() {
     server.value = (await sendRequest("setServerOption", {
@@ -131,6 +140,7 @@ async function changeAutoRestart() {
         autoRestart: !server.value?.autoRestart
     })).server;
     events.emit("createNotification", `Server auto restart ${server.value.autoRestart ? "enabled" : "disabled"}`);
+    servers.updateServer(server.value);
 }
 </script>
 

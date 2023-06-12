@@ -57,6 +57,7 @@ async function togglePerm(perm: ServerPermissions) {
             user: props.user
         }
     })).server;
+    servers.updateServer(server.value);
 }
 async function applyProfile(profile: string) {
     if(isApplied(profile)) return;
@@ -68,6 +69,7 @@ async function applyProfile(profile: string) {
             user: props.user
         }
     })).server;
+    servers.updateServer(server.value);
 }
 function isApplied(profile: string) {
     return !_ServerPermissions.some(p => {

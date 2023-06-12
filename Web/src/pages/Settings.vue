@@ -33,9 +33,9 @@ async function changeOption(option: keyof typeof defaultConfig, newValue: string
 }
 getAllSettings();
 let users = useUsers();
-let allUsers = ref([] as User[]);
+let allUsers = computed(() => users.users);
 if(user.hasPermission("users.view")) {
-    allUsers.value = await users.getAllUsers();
+    await users.getAllUsers();
 }
 
 let creatingUser = ref(false);
@@ -53,8 +53,8 @@ async function deleteUser(user: User) {
     if(!await confirmModal("Delete user?", "Are you sure you want to remove the user " + user.username + "?")) return;
     await sendRequest("deleteUser", {
         id: user._id
-    })
-    users.users = users.users.filter(u => u._id != user._id);
+    });
+    users.removeUserFromCache(user);
 }
 
 let knownTokens: Ref<{[id: string]: string}> = ref({});

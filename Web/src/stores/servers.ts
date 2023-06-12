@@ -46,5 +46,13 @@ export const useServers = defineStore("servers", () => {
             statuses.value[status] = newStatuses[status];
         })
     }
-    return {servers, getServerByID, assignedServers, statuses, getAllServers, addServers, addStatuses}
+    function updateServer(server: Server) {
+        if(!server._id) throw new Error("Invalid server when updating!");
+        removeServerFromCache(server);
+        servers.value.push(server);
+    }
+    function removeServerFromCache(server: Server) {
+        servers.value = servers.value.filter(s => s._id != server._id);
+    }
+    return {servers, getServerByID, assignedServers, statuses, getAllServers, addServers, addStatuses, updateServer, removeServerFromCache}
 });
