@@ -8,4 +8,5 @@ export interface User {
     permissions: PermissionString[];
     password?: string;
     setupPending: boolean;
+    devMode?: boolean;
 }

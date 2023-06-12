@@ -48,6 +48,13 @@ async function showSettings() {
 async function showUsers() {
     allUsers.value = await users.getAllUsers();
 }
+async function toggleDevMode() {
+    user.user = (await sendRequest("editUser", {
+        id: user.user?._id,
+        action: "toggleDev"
+    })).user;
+}
+let API_URL = inject("API_URL");
 </script>
 
 <template>
@@ -73,7 +80,7 @@ async function showUsers() {
     </div>
     <hr/>
     <h1>Users</h1>
-    <div v-if="allUsers" v-for="user in allUsers">
+    <div v-if="allUsers.length != 0" v-for="user in allUsers">
         <pre>{{ user }}</pre>
     </div>
     <div v-else>
@@ -101,6 +108,22 @@ async function showUsers() {
     <button @click="createModal">Create modal</button>
     <h3>Output</h3>
     <textarea readonly v-model="modalOutputData" :style="{width: '500px', height: '250px'}"></textarea>
+    <hr/>
+    <h1>Developer mode</h1>
+        <p>Developer mode for your account is currently <b>{{ user.user?.devMode ? "enabled" : "disabled" }}</b>.</p>
+        <button @click="toggleDevMode">{{ user.user?.devMode ? "Disable" : "Enable" }}</button>
+        <div v-if="user.user?.devMode">
+            Example:<br/>
+            <div :style="{backgroundColor: '#000000', width: 'fit-content', padding: '10px', margin: '10px', borderRadius: '5px'}">curl {{ API_URL }}/api/request/auth \<br/>
+                --request POST \<br/>
+                --header "Content-Type: application/json" \<br/>
+                --header "Authorization: {{ user.user.token }}" \<br/>
+                --data "{}"
+            </div>
+            To get your current login data. See <a href="https://github.com/TheBlueBurger/BurgerPanel/tree/master/Server/src/packets" target="_blank"> here</a> for all types and <a href="https://github.com/TheBlueBurger/BurgerPanel/blob/master/Share/Requests.ts" target="_blank">here</a> for their responses.
+            <br/>
+            <br/>
+        </div>
     <hr/>
     Need help? <a href="https://github.com/TheBlueBurger/BurgerPanel/discussions/new?category=support" target="_blank">Create a support ticket</a>
 </div>

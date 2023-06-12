@@ -103,7 +103,16 @@ export default class EditUser extends Packet {
                     user: filterUserData(user.toJSON()),
                     token: user.token
                 }
-
+            case "toggleDev":
+                if(client.data.auth.user?._id != user._id.toHexString()) {
+                    return "Not allowed to other users"
+                }
+                user.devMode = !user.devMode;
+                logger.log(`${client.data.auth.user.username} is ${user.devMode ? "enabling" : "disabling"} their dev mode`, "info");
+                await user.save();
+                return {
+                    user: user.toJSON()
+                }
         }
         await user?.save();
         return {

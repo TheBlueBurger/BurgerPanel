@@ -41,6 +41,9 @@ app.post("/api/request/:name", async (req, res, next) => {
     if(!user) return res.status(401).json({
         error: "Invalid token"
     });
+    if(!user.devMode) return res.status(401).json({
+        error: "Developer mode is disabled for this account. See /debug"
+    });
     let client: OurClient = {
         json(data) {
             if(data.e) {

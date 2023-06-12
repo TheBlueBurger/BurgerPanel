@@ -51,6 +51,11 @@ export let users = db.model("User", new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    devMode: {
+        type: Boolean,
+        required: false,
+        default: false
+    }
     /*roles: [
         {
             type: mongoose.Types.ObjectId,

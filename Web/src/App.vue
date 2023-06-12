@@ -63,6 +63,7 @@ if (import.meta.env.PROD) {
 } else {
   API_URL = "http://localhost:3001"
 }
+provide("API_URL", API_URL)
 let connected = ref(false);
 // Connect with WS
 let ws: Ref<WebSocket> = ref() as Ref<WebSocket>;
