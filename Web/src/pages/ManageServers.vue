@@ -118,7 +118,6 @@ table {
     width: 100%;
 }
 table > tr > th {
-    /* Center */
     text-align: left;
     margin-left: 100;
 }

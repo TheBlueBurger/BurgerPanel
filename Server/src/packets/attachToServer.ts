@@ -1,4 +1,4 @@
-import { OurClient, Packet, ServerPacketResponse } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse, isProd } from "../index.js";
 import { servers } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
@@ -13,11 +13,13 @@ export default class AttachToServer extends Packet {
             return "Server not found";
         }
         let status = hasServerPermission(client.data.auth.user, server.toJSON(), "status") ? serverManager.getStatus(server.toJSON()) : "unknown";
-            let resp = serverManager.attachClientToServer(client, server.toJSON());
-            return {
-                server: server.toJSON(),
-                lastLogs: hasServerPermission(client.data.auth.user, server.toJSON(), "console.read") ? resp.lastLogs : [],
-                status
-            }
+        // HACK HACK HACK HACK HACK: Make it not error on HMR
+        if(serverManager.isAttachedToServer(client, server.toJSON()) && isProd) return "Already attached!";
+        let resp = serverManager.attachClientToServer(client, server.toJSON());
+        return {
+            server: server.toJSON(),
+            lastLogs: hasServerPermission(client.data.auth.user, server.toJSON(), "console.read") ? resp.lastLogs : [],
+            status
+        }
     }
 }

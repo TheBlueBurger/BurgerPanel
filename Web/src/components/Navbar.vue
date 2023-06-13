@@ -5,13 +5,13 @@ let user = useUser();
 <template>
     <div id="navbar">
         <span id="title"><RouterLink to="/" class="no-text-dec">Burgerpanel</RouterLink></span>
-        <div v-if="user.user?.username" class="loggedin-only">
+        <div v-if="user.user" class="loggedin-only">
             <span class="item link"><RouterLink to="/manage">Servers</RouterLink></span>
           <span class="item link" v-if="user.hasPermission('settings.read') || user.hasPermission('users.view')"><RouterLink to="/settings">Settings</RouterLink></span>
           <span class="item link"><RouterLink to="/about">About</RouterLink></span>
-         <span id="user" class="item" v-if="user.user?.username"><RouterLink :to="{
+         <span id="user" class="item"><div id="inner-user"><RouterLink :to="{
             name: 'MyUser'
-         }" style="color: white; text-decoration: none;">{{ user.user?.username}}</RouterLink> <button @click="user.logout">Log out</button></span>
+         }" style="color: white; text-decoration: none;">{{ user.user?.username }}</RouterLink></div></span><button @click="user.logout" id="logout-btn">Logout</button>
         </div>
     </div>
 </template>
@@ -57,5 +57,12 @@ let user = useUser();
         height: 50px;
         display: flex;
         align-items: center;
+    }
+    #logout-btn {
+        margin-left: 1px;
+        padding: 10px;
+    }
+    #inner-user {
+        margin-left: 25px;
     }
 </style>

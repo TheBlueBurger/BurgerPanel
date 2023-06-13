@@ -74,6 +74,9 @@ enforce-secure-profile=false
             lastLogs: [],
         }
     }
+    isAttachedToServer(client: OurClient, server: Server) {
+        return this.servers[server._id] && this.servers[server._id].clientsAttached.some(c => c.data.auth.user?._id == client.data.auth.user?._id)
+    }
     attachClientToServer(client: OurClient, server: Server) {
         if(client.type != "Websocket") throw new Error("This isnt a real client!");
         if (!this.servers[server._id]) this.createServerEntry(server);

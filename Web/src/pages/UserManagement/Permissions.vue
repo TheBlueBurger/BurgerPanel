@@ -28,6 +28,7 @@ async function togglePerm(perm: PermissionString) {
         permission: perm,
         value: !user.value.permissions.includes(perm)
     })).user;
+    users.updateUser(user.value);
 }
 let router = useRouter();
 if(!myUser.hasPermission("users.permissions.read")) {

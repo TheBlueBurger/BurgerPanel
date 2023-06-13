@@ -15,6 +15,7 @@ export default class WriteToConsole extends Packet {
         }
         if(hasServerPermission(client.data.auth.user, server.toJSON(), "console.write")) {
             if (typeof data.command != "string" || data.command.length > 1000 || data.command.length < 1) return;
+            if(!serverManager.serverIsRunning(server.toJSON())) return "Server isn't running!";
             logger.log(`${client.data.auth.user?.username} wrote to console of ${server.name}: ${data.command}`, "server.console.write");
             serverManager.writeToConsole(server.toJSON(), data.command, client.data.auth.user);
         } else {
