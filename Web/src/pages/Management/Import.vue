@@ -20,10 +20,10 @@ let updateServerPath = async () => {
         requestConfirmation: true
     }).catch(err => {
         router.push({
-        query: {
-            serverPath: undefined
-        }
-    });
+            query: {
+                serverPath: undefined
+            }
+        });
     }); // is there a better way to do this?
     if(resp?.type !== "autodetect") return;
     if (resp.autodetect.version) version.value = resp.autodetect.version;
