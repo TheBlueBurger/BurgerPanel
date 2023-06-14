@@ -29,6 +29,7 @@ if(!isProd) app.use((req, res, next) => {
 });
 app.use(express.json());
 app.post("/api/request/:name", async (req, res, next) => {
+    if(lockdownMode) return;
     if(!packetHandler.packets[req.params.name]) return next();
     if(req.headers["content-type"] != "application/json") return res.status(400).json({
         error: "No JSON"
