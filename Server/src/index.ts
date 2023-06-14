@@ -333,6 +333,7 @@ packetHandler.init().then(async () => {
                 exit();
                 break;
             case "packetLog":
+                if(isProd) return logger.log("Attempted to enable packet logging in prod!", "error", LogLevel.ERROR);
                 logging = !logging;
                 console.log("Packet logging " + (logging ? "enabled" : "disabled"));
                 break;
@@ -353,7 +354,6 @@ packetHandler.init().then(async () => {
                 console.log("users: List all users");
                 console.log("gen-admin-user: Generate a admin user");
                 console.log("servers: List all servers")
-                console.log("packetLog: Toggle packet logging");
                 console.log("stop: Stop all servers and exit");
                 console.log("set-opt <option> <value>: Sets a setting");
                 console.log("start <server>: Start a server");
