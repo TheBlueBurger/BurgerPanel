@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, inject, ref } from 'vue';
-import { getAllSettings } from '../util/config';
+let settings = useSettings();
 import { User } from '../../../Share/User';
 import packets from '../../../Share/Packets';
 import sendRequest from '../util/request';
@@ -8,10 +8,10 @@ import { requestModal, showInfoBox } from '../util/modal';
 import { RequestResponses } from '../../../Share/Requests';
 import { useUser } from '../stores/user';
 import { useUsers } from '../stores/users';
+import { useSettings } from '../stores/settings';
 let showWarning = ref(true);
 const user = useUser();
 const users = useUsers();
-let settings: Ref<Awaited<ReturnType<typeof getAllSettings>> | undefined> = ref();
 let allUsers: Ref<User[]> = ref([]);
 let packetName: Ref<typeof packets[number] | undefined> = ref();
 let packetData = ref(`{
@@ -21,6 +21,7 @@ let requestResponse = ref("");
 let modalInputData = ref(`{
 
 }`);
+let shownSettings = ref();
 let modalOutputData = ref("");
 async function sendPacket() {
     let data;
@@ -43,7 +44,7 @@ async function createModal() {
     modalOutputData.value = JSON.stringify(await requestModal(data), null, 2);
 }
 async function showSettings() {
-    settings.value = await getAllSettings();
+    shownSettings.value = await settings.getAllSettings();
 }
 async function showUsers() {
     allUsers.value = await users.getAllUsers();
@@ -72,8 +73,8 @@ let API_URL = inject("API_URL");
     <pre>{{ user.user }}</pre>
     <hr/>
     <h2>Settings</h2>
-    <div v-if="settings">
-        <pre>{{ settings }}</pre>
+    <div v-if="shownSettings">
+        <pre>{{ shownSettings }}</pre>
     </div>
     <div v-else>
         <button @click="showSettings">Get</button>

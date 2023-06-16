@@ -3,12 +3,13 @@ import { Ref, inject, ref, onMounted, watch, computed } from 'vue';
 import { Server, allowedSoftwares } from '../../../Share/Server';
 import EventEmitter from '../util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
-import { getSetting } from '../util/config';
 import ServerStatus from "../components/ServerStatus.vue";
 import sendRequest from '../util/request';
 import { useUser } from '../stores/user';
 import { useServers } from '../stores/servers';
+import { useSettings } from '../stores/settings';
 
+let settings = useSettings();
 let router = useRouter();
 let events: Ref<typeof EventEmitter> = inject('events') as Ref<typeof EventEmitter>;
 let servers = useServers();
@@ -63,9 +64,9 @@ function manageServer(id: string) {
 }
 (async() => {
     if(user.hasPermission("settings.read")) {
-        newServerMem.value = await getSetting("defaultMemory");
-        newMCServerVersion.value = await getSetting("defaultMCVersion");
-        newMCServerSoftware.value = await getSetting("defaultMCSoftware");
+        newServerMem.value = await settings.getSetting("defaultMemory");
+        newMCServerVersion.value = await settings.getSetting("defaultMCVersion");
+        newMCServerSoftware.value = await settings.getSetting("defaultMCSoftware");
     }
 })();
 let agreesToEULA = ref(false);

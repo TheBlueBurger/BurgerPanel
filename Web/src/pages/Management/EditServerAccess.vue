@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, Ref, inject, computed } from 'vue';
+import { ref, Ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { _ServerPermissions, ServerPermissions, DefaultServerProfiles, serverProfilesDescriptions } from '../../../../Share/Permission';
 import { Server } from '../../../../Share/Server';

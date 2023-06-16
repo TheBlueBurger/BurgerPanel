@@ -81,7 +81,7 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
         return (path.isAbsolute(val) && await exists(val) && (await fs.stat(val)).isDirectory()) || val == "disabled";
     },
     defaultMCVersion: async(val) => {
-        return isValidMCVersion(val);
+        return await isValidMCVersion(val);
     },
     webServerPort: async(val) => {
         let valNum = Number(val);

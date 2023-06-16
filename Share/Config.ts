@@ -4,7 +4,7 @@ export let defaultConfig: Config = {
     defaultMemory: 1024,
     webServerPort: 3001,
     serverPath: "",
-    defaultMCVersion: "1.19.4",
+    defaultMCVersion: "1.20.1",
     defaultMCSoftware: "paper",
     stopServerTimeout: 120_000, // 2 mins
     defaultPermissions: "performance.view,performance.mem,performance.load,performance.platform", // thats how the database works and im too lazy to change
@@ -15,7 +15,7 @@ export let defaultConfig: Config = {
 export interface Config {
     defaultMemory: number;
     webServerPort: number;
-    serverPath: string | null;
+    serverPath: string;
     defaultMCVersion: string;
     defaultMCSoftware: "purpur" | "paper" | "vanilla";
     stopServerTimeout: number;
@@ -36,4 +36,4 @@ export let descriptions: { [key in keyof Config]?: string } = {
 export let disabledEditingFrontend: string[] = ["logging_"]; // if it starts with this, it will be ignored on the frontend settings page
 // Array of keys that are allowed to be read by all users
 export let allUsersAllowedToRead: (keyof Config)[] = [];
-export type ConfigValue = string | number | null | undefined;
+export type ConfigValue = string | number;

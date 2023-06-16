@@ -9,7 +9,6 @@ import sendRequest from "./util/request";
 import "./style.css";
 import Navbar from "./components/Navbar.vue";
 import { Config } from "../../Share/Config";
-import { _knownSettings } from "./util/config";
 import { RouteLocationNormalized, useRouter } from "vue-router";
 import event from "./util/event";
 import type { RequestResponses } from "../../Share/Requests";
@@ -23,7 +22,6 @@ let events = ref(EventEmitter);
 event.once("reload", () => {
   location.reload();
 })
-let knownSettings = ref(_knownSettings) as Ref<{ [key in keyof Config]: any }>
 let notifications = ref([] as string[]);
 let notificationQueue: string[] = [];
 function createNotification(text: string) {
@@ -39,10 +37,6 @@ function createNotification(text: string) {
 }
 const user = useUser();
 events.value.on("createNotification", createNotification);
-events.value.on("knownSettingsUpdated", (settings: any) => {
-  knownSettings.value = settings;
-});
-provide("knownSettings", knownSettings);
 provide("events", events);
 let servers = useServers();
 events.value.on("serverStatusUpdate", (d) => {

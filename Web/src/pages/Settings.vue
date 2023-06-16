@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, Ref, ref } from "vue";
-import { Config, defaultConfig, descriptions, disabledEditingFrontend } from "../../../Share/Config.js";
+import { Config, ConfigValue, defaultConfig, descriptions, disabledEditingFrontend } from "../../../Share/Config.js";
 import { User } from "../../../Share/User.js";
-import { setSetting, getAllSettings } from "../util/config";
 import EventEmitter from "../util/event";
 import { useRouter } from "vue-router";
 import TextInput from "../components/TextInput.vue";
@@ -11,6 +10,9 @@ import titleManager from "../util/titleManager";
 import { confirmModal, showInfoBox } from "../util/modal";
 import { useUser } from "../stores/user";
 import { useUsers } from "../stores/users";
+import { useSettings } from "../stores/settings";
+let settings = useSettings();
+await settings.getAllSettings();
 let router = useRouter();
 const user = useUser();
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
@@ -20,18 +22,15 @@ if (!user.hasPermission("settings.read") && !user.hasPermission("users.view")) {
         path: "/"
     });
 }
-let knownSettings = inject("knownSettings") as Ref<{ [key in keyof Config]: any }>;
 async function changeOption(option: keyof typeof defaultConfig, newValue: string) {
     try {
         if (!newValue) return;
-        let val = await setSetting(option, newValue);
-        knownSettings.value = await getAllSettings();
+        let val = await settings.setSetting(option, newValue);
         events.value.emit("createNotification", "Successfully changed option")
     } catch (e) {
         showInfoBox(`Could not change '${option}'`, `Error: ${e}`);
     }
 }
-getAllSettings();
 let users = useUsers();
 let allUsers = computed(() => users.users);
 if(user.hasPermission("users.view")) {
@@ -110,7 +109,7 @@ titleManager.setTitle("Settings")
         <h2>Settings</h2>
         <div v-for="option of settingsAllowedToShow">
             <span class="setting-span" :title="descriptions[option as keyof typeof defaultConfig]">{{ option }}</span>
-            <TextInput :default="knownSettings[option as keyof Config].toString()" @set="v => changeOption(option as keyof Config, v)" v-if="typeof knownSettings[option as keyof Config] != 'undefined'" />
+            <TextInput :default="(settings.settings[option as keyof Config] as ConfigValue).toString()" @set="v => changeOption(option as keyof Config, v)" v-if="typeof settings.settings[option as keyof Config] != 'undefined'" />
         </div>
     </div>
     <div v-if="user.hasPermission('settings.logging.set')">

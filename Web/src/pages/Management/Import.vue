@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { getSetting } from '../../util/config';
 import event from '../../util/event';
 import sendRequest from '../../util/request';
 import { allowedSoftwares } from '../../../../Share/Server';
 import { modalInput } from '../../util/modal';
+import { useSettings } from '../../stores/settings';
+import { useUser } from '../../stores/user';
 
+let settings = useSettings();
 let router = useRouter();
 let serverPath = ref();
+let user = useUser();
 let updateServerPath = async () => {
     let _serverPath = router.currentRoute.value.query.serverPath;
     serverPath.value = _serverPath;
@@ -27,7 +30,7 @@ let updateServerPath = async () => {
     }); // is there a better way to do this?
     if(resp?.type !== "autodetect") return;
     if (resp.autodetect.version) version.value = resp.autodetect.version;
-    if (resp.autodetect.software) software.value = resp.autodetect.software ?? await getSetting("defaultMCSoftware");
+    if (resp.autodetect.software) software.value = resp.autodetect.software ?? (user.hasPermission("settings.read") ? await settings.getSetting("defaultMCSoftware") : undefined);
     if (resp.autodetect.port) port.value = resp.autodetect.port;
     let splitString = _serverPath.toString().split("/");
     let folderName = splitString[splitString.length-1];

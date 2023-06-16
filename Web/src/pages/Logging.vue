@@ -1,17 +1,18 @@
 <script setup lang="ts">
     import { ref } from 'vue';
-    import { getSetting } from '../util/config';
+    import { useSettings } from '../stores/settings';
     import { IDs } from "../../../Share/Logging";
     import TextInput from '../components/TextInput.vue';
     import sendRequest from '../util/request';
+    let settings = useSettings();
     let logPath = ref("");
     let webhookURL = ref("");
     let finishedLoading = ref(false);
     let disabledLogs = ref([] as typeof IDs[number][]);
     async function load(reload: boolean = false) {
-        webhookURL.value = await getSetting("logging_DiscordWebHookURL", reload);
-        disabledLogs.value = (await getSetting("logging_DisabledIDs", reload)).split(",");
-        logPath.value = await getSetting("logging_logDir", reload);
+        webhookURL.value = await settings.getSetting("logging_DiscordWebHookURL", reload) as string;
+        disabledLogs.value = (await settings.getSetting("logging_DisabledIDs", reload) as string).split(",") as any;
+        logPath.value = await settings.getSetting("logging_logDir", reload) as string;
     }
     await load();
     finishedLoading.value = true;
