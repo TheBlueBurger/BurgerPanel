@@ -13,7 +13,7 @@ export default defineConfig({
       "@components": "/src/components",
       "@util": "/src/util",
       "@": "/src",
-      "@share": "../share"
+      "@share": "/../Share"
     }
   }
 })

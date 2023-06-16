@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, provide, Ref, ref } from "vue";
-import type { AuthS2C } from "@share/Auth.js";
+import type { AuthS2C } from "@share/Auth";
 import { User } from "@share/User";
 import { useUser } from "./stores/user";
 import EventEmitter from "@util/event";
