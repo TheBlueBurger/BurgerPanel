@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import { Server, ServerStatuses } from "../../../Share/Server";
+import { Server, ServerStatuses } from "@share/Server";
 import { useUser } from "./user";
 import sendRequest from "@util/request";
 

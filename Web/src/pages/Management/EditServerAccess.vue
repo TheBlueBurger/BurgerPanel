@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, Ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { _ServerPermissions, ServerPermissions, DefaultServerProfiles, serverProfilesDescriptions } from '../../../../Share/Permission';
-import { Server } from '../../../../Share/Server';
-import { User } from '../../../../Share/User';
+import { _ServerPermissions, ServerPermissions, DefaultServerProfiles, serverProfilesDescriptions } from '@share/Permission';
+import { Server } from '@share/Server';
+import { User } from '@share/User';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { showInfoBox } from '../../util/modal';

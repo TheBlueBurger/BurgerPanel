@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted, onMounted, Ref, ref } from 'vue';
-import { ServerPerformancePacketS2C } from '../../../Share/Perf';
-import { hasPermission} from '../../../Share/Permission';
+import { ServerPerformancePacketS2C } from '@share/Perf';
+import { hasPermission} from '@share/Permission';
 import { useUser } from '../stores/user';
 import sendRequest from '../util/request';
 let user = useUser();

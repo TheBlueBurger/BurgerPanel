@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, ref, onUnmounted, computed } from 'vue';
-import { Server } from '../../../../Share/Server';
+import { Server } from '@share/Server';
 import events from '../../util/event';
 import { useRouter } from 'vue-router';
 import ServerStatus from '@components/ServerStatus.vue';

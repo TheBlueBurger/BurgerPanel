@@ -1,5 +1,5 @@
 import event from "./event";
-import type {Request, RequestResponses} from "../../../Share/Requests";
+import type {Request, RequestResponses} from "@share/Requests";
 import { showInfoBox } from "./modal";
 
 let currentRequestID = 0;

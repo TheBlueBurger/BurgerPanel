@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, provide, Ref, ref } from "vue";
-import type { AuthS2C } from "../../Share/Auth.js";
-import { User } from "../../Share/User";
+import type { AuthS2C } from "@share/Auth.js";
+import { User } from "@share/User";
 import { useUser } from "./stores/user";
 import EventEmitter from "@util/event";
 import sendRequest from "@util/request";
@@ -9,7 +9,7 @@ import "./style.css";
 import Navbar from "@components/Navbar.vue";
 import { RouteLocationNormalized, useRouter } from "vue-router";
 import event from "@util/event";
-import type { RequestResponses } from "../../Share/Requests";
+import type { RequestResponses } from "@share/Requests";
 import titleManager from "@util/titleManager";
 import Modal from "@components/Modal.vue";
 import { showInfoBox } from "@util/modal";

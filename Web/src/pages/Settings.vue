@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, Ref, ref } from "vue";
-import { Config, ConfigValue, defaultConfig, descriptions, disabledEditingFrontend } from "../../../Share/Config.js";
-import { User } from "../../../Share/User.js";
+import { Config, ConfigValue, defaultConfig, descriptions, disabledEditingFrontend } from "@share/Config.js";
+import { User } from "@share/User.js";
 import EventEmitter from "@util/event";
 import { useRouter } from "vue-router";
 import TextInput from "@components/TextInput.vue";

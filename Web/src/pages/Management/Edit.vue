@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Ref, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { hasPermission } from '../../../../Share/Permission';
-import { Server } from '../../../../Share/Server';
-import { User } from '../../../../Share/User';
+import { hasPermission } from '@share/Permission';
+import { Server } from '@share/Server';
+import { User } from '@share/User';
 import events from '../../util/event';
 import TextInput from '@components/TextInput.vue';
 import sendRequest from '../../util/request';

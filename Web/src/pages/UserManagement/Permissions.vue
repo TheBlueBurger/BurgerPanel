@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, ref } from 'vue';
-import { User } from '../../../../Share/User';
-import { PermissionString, validPermissions } from "../../../../Share/Permission";
+import { User } from '@share/User';
+import { PermissionString, validPermissions } from "@share/Permission";
 import { useRouter } from 'vue-router';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';

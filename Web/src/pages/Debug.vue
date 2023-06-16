@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Ref, inject, ref } from 'vue';
 let settings = useSettings();
-import { User } from '../../../Share/User';
-import packets from '../../../Share/Packets';
+import { User } from '@share/User';
+import packets from '@share/Packets';
 import sendRequest from '../util/request';
 import { requestModal, showInfoBox } from '../util/modal';
-import { RequestResponses } from '../../../Share/Requests';
+import { RequestResponses } from '@share/Requests';
 import { useUser } from '../stores/user';
 import { useUsers } from '../stores/users';
 import { useSettings } from '../stores/settings';

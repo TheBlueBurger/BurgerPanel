@@ -3,7 +3,7 @@ import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import event from '../../util/event';
 import sendRequest from '../../util/request';
-import { allowedSoftwares } from '../../../../Share/Server';
+import { allowedSoftwares } from '@share/Server';
 import { modalInput } from '../../util/modal';
 import { useSettings } from '../../stores/settings';
 import { useUser } from '../../stores/user';

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted, watch, computed } from 'vue';
-import { Server, allowedSoftwares } from '../../../Share/Server';
+import { Server, allowedSoftwares } from '@share/Server';
 import EventEmitter from '../util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
 import ServerStatus from "@components/ServerStatus.vue";
