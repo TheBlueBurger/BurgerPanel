@@ -2,7 +2,7 @@
     import { ref } from 'vue';
     import { useSettings } from '../stores/settings';
     import { IDs } from "../../../Share/Logging";
-    import TextInput from '../components/TextInput.vue';
+    import TextInput from '@components/TextInput.vue';
     import sendRequest from '../util/request';
     let settings = useSettings();
     let logPath = ref("");

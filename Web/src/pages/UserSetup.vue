@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, computed, inject } from 'vue';
 import { useRouter } from 'vue-router';
-import TextInput from '../components/TextInput.vue';
+import TextInput from '@components/TextInput.vue';
 import event from '../util/event';
 import sendRequest from '../util/request';
 import { useUser } from '../stores/user';

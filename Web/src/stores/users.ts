@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { User } from "../../../Share/User";
-import sendRequest from "../util/request";
+import sendRequest from "@util/request";
 
 export const useUsers = defineStore("users", () => {
     let users = ref([] as User[]);

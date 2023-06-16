@@ -2,12 +2,12 @@
 import { computed, inject, Ref, ref } from "vue";
 import { Config, ConfigValue, defaultConfig, descriptions, disabledEditingFrontend } from "../../../Share/Config.js";
 import { User } from "../../../Share/User.js";
-import EventEmitter from "../util/event";
+import EventEmitter from "@util/event";
 import { useRouter } from "vue-router";
-import TextInput from "../components/TextInput.vue";
-import sendRequest from "../util/request";
-import titleManager from "../util/titleManager";
-import { confirmModal, showInfoBox } from "../util/modal";
+import TextInput from "@components/TextInput.vue";
+import sendRequest from "@util/request";
+import titleManager from "@util/titleManager";
+import { confirmModal, showInfoBox } from "@util/modal";
 import { useUser } from "../stores/user";
 import { useUsers } from "../stores/users";
 import { useSettings } from "../stores/settings";

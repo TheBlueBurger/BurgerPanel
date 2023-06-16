@@ -1,20 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, Ref, ref, watch } from "vue";
-import type { Server } from "../../Share/Server.js";
+import { onMounted, onUnmounted, provide, Ref, ref } from "vue";
 import type { AuthS2C } from "../../Share/Auth.js";
 import { User } from "../../Share/User";
 import { useUser } from "./stores/user";
-import EventEmitter from "./util/event";
-import sendRequest from "./util/request";
+import EventEmitter from "@util/event";
+import sendRequest from "@util/request";
 import "./style.css";
-import Navbar from "./components/Navbar.vue";
-import { Config } from "../../Share/Config";
+import Navbar from "@components/Navbar.vue";
 import { RouteLocationNormalized, useRouter } from "vue-router";
-import event from "./util/event";
+import event from "@util/event";
 import type { RequestResponses } from "../../Share/Requests";
-import titleManager from "./util/titleManager";
-import Modal from "./components/Modal.vue";
-import { showInfoBox } from "./util/modal";
+import titleManager from "@util/titleManager";
+import Modal from "@components/Modal.vue";
+import { showInfoBox } from "@util/modal";
 import { useServers } from "./stores/servers";
 
 let router = useRouter();

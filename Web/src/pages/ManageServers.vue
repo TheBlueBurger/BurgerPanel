@@ -3,7 +3,7 @@ import { Ref, inject, ref, onMounted, watch, computed } from 'vue';
 import { Server, allowedSoftwares } from '../../../Share/Server';
 import EventEmitter from '../util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
-import ServerStatus from "../components/ServerStatus.vue";
+import ServerStatus from "@components/ServerStatus.vue";
 import sendRequest from '../util/request';
 import { useUser } from '../stores/user';
 import { useServers } from '../stores/servers';

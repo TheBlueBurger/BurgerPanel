@@ -12,7 +12,8 @@ export default defineConfig({
       "@assets": "/src/assets",
       "@components": "/src/components",
       "@util": "/src/util",
-      "@": "/src"
+      "@": "/src",
+      "@share": "../share"
     }
   }
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TextInput from '../components/TextInput.vue';
+import TextInput from '@components/TextInput.vue';
 import event from '../util/event';
 import sendRequest from '../util/request';
 import { confirmModal } from '../util/modal';

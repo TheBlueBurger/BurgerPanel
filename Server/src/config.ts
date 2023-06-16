@@ -1,5 +1,5 @@
 var forcedChangeConfig: (keyof Config)[] = ["serverPath"];
-var cachedSettings: { [key in keyof Config]?: string | number | null } = {};
+var cachedSettings: { [key in keyof Config]?: string | number } = {};
 import { defaultConfig, Config, ConfigValue } from "../../Share/Config.js";
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -10,8 +10,9 @@ import { exists } from "./util/exists.js";
 import { allowedSoftwares } from "../../Share/Server.js";
 import isValidMCVersion from "./util/isValidMCVersion.js";
 export async function getSetting(key: keyof typeof defaultConfig, ignoreForcedChangeConfig?: boolean, errorIfNotSet?: boolean): Promise<ConfigValue> {
-    if (key in cachedSettings && !errorIfNotSet) {
-        return cachedSettings[key];
+    let cachedSetting = cachedSettings[key];
+    if (typeof cachedSetting != "undefined" && !errorIfNotSet) {
+        return cachedSetting;
     }
     let databaseOption = await settings.findOne({ key }).exec();
     if (!databaseOption?.value) {

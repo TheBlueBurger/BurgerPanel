@@ -3,7 +3,7 @@ import { Ref, ref, onUnmounted, computed } from 'vue';
 import { Server } from '../../../../Share/Server';
 import events from '../../util/event';
 import { useRouter } from 'vue-router';
-import ServerStatus from '../../components/ServerStatus.vue';
+import ServerStatus from '@components/ServerStatus.vue';
 import sendRequest from '../../util/request';
 import titleManager from '../../util/titleManager';
 import { confirmModal } from '../../util/modal';

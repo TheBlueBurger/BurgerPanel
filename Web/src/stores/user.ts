@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { Ref, ref } from "vue";
 import { User } from "../../../Share/User";
-import sendRequest from "../util/request";
-import event from "../util/event";
+import sendRequest from "@util/request";
+import event from "@util/event";
 import { Permission, hasServerPermission as _hasServerPermission, hasPermission as _hasPermission, ServerPermissions } from "../../../Share/Permission";
 import { Server } from "../../../Share/Server";
 

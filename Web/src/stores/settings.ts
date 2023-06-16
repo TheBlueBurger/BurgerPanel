@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { Ref, ref } from "vue";
-import sendRequest from "../util/request";
+import sendRequest from "@util/request";
 import { Config, ConfigValue, defaultConfig } from "../../../Share/Config";
 
 export const useSettings = defineStore("settings", () => {
