@@ -22,7 +22,7 @@ async function installWebIfForgotten() {
 }
 
 async function buildWeb() {
-    let files = fs.readdirSync("src/packets");
+    await import("./buildTools/packetsToFile.mjs")
     execSync("pnpm build", {cwd: "../Web"});
 }
 
@@ -36,10 +36,10 @@ export async function packetsToFile() {
         fileData += `export default [${files.map(f => f.replace(".ts", "")).join(", ")}];\n`;
         fs.writeFileSync("packets.mjs", fileData);
     }
-    await import("./buildTools/packetsToFile.mjs")
 }
 
-async function buildServer() {
+export async function buildServer() {
+    await packetsToFile();
     execSync("pnpm build");
 }
 
@@ -70,6 +70,7 @@ async function runESBuild() {
     await esbuild.build({
         entryPoints: ["_build/input.js"],
         minify: true,
+        target: "es2022",
         outfile: "_build/burgerpanel.mjs",
     });
 }
@@ -123,10 +124,7 @@ function buildAndBundle() {
     return series(
         clean,
         installWebIfForgotten,
-        packetsToFile,
-        parallel(buildWeb, buildServer),
-        runRollup,
-        runESBuild,
+        parallel(buildWeb, series(buildServer, runRollup, runESBuild)),
         copyFiles,
         zip
     )

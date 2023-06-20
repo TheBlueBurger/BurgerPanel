@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, provide, Ref, ref } from "vue";
+import { computed, onMounted, onUnmounted, provide, Ref, ref } from "vue";
 import type { AuthS2C } from "@share/Auth";
 import { User } from "@share/User";
 import { useUser } from "./stores/user";
@@ -19,7 +19,7 @@ let router = useRouter();
 let events = ref(EventEmitter);
 event.once("reload", () => {
   location.reload();
-})
+});
 let notifications = ref([] as string[]);
 let notificationQueue: string[] = [];
 function createNotification(text: string) {
@@ -113,9 +113,9 @@ function initWS() {
 
 
 initWS();
-async function login(usingToken: boolean = false) {
+async function login(usingTokenOverride: boolean = false) {
   let authResp: void | RequestResponses["auth"];
-  if (usingTokenLogin.value || usingToken) {
+  if (usingTokenLogin.value || usingTokenOverride) {
     authResp = await sendRequest("auth", {
       token: token.value
     }, false).catch((err) => {
@@ -151,6 +151,7 @@ async function login(usingToken: boolean = false) {
     console.log("Sending queued request", queuedPacket)
     ws.value.send(JSON.stringify(queuedPacket));
   });
+  queuedPackets = [];
 }
 let token = ref("");
 
@@ -223,18 +224,24 @@ user.$subscribe((_, newUser) => {
 let usingTokenLogin = ref(false);
 let loginUsername = ref("");
 let loginPassword = ref("");
+let hideMainContentMsg = computed(() => {
+  if(user.user?.setupPending && router.currentRoute.value.name != "userSetup") return "Redirecting to user setup";
+});
+let shouldHideMainContent = computed(() => typeof hideMainContentMsg.value == "string")
 </script>
 
 <template>
   <Navbar />
   <Modal :__is-default-modal="true" />
-  <div v-if="user.user">
+  <div id="login-div" v-if="shouldHideMainContent">
+    {{ hideMainContentMsg }}
+  </div>
+  <div v-else-if="user.user">
     <RouterView v-slot="{ Component }">
       <template v-if="Component">
           <Suspense>
             <!-- main content -->
-            <component :is="Component"></component>
-            
+            <component :is="Component" v-if="!shouldHideMainContent"></component>
             <!-- loading state -->
             <template #fallback>
               <div id="login-div">

@@ -57,6 +57,24 @@ export default class ServerFiles extends Packet {
                     fileData,
                     type: "data"
                 }
+            case "write":
+                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.write")) return "No permission";
+                let writeStatData = await fs.stat(pathToCheck);
+                if(writeStatData.size > 320_000) {
+                    return "File is over size limit (320kb)"
+                }
+                let writeMimeData = mime.lookup(pathToCheck);
+                if(!allowedMimeTypes.includes(writeMimeData.toString()) && !allowedFileNames.includes(data.path)) {
+                    return "Disallowed type!"
+                }
+                if(typeof data.data != "string") return "Missing data";
+                if(data.data.length > 320_000) return "Too big!!!";
+                logger.log(`${client.data.auth.user?.username} is updating ${data.path} in ${server.name}. Size: ${writeStatData.size} -> ${data.data.length}`, "server.file.write");
+                await fs.writeFile(pathToCheck, data.data);
+                return {
+                    fileData: data.data,
+                    type: "edit-success"
+                }
         }
     }
 }

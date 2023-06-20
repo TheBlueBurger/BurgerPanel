@@ -10,10 +10,14 @@ import { useServers } from '../stores/servers';
 let router = useRouter();
 let servers = useServers();
 let user = useUser();
+function gotoCB() {
+    let cbQuery = router.currentRoute.value.query.cb;
+    if(cbQuery) cbQuery = cbQuery.toString();
+    console.log("Pushing",cbQuery ?? "/")
+    router.push(cbQuery ?? "/");
+}
 if(!user.user?.setupPending) {
-    router.push({
-        name: "Home"
-    });
+    gotoCB();
 }
 async function changePassword(password: string) {
     await sendRequest("editUser", {
@@ -23,14 +27,14 @@ async function changePassword(password: string) {
     });
     event.emit("createNotification", "Your password has been changed!");
 }
-let usedFormat: Ref<['days' | 'hour' | 'minute' | 'second', number]> = computed(() => { // there has to be a better way to do this
+let usedFormat: Ref<['day' | 'hour' | 'minute' | 'second', number]> = computed(() => { // there has to be a better way to do this
     let msDiff = Date.now() - new Date(user.user?.createdAt || Date.now()).getTime();
     const diffInSeconds = msDiff / 1000;
     const diffInMinutes = diffInSeconds / 60;
     const diffInHours = diffInMinutes / 60;
     const diffInDays = diffInHours / 24;
     if (diffInDays >= 1) {
-        return ["days", diffInDays];
+        return ["day", diffInDays];
     } else if (diffInHours >= 1) {
         return ['hour', diffInHours];
     } else if (diffInMinutes >= 1) {
@@ -39,12 +43,6 @@ let usedFormat: Ref<['days' | 'hour' | 'minute' | 'second', number]> = computed(
         return ['second', diffInSeconds];
     }
 });
-function gotoCB() {
-    let cbQuery = router.currentRoute.value.query.cb;
-    if(cbQuery) cbQuery = cbQuery.toString();
-    console.log("Pushing",cbQuery ?? "/")
-    router.push(cbQuery ?? "/");
-}
 async function finish() {
     await sendRequest("editUser", {
         id: user.user?._id,
@@ -64,7 +62,7 @@ async function finish() {
     <br/>
     <br/>
     <div v-if="servers.assignedServers.length != 0">
-        <h3>You have access to {{ servers.assignedServers }} server{{ servers.assignedServers.length == 1 ? "" : "s" }}!</h3>
+        <h3>You have access to {{ servers.assignedServers.length }} server{{ servers.assignedServers.length == 1 ? "" : "s" }}!</h3>
         <div v-for="server of servers.assignedServers">
             {{ server.name }}
         </div>

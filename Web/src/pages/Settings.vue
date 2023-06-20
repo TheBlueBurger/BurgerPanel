@@ -12,9 +12,22 @@ import { useUser } from "../stores/user";
 import { useUsers } from "../stores/users";
 import { useSettings } from "../stores/settings";
 let settings = useSettings();
-await settings.getAllSettings();
 let router = useRouter();
 const user = useUser();
+let users = useUsers();
+let allUsers = computed(() => users.users);
+await Promise.all([
+    (async() => {
+        if(user.hasPermission("settings.read")) {
+            await settings.getAllSettings();
+        }
+    })(),
+    (async () => {
+        if(user.hasPermission("users.view")) {
+            await users.getAllUsers();
+        }
+    })()
+]);
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
 if (!user.hasPermission("settings.read") && !user.hasPermission("users.view")) {
     events.value.emit("createNotification", "You do not have permission! Get out of here!");
@@ -30,11 +43,6 @@ async function changeOption(option: keyof typeof defaultConfig, newValue: string
     } catch (e) {
         showInfoBox(`Could not change '${option}'`, `Error: ${e}`);
     }
-}
-let users = useUsers();
-let allUsers = computed(() => users.users);
-if(user.hasPermission("users.view")) {
-    await users.getAllUsers();
 }
 
 let creatingUser = ref(false);

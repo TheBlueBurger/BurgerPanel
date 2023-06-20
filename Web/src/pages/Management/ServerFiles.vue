@@ -4,7 +4,7 @@
     import { useRouter } from 'vue-router';
     import sendRequest from '../../util/request';
     import titleManager from '../../util/titleManager';
-    import { confirmModal } from '../../util/modal';
+    import { confirmModal, showInfoBox } from '../../util/modal';
     import { useServers } from '../../stores/servers';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
@@ -21,8 +21,12 @@
     let readingFile = computed(() => {
         return isReading();
     });
+    function setTitle() {
+        titleManager.setTitle(`${server.value?.name}${path.value.toString().startsWith("/") ? "" : "/"}${path.value} - File reader`);
+    }
     watch(path, () => {
         if(!readingFile.value) getFiles();
+        setTitle();
     });
     watch(router.currentRoute, (r) => {
         if(r.query?.type == "read") {
@@ -36,7 +40,6 @@
     })
     async function readFile() {
         fileData.value = "Loading...";
-        titleManager.setTitle(`${fileName.value} in ${server.value?.name}`)
         let resp = await sendRequest("serverFiles", {
             id: props.server,
             path: path.value,
@@ -58,11 +61,11 @@
     }[]>;
     let servers = useServers();
     server.value = await servers.getServerByID(props.server);
+    setTitle();
     if(!isReading()) await getFiles();
     else readFile();
     finishedLoading.value = true;
     async function getFiles() {
-        titleManager.setTitle("Files in " + server.value?.name);
         if(path.value.toString().startsWith("/logs")) {
             if((await confirmModal("Open logs?", `Would you like to open the logs page of '${server.value?.name}'?\nYou cannot see log files in this page.`))) {
                 await router.push({
@@ -93,6 +96,16 @@
         files.value = files.value?.sort((file, lastFile) => {
             return (lastFile.folder?1:0) - (file.folder?1:0);
         });
+    }
+    async function saveFile() {
+        let resp = await sendRequest("serverFiles", {
+            action: "write",
+            id: server.value?._id,
+            data: fileData.value,
+            path: path.value
+        });
+        if(resp.type != "edit-success") return;
+        showInfoBox("Save successful", `The file at ${path.value} has been successfully updated.`);
     }
 </script>
 <template>
@@ -134,7 +147,7 @@
             query: {
                 path: path.toString().split('/').slice(0, -1).join('/')
             }
-        }"><button>Go back</button></RouterLink> <br/>
+        }"><button>Go back</button></RouterLink> <button @click="saveFile">Save</button> <br/>
         <textarea v-model="fileData"></textarea>
     </div>
 </template>

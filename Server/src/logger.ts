@@ -18,7 +18,7 @@ let colors: {[level: string]: Function} = {
     [LogLevel.INFO]: chalk.greenBright,
     [LogLevel.WARNING]: chalk.yellowBright,
     [LogLevel.ERROR]: chalk.redBright
-}
+};
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 export default new class Logger {
     writeStream: fs.WriteStream | null = null;

@@ -64,9 +64,17 @@ function manageServer(id: string) {
 }
 (async() => {
     if(user.hasPermission("settings.read")) {
-        newServerMem.value = await settings.getSetting("defaultMemory");
-        newMCServerVersion.value = await settings.getSetting("defaultMCVersion");
-        newMCServerSoftware.value = await settings.getSetting("defaultMCSoftware");
+        await Promise.all([
+            (async() => {
+                newServerMem.value = await settings.getSetting("defaultMemory");
+            })(),
+            (async() => {
+                newMCServerVersion.value = await settings.getSetting("defaultMCVersion");
+            })(),
+            (async() => {
+                newMCServerSoftware.value = await settings.getSetting("defaultMCSoftware");
+            })()
+        ])
     }
 })();
 let agreesToEULA = ref(false);
@@ -75,7 +83,7 @@ let newMCServerPort = ref(25565);
 </script>
 <template>
     <h1>Servers</h1>
-        <RouterLink :to="{query: {all: 'true'}}"><button v-if="!(router.currentRoute.value.query.all == 'true') && user.hasPermission('servers.all.view')">Show all servers</button></RouterLink>
+        <RouterLink :to="{query: {all: 'true'}}"><button v-if="router.currentRoute.value.query.all != 'true' && user.hasPermission('servers.all.view')">Show all servers</button></RouterLink>
         <RouterLink v-if="router.currentRoute.value.query.all == 'true'" :to="{query: {}}"><button>Show only my servers</button></RouterLink>
         <button @click="serverCreatorOpen = !serverCreatorOpen" v-if="user.hasPermission('servers.create')">Create server {{ serverCreatorOpen ? "∧" : "V" }}</button>
         <RouterLink :to="{name: 'importServer'}"><button v-if="user.hasPermission('servers.import')">Import server</button></RouterLink>

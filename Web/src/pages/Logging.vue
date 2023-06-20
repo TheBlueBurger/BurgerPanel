@@ -10,9 +10,17 @@
     let finishedLoading = ref(false);
     let disabledLogs = ref([] as typeof IDs[number][]);
     async function load(reload: boolean = false) {
-        webhookURL.value = await settings.getSetting("logging_DiscordWebHookURL", reload) as string;
-        disabledLogs.value = (await settings.getSetting("logging_DisabledIDs", reload) as string).split(",") as any;
-        logPath.value = await settings.getSetting("logging_logDir", reload) as string;
+        await Promise.all([
+            (async() => {
+                webhookURL.value = await settings.getSetting("logging_DiscordWebHookURL", reload) as string;
+            })(),
+            (async() => {
+                disabledLogs.value = (await settings.getSetting("logging_DisabledIDs", reload) as string).split(",") as any;
+            })(),
+            (async() => {
+                logPath.value = await settings.getSetting("logging_logDir", reload) as string;
+            })
+        ])
     }
     await load();
     finishedLoading.value = true;

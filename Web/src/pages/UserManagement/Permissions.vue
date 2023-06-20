@@ -77,14 +77,13 @@ if(!myUser.hasPermission("users.permissions.read")) {
 }
 
 table > tr > th {
-    /* Center */
     text-align: left;
     margin-left: 100;
 }
 table {
     width: 100%;
 }
-td, th, .manage-btn {
+td, th {
   border: 1px solid #dddddd;
   text-align: left;
 }

@@ -1,6 +1,6 @@
 import { Server } from "./Server.js";
 import { User } from "./User.js";
-export const _ServerPermissions = ["set.autostart", "set.autorestart", "set.port", "set.software", "set.version", "set.mem", "set.name", "set.allowedUsers.add", "set.allowedUsers.remove", "set.allowedUsers.permissions.write", "console.read", "console.write", "status", "stop", "start", "kill", "delete", "oldlogs.read", "serverfiles.read", "full"] as const;
+export const _ServerPermissions = ["set.autostart", "set.autorestart", "set.port", "set.software", "set.version", "set.mem", "set.name", "set.allowedUsers.add", "set.allowedUsers.remove", "set.allowedUsers.permissions.write", "console.read", "console.write", "status", "stop", "start", "kill", "delete", "oldlogs.read", "serverfiles.read", "serverfiles.write", "full"] as const;
 export const _ServersPermissions = [
     "create",
     "import",
@@ -32,7 +32,7 @@ export const DefaultServerProfiles: {[name:  string]: ServerPermissions[]} = {
 
 export const serverProfilesDescriptions: {[name: string]: string} = {
     basic: "Can read the console",
-    trusted: "Read and write to console, read files, start and stop and read old logs",
+    trusted: "Read and write to console, read files, start and stop and read old logs and files",
     admin: "Can do anything, only give it to people you really trust!"
 };
 

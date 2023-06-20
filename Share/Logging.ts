@@ -36,6 +36,7 @@ export let IDs = [
     "info",
     "server.file.read",
     "server.delete",
+    "server.file.write",
     "api"
 ] as const;
 // WARNING: Do not remove any of these before fixing the issue

@@ -28,8 +28,14 @@ let router = useRouter();
 let servers = useServers();
 let users = useUsers();
 try {
-    server.value = await servers.getServerByID(props.server);
-    user.value = await users.getUserByID(props.user);
+    await Promise.all([
+        (async() => {
+            server.value = await servers.getServerByID(props.server);
+        })(),
+        (async() => {
+            user.value = await users.getUserByID(props.user);
+        })()
+    ])
 } catch(err) {
     showInfoBox("Couldnt get server/user", `${err}`)
     console.log(err);

@@ -19,18 +19,25 @@ let viewingLog = computed(() => {
     return router.currentRoute.value.query.log
 });
 let servers = useServers();
-server.value = await servers.getServerByID(props.server);
-if(viewingLog.value) getLog(viewingLog.value?.toString() || "");
-else titleManager.setTitle("Logs in " + server.value.name)
-let resp = await sendRequest("serverLogs", {
-    id: props.server,
-    list: true
-});
-let logs = ref([] as string[]);
-if(resp.type == "list") {
-    logs.value = resp.files;
-}
 let logData = ref("");
+server.value = await servers.getServerByID(props.server);
+if(!viewingLog.value) titleManager.setTitle("Logs in " + server.value.name);
+let logs = ref([] as string[]);
+await Promise.all([
+    (async () => {
+        let resp = await sendRequest("serverLogs", {
+            id: props.server,
+            list: true
+        });
+        if(resp.type == "list") {
+            logs.value = resp.files;
+        }
+        return
+    })(),
+    (async () => {
+        if(viewingLog.value) await getLog(viewingLog.value?.toString() || "")
+    })()
+])
 watch(() => viewingLog.value, async (val) => {
     let str = val?.toString();
     if(str) {
