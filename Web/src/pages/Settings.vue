@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, inject, Ref, ref } from "vue";
+import { computed, inject, Ref, ref, watch } from "vue";
 import { Config, ConfigValue, defaultConfig, descriptions, disabledEditingFrontend } from "@share/Config";
 import { User } from "@share/User";
 import EventEmitter from "@util/event";
 import { useRouter } from "vue-router";
 import TextInput from "@components/TextInput.vue";
+import Dropdown from "@components/Dropdown.vue"
 import sendRequest from "@util/request";
 import titleManager from "@util/titleManager";
 import { confirmModal, showInfoBox } from "@util/modal";
@@ -30,7 +31,7 @@ await Promise.all([
 ]);
 let events: Ref<typeof EventEmitter> = inject("events") as Ref<typeof EventEmitter>;
 if (!user.hasPermission("settings.read") && !user.hasPermission("users.view")) {
-    events.value.emit("createNotification", "You do not have permission! Get out of here!");
+    showInfoBox("Permission error", "You do not have permission to access this page.\nRedirecting to home.")
     router.push({
         path: "/"
     });
@@ -110,7 +111,12 @@ async function resetToken(id: string) {
     })
     events.value.emit("createNotification", "Token has been reset!");
 }
-titleManager.setTitle("Settings")
+titleManager.setTitle("Settings");
+let dropdownRefs = {} as {[e:string]: any};
+function getDropdownRefs(uid: string) {
+    if(typeof dropdownRefs[uid] == "undefined") dropdownRefs[uid] = ref();
+    return dropdownRefs[uid];
+}
 </script>
 <template>
     <div v-if="user.hasPermission('settings.read')">
@@ -136,7 +142,7 @@ titleManager.setTitle("Settings")
             <button type="submit">Create user</button>
         </form>
     </div>
-    <table>
+    <!-- <table>
         <tr>
             <th>ID</th>
             <th>Username</th>
@@ -163,27 +169,65 @@ titleManager.setTitle("Settings")
                 <button @click="deleteUser(_user)" v-if="user">Delete</button>
             </td>
         </tr>
-    </table>
+    </table> -->
+    <div id="users">
+        <div v-for="_user in sortedUsers" class="user" @contextmenu.prevent="e => dropdownRefs[_user._id].value[0].show(e)" @click="e => dropdownRefs[_user._id].value[0].hide()">
+            <div class="user-content">
+                <h3>{{ _user.username }}</h3>
+                <p>ID: {{ _user._id }}</p>
+                <p>Created at: {{new Date(_user.createdAt).toLocaleString()}}</p>
+                <p v-if="_user.setupPending"><i>(Setup pending)</i></p>
+                <Dropdown :ref="getDropdownRefs(_user._id)" :create-on-cursor="true">
+                    <div id="dropdown-inner">
+                        <RouterLink :to="{
+                            name: 'editUserPermissions',
+                            params: {
+                                user: _user._id
+                            }}">
+                            <button>Edit permissions</button>
+                        </RouterLink>
+                        <br/>
+                        <button @click="viewToken(_user._id, true)">Copy token</button>
+                        <br/>
+                        <button @click="copyLoginURL(_user._id)">Copy login URL</button>
+                        <br/>
+                        <button @click="resetToken(_user._id)">Reset token</button>
+                        <br/>
+                        <button @click="deleteUser(_user)">Delete account</button>
+                    </div>
+                </Dropdown>
+            </div>
+        </div>
+    </div>
 </template>
 <style scoped>
+    #dropdown-inner button {
+        width: 100%;
+        border-radius: 0;
+    }
+    #dropdown-inner {
+        border-radius: 10px;
+    }
+    .user {
+        background-color: #2e2e2e;
+        min-width: 300px;
+        margin-left: 10px;
+        border-radius: 10px;
+        justify-content: left;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+    #users {
+        display: flex;
+        flex-wrap:wrap;
+        justify-content: center;
+    }
+    .user-content {
+        padding-bottom: 75px;
+        padding-right: 10px;
+    }
 .setting-span {
     cursor: help;
     margin-right: 10px;
-}
-table {
-    width: 100%;
-}
-table > tr > th {
-    /* Center */
-    text-align: left;
-    margin-left: 100;
-}
-td, th, .manage-btn {
-  border: 1px solid #dddddd;
-  text-align: left;
-  padding: 8px;
-}
-tr:nth-child(even) {
-  background-color: #383535;
 }
 </style>

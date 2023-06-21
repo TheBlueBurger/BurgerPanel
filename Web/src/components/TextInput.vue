@@ -23,7 +23,7 @@
             required: false,
             default: false
         },
-        modelMode: {
+        modalMode: {
             type: Boolean,
             required: false,
             default: false
@@ -42,30 +42,76 @@
         disabled.value = true;
     }
     watch(disabled, (newVal) => {
-        if(props.modelMode && newVal) disabled.value = false;
+        if(props.modalMode && newVal) disabled.value = false;
     })
 </script>
 <template>
     <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
         width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
-    }" :type="props.password ? 'password' : 'text'" @input="e => {if(modelMode) $emit('set', text)}">
-    <button v-if="disabled && !modelMode" @click="() => {if(!props.forceDisabled) disabled = false}" :style="
+    }" :type="props.password ? 'password' : 'text'" @input="e => {if(modalMode) $emit('set', text)}" :class="{
+        'modal-mode': modalMode
+    }">
+    <button v-if="disabled && !modalMode" @click="() => {if(!props.forceDisabled) disabled = false}" :style="
     {
         cursor: props.forceDisabled ? 'not-allowed' : 'pointer'
     }
-    ">Edit</button>
-    <button v-if="!disabled && !modelMode" @click="set">Set</button>
-    <button v-if="!disabled && !modelMode" @click="reset">Cancel</button>
+    " id="edit-btn">Edit</button>
+    <button v-if="!disabled && !modalMode" @click="set" id="set-btn">Set</button>
+    <button v-if="!disabled && !modalMode" @click="reset" id="cancel-btn">Cancel</button>
 </template>
 <style scoped>
+.modal-mode {
+    border-radius: 10px;
+    border-right: 1px solid #504f4f;
+}
+#edit-btn {
+    background-color: #2c2b2b80;
+    border: 1px solid #323131;
+    color: #868686;
+    border-radius: 0px 10px 10px 0px;
+    padding:5px 10px;
+    border-left: none;
+}
+#edit-btn:hover {
+    background-color: #515050;
+    border: 1px solid #777777;
+    border-left: none;
+    color: #d0d0d0;
+}
+#set-btn {
+    border-radius: 0px;
+    padding:5px 10px;
+    border-left:none;
+    border-right:none;
+}
+#cancel-btn {
+    padding: 5px 10px;
+    border-radius: 0px 10px 10px 0px;
+    border-left: none;
+}
+/* the button for applying will only show once */
 input {
-    border-radius: 7px;
+    border-radius: 10px 0px 0px 10px;
     border: 0px;
-    padding: 3.5px;
+    padding: 5px 10px;
     margin-right: 2px;
-    color: black;
+    color: #ffd069;
+    border: 1px solid #504f4f;
+    margin-right: 0;
+    border-right: none;
 }
 input[disabled] {
-    background-color: rgb(197, 197, 197);
+    border-radius: 10px 0px 0px 10px;
+    color: #868686;
+    background-color: #2c2b2b80;
+    border: 1px solid #323131;
+    border-right: none;
+}
+input:focus {
+    outline: none;
+}
+input::selection {
+    background-color: #ffd069;
+    color:black;
 }
 </style>

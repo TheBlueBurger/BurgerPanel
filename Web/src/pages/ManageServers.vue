@@ -8,6 +8,7 @@ import sendRequest from '../util/request';
 import { useUser } from '../stores/user';
 import { useServers } from '../stores/servers';
 import { useSettings } from '../stores/settings';
+import ServerVue from '@components/Server.vue';
 
 let settings = useSettings();
 let router = useRouter();
@@ -99,43 +100,17 @@ let newMCServerPort = ref(25565);
             <button type="submit" @click.prevent="createServer" :disabled="serverCreating">Create</button>
         </form>
     </div>
-    <div v-if="usedServers.length != 0">
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Memory</th>
-                <th>Path</th>
-                <th>Port</th>
-                <th>Status</th>
-                <th>Manage</th>
-            </tr>
-            <tr v-for="server in usedServers">
-                <td>{{ server.name }}</td>
-                <td>{{ server.mem }} MB</td>
-                <td>{{ server.path }}</td>
-                <td>{{ server.port }}</td>
-                <td><ServerStatus :server="server._id"/></td>
-                <td><RouterLink :to="{name: 'manageServer', params: {server: server._id}}"><button>Manage</button></RouterLink></td>
-            </tr>
-        </table>
+    <div id="servers-container">
+        <ServerVue v-for="server of usedServers" :server="server" />
     </div>
     <p v-if="usedServers.length === 0">There are no servers for you to manage.{{ (!(router.currentRoute.value.query.all == 'true') && user.hasPermission('servers.all.view')) ? " You can click 'Show all servers' to see all servers on the server." : '' }}</p>
 </template>
 
 <style scoped>
-table {
-    width: 100%;
-}
-table > tr > th {
-    text-align: left;
-    margin-left: 100;
-}
-td, th, .manage-btn {
-  border: 1px solid #dddddd;
-  text-align: left;
-  padding: 8px;
-}
-tr:nth-child(even) {
-  background-color: #383535;
-}
+
+    #servers-container {
+        display: flex;
+        flex-wrap:wrap;
+        justify-content: center;
+    }
 </style>

@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router';
 import titleManager from '../util/titleManager';
 
 let router = useRouter();
-titleManager.setTitle("404 Not Found")
+titleManager.setTitle("404 Not Found");
 </script>
 
 <template>

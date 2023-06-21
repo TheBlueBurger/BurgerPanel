@@ -9,7 +9,8 @@ import { RequestResponses } from '@share/Requests';
 import { useUser } from '../stores/user';
 import { useUsers } from '../stores/users';
 import { useSettings } from '../stores/settings';
-let showWarning = ref(true);
+import Dropdown from '@components/Dropdown.vue';
+let showWarning = ref(import.meta.env.PROD);
 const user = useUser();
 const users = useUsers();
 let allUsers: Ref<User[]> = ref([]);
@@ -56,6 +57,7 @@ async function toggleDevMode() {
     })).user;
 }
 let API_URL = inject("API_URL");
+let dropdown = ref();
 </script>
 
 <template>
@@ -69,6 +71,12 @@ let API_URL = inject("API_URL");
     <button @click="showWarning = false">I understand the risks</button>
 </div>
 <div v-else>
+    <button @click="e => dropdown.show(e)">Dropdown</button>
+    <div @focus="dropdown.hide()">
+        <Dropdown ref="dropdown" :create-on-cursor="true">
+            Hello World!
+        </Dropdown>
+    </div>
     <h2>My user</h2>
     <pre>{{ user.user }}</pre>
     <hr/>

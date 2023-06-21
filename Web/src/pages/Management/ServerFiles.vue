@@ -119,11 +119,13 @@
             server: props.server
         }
     }"><button id="back-server-page-btn">Server Page</button></RouterLink></h1>
+    <div class="serverfiles">
+
         <RouterLink v-if="!['','/'].includes(path.toString())" :to="{
-                    query: {
-                        path: path.toString().split('/').slice(0, -1).join('/')
-                    }
-                }" class="link"><span class="entry folder">../</span></RouterLink>
+            query: {
+                path: path.toString().split('/').slice(0, -1).join('/')
+            }
+        }" class="link"><span class="entry folder">../</span></RouterLink>
         <div v-for="file in files">
             <div v-if="file.folder">
                 <RouterLink :to="{
@@ -141,6 +143,7 @@
                 }" class="link"><span class="entry file">{{ file.name }}</span></RouterLink>
             </div>
         </div>
+    </div>
     </div>
     <div v-else>
         <RouterLink :to="{
@@ -166,14 +169,30 @@ textarea {
     color: white;
     text-decoration: none;
 }
+.serverfiles {
+    padding: 20px;
+}
 .entry {
-    margin-top: 3px;
+    display:block;
+    /* margin-top: 3px; */
+    margin-bottom: 1px;
     border-radius: 10px;
     padding: 10px;
     display: block;
     font-size: 1.25rem;
-    margin-left: 10px;
-    background-color: #3b3a3a;
+    background-color: #3b3a3a60;
+    border: 1px solid #494949;
+    transition: .1s ease-in-out;
+}
+.entry:hover {
+    background-color: #4b4a4a80;
+}
+.entry:hover i {
+    color: white;
+}
+.entry i {
+    margin-right: 10px;
+    color: #5f5f5f;
 }
 #back-server-page-btn {
     margin-top: -50px;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, Ref } from 'vue';
 import { useServers } from '../stores/servers';
+import { ServerStatus } from '@share/Server';
 let props = defineProps({
     server: {
         type: String,
@@ -8,13 +9,21 @@ let props = defineProps({
     }
 });
 let servers = useServers();
-let status: Ref<"running" | "stopped" | "unknown"> = computed(() => {
+let status: Ref<ServerStatus> = computed(() => {
     return servers.statuses[props.server]?.status || "unknown";
 });
+let statusText = computed(() => {
+    return status.value.charAt(0).toUpperCase() + status.value.slice(1);
+})
 </script>
 
 <template>
-    <span class="container"><span :class="'dot ' + (status == 'running' ? 'green' : status == 'stopped' ? 'red': 'gray')" /><pre> </pre><span class="text">{{   status == "running" ? "Running" : status == "stopped" ? "Stopped" : "Unknown" }}</span></span>
+    <span class="container"><span :class="{
+        dot: true,
+        red: status == 'stopped' || status == 'stopping',
+        green: status == 'running',
+        gray: status == 'unknown'
+    }" /><pre> </pre><span class="text">{{ statusText }}</span></span>
 </template>
 
 <style scoped>

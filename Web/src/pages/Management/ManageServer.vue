@@ -17,7 +17,7 @@ let servers = useServers();
 let thisServerStatus = computed(() => {
     return servers.statuses[props.server]?.status;
 });
-let isRunning = computed(() => thisServerStatus.value == "running");
+let isRunning = computed(() => thisServerStatus.value == "running" || thisServerStatus.value == "stopping");
 let server = ref(null as Server | null);
 let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);
@@ -105,7 +105,7 @@ function onScrolled() {
   <div v-if="server">
     <h2>{{ server.name }}</h2>
     <button @click="startServer()" :disabled="!user.hasServerPermission(server, 'start') || isRunning">Start</button>
-    <button @click="stopServer()" :disabled="!user.hasServerPermission(server, 'stop') || !isRunning">Stop</button>
+    <button @click="stopServer()" :disabled="!user.hasServerPermission(server, 'stop') || !isRunning || thisServerStatus == 'stopping'">Stop</button>
     <button @click="killServer()" :disabled="!user.hasServerPermission(server, 'kill') || !isRunning">Kill</button>
     <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
     <span class="server-status"><ServerStatus :server="server._id" /></span>
@@ -139,7 +139,7 @@ textarea {
 }
 .console-input {
   height: 30px;
-  width: 95.2%;
+  width: 95%;
   border: none;
   /* Center */
   margin-left: auto;

@@ -84,10 +84,10 @@ table {
     width: 100%;
 }
 td, th {
-  border: 1px solid #dddddd;
+  border: 1px solid #3f3f3f;
   text-align: left;
 }
 tr:nth-child(even) {
-  background-color: #383535;
+  background-color: #242323;
 }
 </style>

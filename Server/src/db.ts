@@ -55,7 +55,13 @@ export let users = db.model("User", new mongoose.Schema({
         type: Boolean,
         required: false,
         default: false
-    }
+    },
+    pins: [{
+        type: String,
+        max: 3,
+        default: [],
+        validate: [(v: any) => v.length >= 10, "Too many pinned servers"]
+    }]
     /*roles: [
         {
             type: mongoose.Types.ObjectId,

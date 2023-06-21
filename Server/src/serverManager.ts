@@ -19,6 +19,7 @@ export default new class ServerManager {
             clientsAttached: OurClient[];
             childProcess?: ChildProcess;
             lastLogs: string[];
+            stopping: boolean;
         }
     } = {};
     constructor() {
@@ -72,10 +73,11 @@ enforce-secure-profile=false
             server,
             clientsAttached: [],
             lastLogs: [],
+            stopping: false
         }
     }
     isAttachedToServer(client: OurClient, server: Server) {
-        return this.servers[server._id] && this.servers[server._id].clientsAttached.some(c => c.data.auth.user?._id == client.data.auth.user?._id)
+        return this.servers[server._id] && this.servers[server._id].clientsAttached.some(c => c.data.clientID == client.data.clientID);
     }
     attachClientToServer(client: OurClient, server: Server) {
         if(client.type != "Websocket") throw new Error("This isnt a real client!");
@@ -154,6 +156,8 @@ enforce-secure-profile=false
             let startTimestamp = Date.now();
             let serverEntry = this.servers[server._id];
             if (!serverEntry.childProcess) return resolve();
+            serverEntry.stopping = true;
+            this.updateStatus(server);
             let timeToWait = await getSetting("stopServerTimeout");
             let timeout = setTimeout(() => {
                 logger.log("Server " + server._id + " did not stop in time. Killing...", "server.stop", LogLevel.DEBUG);
@@ -164,6 +168,7 @@ enforce-secure-profile=false
                 clearTimeout(timeout);
                 logger.log(`Server ${server._id} stopped in ${Date.now() - startTimestamp}ms`, "server.stop", LogLevel.DEBUG);
                 serverEntry.childProcess = undefined;
+                serverEntry.stopping = false;
                 this.updateStatus(server);
                 resolve();
             });
@@ -176,6 +181,7 @@ enforce-secure-profile=false
         let serverEntry = this.servers[server._id];
         if (!serverEntry.childProcess) throw new Error("Server is not running: " + server._id);
         serverEntry.childProcess.kill("SIGKILL");
+        serverEntry.stopping = false;
         serverEntry.childProcess = undefined;
         this.updateStatus(server);
     }
@@ -186,7 +192,7 @@ enforce-secure-profile=false
         if(client.type != "Websocket") throw new Error("This isnt a real client!");
         let serverEntry = this.servers[server];
         if (!serverEntry) return;
-        serverEntry.clientsAttached = serverEntry.clientsAttached.filter(c => c !== client);
+        serverEntry.clientsAttached = serverEntry.clientsAttached.filter(c => c.data.clientID != client.data.clientID);
     }
     writeToConsole(server: Server, command: string, user: User | undefined) {
         if(typeof command != "string") throw new Error("Cannot write to server because it's not a string!");
@@ -243,13 +249,14 @@ enforce-secure-profile=false
         }))
     }
     getStatus(server: Server): ServerStatus {
-        return this.servers[server._id.toString()]?.childProcess ? "running" : "stopped";
+        if(this.servers[server._id.toString()]?.childProcess) return this.servers[server._id.toString()].stopping ? "stopping" : "running";
+        return "stopped";
     }
     serverIsRunning(server: Server) {
         return !!this.servers[server._id.toString()]?.childProcess
     }
     handleDisconnect(client: OurClient) {
-        Object.values(this.servers).filter(s => s.clientsAttached.includes(client)).forEach(s => this.detachFromServer(client, s.server._id.toString()));
+        Object.values(this.servers).filter(s => this.isAttachedToServer(client, s.server)).forEach(s => this.detachFromServer(client, s.server._id.toString()));
     }
 }
 export function userHasAccessToServer(user: User | undefined, server: Server) {

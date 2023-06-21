@@ -13,8 +13,6 @@ export default class AttachToServer extends Packet {
             return "Server not found";
         }
         let status = hasServerPermission(client.data.auth.user, server.toJSON(), "status") ? serverManager.getStatus(server.toJSON()) : "unknown";
-        // HACK HACK HACK HACK HACK: Make it not error on HMR
-        if(serverManager.isAttachedToServer(client, server.toJSON()) && isProd) return "Already attached!";
         let resp = serverManager.attachClientToServer(client, server.toJSON());
         return {
             server: server.toJSON(),

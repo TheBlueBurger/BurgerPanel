@@ -78,6 +78,7 @@ onUnmounted(() => {
   ws.value.close();
 });
 function initWS() {
+  if(ws.value?.readyState == WebSocket.OPEN) return;
   ws.value = new WebSocket(API_URL.replace("http", "ws"));
   ws.value.addEventListener("open", () => {
     connected.value = true;

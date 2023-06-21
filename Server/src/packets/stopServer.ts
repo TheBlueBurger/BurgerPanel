@@ -16,6 +16,7 @@ export default class StopServer extends Packet {
         if(!hasServerPermission(client.data.auth.user, server.toJSON(), "stop")) {
             return "You don't have permission to stop this server!";
         }
+        if(["stopped", "stopping"].includes(serverManager.getStatus(server.toJSON()))) return "Already stopped/stopping!";
         logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is stopping ${server.name} (${server._id})`, "server.stop", LogLevel.INFO);
         await serverManager.stopServer(server?.toJSON());
     }

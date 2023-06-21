@@ -1,6 +1,5 @@
 import { OurClient, Packet, ServerPacketResponse, lockDownExcludedUser, lockdownMode } from "../index.js";
 import { servers, users } from "../db.js";
-import type { AuthS2C } from "../../../Share/Auth.js"
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import logger, { LogLevel } from "../logger.js";
 import { ServerStatuses } from "../../../Share/Server.js";

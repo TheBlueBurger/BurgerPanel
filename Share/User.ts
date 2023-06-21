@@ -9,4 +9,5 @@ export interface User {
     password?: string;
     setupPending: boolean;
     devMode?: boolean;
+    pins?: string[];
 }

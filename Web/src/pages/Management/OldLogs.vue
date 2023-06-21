@@ -71,7 +71,7 @@ async function getLog(logName: string) {
             server: props.server
         }
     }" v-if="!viewingLog && server && user.hasServerPermission(server, 'serverfiles.read')"><button>View all files</button></RouterLink>
-    <h1 v-if="!viewingLog">Logs for {{ server?.name }}</h1>
+    <h1 v-if="!viewingLog">Logs for <span class="codeblock">{{ server?.name }}</span>:</h1>
     <div v-for="log in logs" class="logname" v-if="!viewingLog">
         <RouterLink :to="{
             name: 'viewLogs',
@@ -81,8 +81,7 @@ async function getLog(logName: string) {
             query: {
                 log
             }
-        }">
-            {{ log }}
+        }">{{ log }}
         </RouterLink>
     </div>
     <div v-else>
@@ -97,7 +96,29 @@ async function getLog(logName: string) {
 </template>
 <style scoped>
     .logname {
-        margin-bottom: 10px;
+        display:block;
+        background-color: #3b3a3a60;
+        border-radius: 10px;
+        margin: 1px 20px;
+        border: 1px solid #494949;
+        transition: .1s ease-in-out;
+    }
+    .logname:last-child {
+        margin-bottom: 20px;
+    }
+    .logname:hover {
+        background-color: #4b4a4a80;
+    }
+    .logname a {
+        display: block;
+        padding: 10px;
+    }
+    .logname i {
+        margin-right: 10px;
+        color: #8d8d8d;
+    }
+    .logname:hover i {
+        color: white;
     }
     textarea {
     resize: none;
@@ -119,5 +140,24 @@ async function getLog(logName: string) {
     a {
         text-decoration: none;
         color: white;
+    }
+    h1 {
+        padding: 15px;
+        padding-left:20px;
+        font-size: 30px;
+    }
+    button {
+        background-color: #3b3a3a80;
+        border: 1px solid #494949;
+        color: white;
+    }
+    button:hover {
+        background-color: #4b4a4aa0;
+    }
+    .logname .filesize {
+        float: right;
+        margin-right: 10px;
+        color: #686868;
+        /* margin-right: -25px; */
     }
 </style>

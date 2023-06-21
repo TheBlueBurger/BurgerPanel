@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ComputedRef, Ref, computed, onMounted, onUnmounted, ref } from 'vue';
+import { ComputedRef, Ref, computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import event from '../util/event';
 import { ConfirmButtonType, ModalData } from '../util/modal';
 import TextInput from './TextInput.vue';
@@ -44,7 +44,16 @@ let inputResponses = ref({}) as Ref<{
     [id: string]: string;
 }>;
 let currentID = -1;
+function doScroll() {
+    if(!shouldShow.value || !blurRef.value) return;
+    if((blurRef.value as any).scrollIntoViewIfNeeded) (blurRef.value as any).scrollIntoViewIfNeeded();
+    else blurRef.value.scrollIntoView()
+}
+watch(shouldShow, () => {
+    setTimeout(() => doScroll(), 75); //stupid hack which somehow works
+});
 onMounted(() => {
+    doScroll();
     if (props.__isDefaultModal) event.on("default-modalbox-show", d => {
         if(defaultModalShow.value) {
             throw new Error(`Got request to show modal while modal is already showing! Old: ${JSON.stringify(defaultModalData.value)}. New: ${JSON.stringify(d)}`);
@@ -100,10 +109,11 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
     if(!props.__isDefaultModal) return !!props.whiteButtons;
     else return !!defaultModalData.value?.whiteLabels;
 });
+let blurRef = ref() as Ref<Element>;
 </script>
 
 <template>
-    <div id="blur" v-if="shouldShow">
+    <div id="blur" v-if="shouldShow" ref="blurRef">
         <div id="modal-container">
             <div id="modal">
                 <div id="modal-content">
@@ -120,7 +130,7 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
                             <div v-if="__isDefaultModal">
                                 <div v-if="defaultModalData?.inputs" v-for="input in defaultModalData?.inputs">
                                     <div v-if="input.type == 'TextInput'">
-                                        <div v-if="input.data.inputType != 'number'"><TextInput :placeholder="input.data.placeholder" @set="v => inputResponses[input.id] = v" :default="''" :initial-editing="true" :model-mode="true" /></div>
+                                        <div v-if="input.data.inputType != 'number'"><TextInput :placeholder="input.data.placeholder" @set="v => inputResponses[input.id] = v" :default="''" :initial-editing="true" :modal-mode="true" /></div>
                                         <input v-else :type="input.data.inputType" :placeholder="input.data.placeholder" v-model="inputResponses[input.id]">
                                     </div>
                                 </div>
@@ -163,6 +173,31 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
 #done-btn {
     margin-top: 5px;
 }
+@keyframes fade {
+    0% {
+        background-color: rgba(0, 0, 0, 0);
+        backdrop-filter: blur(0px);
+    }
+    90% {
+        background-color: rgba(0, 0, 0, 0.38);
+    }
+    100% {
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(5px);
+    }
+}
+
+@keyframes modal-in {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 #blur {
     position: fixed;
     top: 0;
@@ -170,8 +205,12 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
     z-index: 1040;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(1px);
+    background-color: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    animation-name: fade;
+    animation-fill-mode: forwards;
+    animation-duration: 0.2s;
+    animation-timing-function: ease-in-out;
 }
 
 #modal-container {
@@ -180,7 +219,7 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
     border-radius: 10px;
     width: fit-content;
     max-width: 1000px;
-    padding: 10px;
+    padding: 20px;
     height: fit-content;
     position: fixed;
     top: 0;
@@ -188,9 +227,14 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
     left: 0;
     right: 0;
     justify-content: center;
-    background-color: #3d3c3c;
+    background-color: #262626;
+    border: 1px solid #353535;
     margin: auto;
     z-index: 9999;
+    animation-name: modal-in;
+    animation-duration: 0.2s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: forwards;
 }
 
 #modal * {

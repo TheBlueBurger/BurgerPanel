@@ -62,7 +62,8 @@ app.post("/api/request/:name", async (req, res, next) => {
                 authenticated: true,
                 token,
                 user: user.toJSON()
-            }
+            },
+            clientID: genClientID()
         },
         type: "APIRequest"
     };
@@ -181,7 +182,8 @@ export interface OurClient {
             token?: string,
             user?: User,
             authenticated: boolean,
-        }
+        },
+        clientID: number
     },
     json: (data: any) => void,
     type: "APIRequest" | string
@@ -196,13 +198,18 @@ let logging = false;
 let loggingIgnore: string[] = [];
 export let lockdownMode = false;
 export let lockDownExcludedUser = "";
+let clientID = 0;
+function genClientID() {
+    return clientID++;
+}
 export const clients: OurWebsocketClient[] = [];
 wss.on('connection', (_client) => {
     let client: OurWebsocketClient = _client as OurWebsocketClient;
     client.data = {
         auth: {
             authenticated: false,
-        }
+        },
+        clientID: genClientID()
     };
     client.type = "Websocket";
     client.json = (data: any) => {

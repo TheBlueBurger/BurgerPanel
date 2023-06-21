@@ -16,6 +16,7 @@ export default class StartServer extends Packet {
         if(!hasServerPermission(client.data.auth.user, server.toJSON(), "start")) {
             return "Not allowed";
         }
+        if(serverManager.serverIsRunning(server.toJSON())) return "Already running!";
         logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is starting ${server.name} (${server._id})`, "server.start", LogLevel.INFO);
         await serverManager.startServer(server?.toJSON());
         return;

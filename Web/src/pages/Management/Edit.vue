@@ -24,7 +24,7 @@ let serverStatuses = servers.statuses;
 let thisServerStatus = computed(() => {
     return serverStatuses[props.server]?.status;
 });
-let isRunning = computed(() => thisServerStatus.value == "running");
+let isRunning = computed(() => thisServerStatus.value == "running" || thisServerStatus.value == "stopping");
 let users = useUsers();
 let allUsers: Ref<User[]> = ref([]);
 await Promise.all([
@@ -152,7 +152,7 @@ async function changeAutoRestart() {
 </script>
 
 <template>
-<div v-if="server">
+<div v-if="server" class="editing">
     <h2>Editing {{ server.name }}</h2>
     <button @click="deleteServer()" v-if="user.hasServerPermission(server, 'delete')" class="button-red">Delete</button>
     <RouterLink :to="{
@@ -174,7 +174,9 @@ async function changeAutoRestart() {
         }
     }">
         <button>Edit Files</button>
-    </RouterLink><br/><hr/>
+    </RouterLink>
+    <button @click="servers.togglePin(server)">{{ servers.isPinned(server) ? "Unpin" : "Pin" }}</button>
+    <br/><hr/>
     Server name: <TextInput :default="server.name" @set="renameServer" :force-disabled="!user.hasServerPermission(server, 'set.name')" />
     <br />
     Server path: {{ server.path }} (Read only)
@@ -227,9 +229,32 @@ async function changeAutoRestart() {
 </template>
 <style scoped>
 .button-red {
+    background-color: #b1373780;
+    border: 1px solid #c05858;
+    color: #ff7b7b;
+}
+.button-red:hover {
     background-color: #b13737;
+    border: 1px solid #d77171;
+    color: #ffc4c4;
 }
 .red-text {
     color: #b13737;
+}
+
+.editing {
+    padding: 10px;
+}
+
+.editing > br {
+    margin: 8px;
+}
+
+button {
+    margin: 4px;
+}
+
+hr {
+    margin: 10px;
 }
 </style>

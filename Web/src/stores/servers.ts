@@ -16,14 +16,14 @@ export const useServers = defineStore("servers", () => {
         })
     })
     let allServersHaveBeenCached = false;
-    async function getServerByID(id: string) {
+    async function getServerByID(id: string, disableModalErr: boolean = false) {
         let cachedServer = servers.value.find(s => s._id == id);
         if(cachedServer) return cachedServer;
         // we gotta ask the server for it
         if(allServersHaveBeenCached) throw new Error("Alr cached all servers and couldnt find " + id);
         let server = await sendRequest("getServer", {
             id
-        });
+        }, !disableModalErr);
         if(server.status) statuses.value[id] = {status: server.status}
         return server.server;
     }
@@ -54,5 +54,38 @@ export const useServers = defineStore("servers", () => {
     function removeServerFromCache(server: Server) {
         servers.value = servers.value.filter(s => s._id != server._id);
     }
-    return {servers, getServerByID, assignedServers, statuses, getAllServers, addServers, addStatuses, updateServer, removeServerFromCache}
+    async function getPinnedServers() {
+        let user = useUser();
+        let pins = user.user?.pins;
+        if(!pins) return [];
+        let pinnedServers = await Promise.allSettled(pins.map(p => getServerByID(p, true)));
+        if(pinnedServers.some(p => p.status == "rejected")) {
+            console.log("Pins are broken, prob deleted server, fixing it up");
+            await fixPins();
+            console.log("Fix successful!")
+        }
+        return pinnedServers.filter(p => p.status == "fulfilled").map(p => {
+            if(p.status != "fulfilled") throw new Error("Found rejected pin when they were already filtered!!!");
+            return p.value;
+        });
+    }
+    async function togglePin(server: Server) {
+        await sendRequest("editUser", {
+            id: useUser().user?._id,
+            action: "togglePin",
+            server: server._id
+        })
+    }
+    function isPinned(server: Server) {
+        let pins = useUser().user?.pins;
+        if(!pins) return false;
+        return pins.includes(server._id)
+    }
+    async function fixPins() {
+        await sendRequest("editUser", {
+            id: useUser().user?._id,
+            action: "fixPins"
+        })
+    }
+    return {servers, getServerByID, assignedServers, statuses, getAllServers, addServers, addStatuses, updateServer, removeServerFromCache, getPinnedServers, togglePin, isPinned}
 });

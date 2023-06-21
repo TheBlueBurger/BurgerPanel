@@ -19,35 +19,29 @@
     }
 }
 
-#toggle-server-creator-btn {
-    cursor: pointer;
-}
-
-#logoutbtn {
-    cursor: pointer;
-    margin-left: 10px;
-}
-
-#title-txt {
-    cursor: pointer;
-}
-
 body {
     color: white;
     background-color: #151516;
+    /* background-color: #191929; */
+    /* background-color: #241a1a; */
     font-family: 'Ubuntu Mono Regular', monospace;
 }
 
 * {
     margin: 0;
+    padding: 0;
+    /* box-sizing: border-box; */
 }
 
 button {
     padding: 4px 10px;
     border: none;
     border-radius: 10px;
-    background-color: #ececec;
-    color: black;
+    /* background-color: #ececec; */
+    /* color: black; */
+    background-color: #3b3a3a80;
+    border: 1px solid #494949;
+    color: white;
     font-size: 15px;
     font-family: 'Ubuntu Mono Regular', monospace;
     cursor: pointer;
@@ -55,12 +49,16 @@ button {
 }
 
 button:hover {
-    background-color: #ffffff;
+    /* background-color: #ffffff; */
+    background-color: #4b4a4aa0;
     border-radius: 5px;
 }
 
 button:disabled {
     cursor: not-allowed;
+    color: #494949;
+    border-radius: 10px;
+    background-color: #292929a0;
 }
 
 /* text input */
@@ -69,11 +67,22 @@ input[type=text], input[type=password], input[type=number] {
     padding: 4px 10px;
     border: none;
     border-radius: 10px;
-    background-color: #ececec;
-    color: black;
+    background-color: #3b3a3a80;
+    color: #ffe677;
     font-size: 15px;
     font-family: 'Ubuntu Mono Regular', monospace;
     transition: all .1s ease-in-out;
+}
+textarea {
+    background-color: #3b3a3a80;
+    color: white;
+}
+select {
+    background-color: #3b3a3a80;
+    color: white;
+}
+select option {
+    background-color: #3b3a3a;
 }
 .notification {
     display:block;
@@ -122,4 +131,23 @@ select {
     border-radius: 3px;
     margin-top:2px;
     margin-bottom:2px;
+}
+
+.codeblock {
+    color: #ffd57b;
+    background-color: #ffd57b20;
+    padding: 0px 5px;
+    border-radius: 5px;
+    border: 1px solid #ffd57b40;
+}
+tr:nth-child(even) {
+    background-color: #242121;
+}
+
+td, th {
+    border: 1px solid #444040;
+}
+
+#login-div input {
+    background-color: #1b1b1b;
 }

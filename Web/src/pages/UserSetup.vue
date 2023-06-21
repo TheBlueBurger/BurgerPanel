@@ -58,7 +58,7 @@ async function finish() {
     <p>Your user was created {{ new Intl.RelativeTimeFormat(undefined, {numeric: "auto"}).format(0-usedFormat[1], usedFormat[0]) }} ({{ new Intl.DateTimeFormat(undefined, {year: "numeric", month: "long", day: "numeric", weekday: "long", hour: "2-digit", minute: "2-digit", second: "2-digit"}).format(new Date(user.user?.createdAt || Date.now())) }})</p>
     <br/>
     <b><p>Set your password:</p></b>
-    <TextInput :default="''" @set="changePassword" placeholder="Password" :password="true" />
+    <TextInput :default="''" @set="changePassword" placeholder="Password" :password="true" :initial-editing="true" />
     <br/>
     <br/>
     <div v-if="servers.assignedServers.length != 0">

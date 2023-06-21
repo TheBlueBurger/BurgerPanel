@@ -1,11 +1,12 @@
 import { OurClient, Packet, ServerPacketResponse, clients } from "../index.js";
-import { makeToken, users } from "../db.js";
+import { makeToken, servers, users } from "../db.js";
 import { hasPermission, isValidPermissionString, Permission } from "../../../Share/Permission.js";
 import filterUserData from "../util/filterUserData.js";
 import { User } from "../../../Share/User.js";
 import logger, { LogLevel } from "../logger.js";
 import makeHash from "../util/makeHash.js";
 import { Request } from "../../../Share/Requests.js";
+import { userHasAccessToServer } from "../serverManager.js";
 
 export default class EditUser extends Packet {
     name: Request = "editUser";
@@ -113,6 +114,28 @@ export default class EditUser extends Packet {
                 return {
                     user: user.toJSON()
                 }
+            case "fixPins":
+                if(user._id.toHexString() != client.data.auth.user?._id) return "Not allowed to others";
+                let newPins = [];
+                for await(let pin of user.pins) {
+                    try {
+                        let server = await servers.findById(pin).exec();
+                        if(!server || !userHasAccessToServer(user.toJSON(), server.toJSON())) continue;
+                        newPins.push(pin);
+                    } catch {}
+                }
+                user.pins = newPins;
+                this.sendUserUpdated(user.toJSON());
+                break;
+            case "togglePin":
+                if(user._id.toHexString() != client.data.auth.user?._id) return "Not allowed to others";
+                let server = await servers.findById(data.server).exec();
+                if(!server || !userHasAccessToServer(user.toJSON(), server.toJSON())) return "Server not found";
+                if(user.pins && user.pins.includes(server._id.toHexString())) user.pins = user.pins.filter(pin => pin != server?._id.toHexString());
+                else user.pins.push(server._id.toString());
+                if(user.pins.length >= 10) return "Too many pins!";
+                this.sendUserUpdated(user.toJSON());
+                break;
         }
         await user?.save();
         return {
