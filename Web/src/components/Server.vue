@@ -29,7 +29,7 @@
                     <div class="servername">{{server.name}}</div>
                     <div class="status"><ServerStatus :server="server._id" /></div>
                     {{ server.software.charAt(0).toUpperCase() + server.software.slice(1) }} {{ server.version }}<br/>
-                    {{ server.mem }}MB<br/>
+                    Port {{server.port}} ({{ server.mem }}MB)<br/>
                     <button :disabled="(['running', 'stopping', 'unknown'].includes(servers.statuses[server._id].status))" class="green" @click.prevent="startServer(server)">Start</button>
                     <button :disabled="(['stopped', 'stopping', 'unknown'].includes(servers.statuses[server._id].status))" class="red" @click.prevent="stopServer(server)">Stop</button>
                     <RouterLink :to="{

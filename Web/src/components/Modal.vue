@@ -130,7 +130,7 @@ let blurRef = ref() as Ref<Element>;
                             <div v-if="__isDefaultModal">
                                 <div v-if="defaultModalData?.inputs" v-for="input in defaultModalData?.inputs">
                                     <div v-if="input.type == 'TextInput'">
-                                        <div v-if="input.data.inputType != 'number'"><TextInput :placeholder="input.data.placeholder" @set="v => inputResponses[input.id] = v" :default="''" :initial-editing="true" :modal-mode="true" /></div>
+                                        <div v-if="input.data.inputType != 'number'"><TextInput :placeholder="input.data.placeholder" @set="v => inputResponses[input.id] = v" :default="''" :initial-editing="true" :modal-mode="true" :max-length="input.data.maxLength" /></div>
                                         <input v-else :type="input.data.inputType" :placeholder="input.data.placeholder" v-model="inputResponses[input.id]">
                                     </div>
                                 </div>
@@ -159,6 +159,17 @@ let blurRef = ref() as Ref<Element>;
                                             "bg-green": !shouldButtonsBeReversedColors,
                                             "bg-red": shouldButtonsBeReversedColors
                                         }' @click="clicked('YES')">Yes</button>
+                                </div>
+                                <div v-else-if="confirmButtonType == 'OK_CANCEL'">
+                                    <button :class='{
+                                            "bg-green": shouldButtonsBeReversedColors && !noShouldBeGray,
+                                            "bg-red": !shouldButtonsBeReversedColors && !noShouldBeGray,
+                                            "bg-gray": noShouldBeGray
+                                        }' @click="clicked('CANCEL')">Cancel</button>
+                                    <button :class='{
+                                            "bg-green": !shouldButtonsBeReversedColors,
+                                            "bg-red": shouldButtonsBeReversedColors
+                                        }' @click="clicked('OK')">Ok</button>
                                 </div>
                             </div>
                         </div>

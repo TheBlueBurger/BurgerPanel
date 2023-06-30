@@ -45,8 +45,8 @@ async function changeServerPath() {
         data: {
             placeholder: "Path",
             inputType: "text"
-        }
-    }])).inputs.path;
+        },
+    }], undefined, "OK_CANCEL"))?.inputs?.path;
     if (!newServerPath) return;
     router.push({
         query: {

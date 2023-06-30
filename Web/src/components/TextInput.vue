@@ -27,6 +27,10 @@
             type: Boolean,
             required: false,
             default: false
+        },
+        maxLength: {
+            type: Number,
+            required: false
         }
     });
     let disabled = ref(!props.initialEditing);
@@ -50,7 +54,7 @@
         width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
     }" :type="props.password ? 'password' : 'text'" @input="e => {if(modalMode) $emit('set', text)}" :class="{
         'modal-mode': modalMode
-    }">
+    }" :maxlength="props.maxLength">
     <button v-if="disabled && !modalMode" @click="() => {if(!props.forceDisabled) disabled = false}" :style="
     {
         cursor: props.forceDisabled ? 'not-allowed' : 'pointer'

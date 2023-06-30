@@ -8,7 +8,7 @@ import TextInput from "@components/TextInput.vue";
 import Dropdown from "@components/Dropdown.vue"
 import sendRequest from "@util/request";
 import titleManager from "@util/titleManager";
-import { confirmModal, showInfoBox } from "@util/modal";
+import { confirmModal, modalInput, showInfoBox } from "@util/modal";
 import { useUser } from "../stores/user";
 import { useUsers } from "../stores/users";
 import { useSettings } from "../stores/settings";
@@ -117,6 +117,26 @@ function getDropdownRefs(uid: string) {
     if(typeof dropdownRefs[uid] == "undefined") dropdownRefs[uid] = ref();
     return dropdownRefs[uid];
 }
+async function renameUser(id: string) {
+    let modalResp = (await modalInput("Rename", [{
+        id: "name",
+        type: "TextInput",
+        data: {
+            inputType: "text",
+            placeholder: "New name",
+            maxLength: 24
+        }
+    }]));
+    let newName = modalResp?.inputs?.name;
+    if(!newName) return;
+    let resp = await sendRequest("editUser", {
+        id,
+        action: "changeUsername",
+        username: newName
+    });
+    users.updateUser(resp.user);
+    await showInfoBox("Name change successful", `Successfully changed the name to '${newName}'`);
+}
 </script>
 <template>
     <div v-if="user.hasPermission('settings.read')">
@@ -179,6 +199,8 @@ function getDropdownRefs(uid: string) {
                 <p v-if="_user.setupPending"><i>(Setup pending)</i></p>
                 <Dropdown :ref="getDropdownRefs(_user._id)" :create-on-cursor="true">
                     <div id="dropdown-inner">
+                        <button @click="() => {renameUser(_user._id);dropdownRefs[_user._id].value[0].hide()}">Rename</button>
+                        <br/>
                         <RouterLink :to="{
                             name: 'editUserPermissions',
                             params: {
@@ -187,13 +209,13 @@ function getDropdownRefs(uid: string) {
                             <button>Edit permissions</button>
                         </RouterLink>
                         <br/>
-                        <button @click="viewToken(_user._id, true)">Copy token</button>
+                        <button @click="() => {viewToken(_user._id, true);dropdownRefs[_user._id].value[0].hide()}">Copy token</button>
                         <br/>
-                        <button @click="copyLoginURL(_user._id)">Copy login URL</button>
+                        <button @click="() => {copyLoginURL(_user._id);dropdownRefs[_user._id].value[0].hide()}">Copy login URL</button>
                         <br/>
-                        <button @click="resetToken(_user._id)">Reset token</button>
+                        <button @click="() => {resetToken(_user._id);dropdownRefs[_user._id].value[0].hide()}">Reset token</button>
                         <br/>
-                        <button @click="deleteUser(_user)">Delete account</button>
+                        <button @click="() => {deleteUser(_user);dropdownRefs[_user._id].value[0].hide()}">Delete account</button>
                     </div>
                 </Dropdown>
             </div>

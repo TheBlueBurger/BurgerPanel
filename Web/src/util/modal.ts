@@ -8,10 +8,11 @@ let currentModalID = 0;
 export type ModalInput = {
     TextInput: {
         inputType: "text" | "password" | "number",
-        placeholder: string
+        placeholder: string,
+        maxLength?: number;
     }
 }
-export type ConfirmButtonType = "OK" | "CONFIRM";
+export type ConfirmButtonType = "OK" | "CONFIRM" | "OK_CANCEL";
 export type ModalData = {
     title: string,
     description?: string,
@@ -23,7 +24,7 @@ export type ModalData = {
     whiteLabels?: boolean
 };
 export type ModalResp = {
-    type: "YES" | "NO" | "OK" | "CLOSE",
+    type: "YES" | "NO" | "OK" | "CLOSE" | "CANCEL",
     inputs: {
         [id: string]: string
     }
@@ -36,12 +37,13 @@ export async function showInfoBox(title: string, description: string) {
     })
 }
 export async function modalInput(title: string, inputs: ModalData["inputs"], description?: string, buttonType: ConfirmButtonType = "CONFIRM") {
-    return await requestModal({
+    let modalResp = await requestModal({
         title,
         inputs,
         description,
         confirmButtonType: buttonType
-    })
+    });
+    if(["OK","YES"].includes(modalResp.type)) return modalResp;
 }
 export async function confirmModal(title: string, description: string, grayNo: boolean = false, reversedButtonColors: boolean = false, whiteButtons: boolean = false) {
     return (await requestModal({
