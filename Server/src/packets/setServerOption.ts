@@ -18,6 +18,7 @@ export default class SetServerOption extends Packet {
         }
         if (data.name && typeof data.name == "string" && data.name.length < 25 && data.name.length > 0) {
             // Check if the name is already taken
+            if(!hasServerPermission(client.data.auth.user, server.toJSON(), "set.name")) return "Not allowed";
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the name of ${server.name} (${server._id}) to ${data.name}`, "server.change-name");
             let serverWithSameName = await servers.findOne({ name: data.name }).exec();
             if (serverWithSameName) {

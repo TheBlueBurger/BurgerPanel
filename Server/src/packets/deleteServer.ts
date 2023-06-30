@@ -1,6 +1,5 @@
 import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { servers } from "../db.js";
-import type { DeleteServerS2C } from "../../../Share/DeleteServer.js"
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import { hasServerPermission } from "../util/permission.js";
 import { Request } from "../../../Share/Requests.js";

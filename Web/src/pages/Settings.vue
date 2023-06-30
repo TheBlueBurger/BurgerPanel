@@ -171,7 +171,7 @@ function getDropdownRefs(uid: string) {
         </tr>
     </table> -->
     <div id="users">
-        <div v-for="_user in sortedUsers" class="user" @contextmenu.prevent="e => dropdownRefs[_user._id].value[0].show(e)" @click="e => dropdownRefs[_user._id].value[0].hide()">
+        <div v-for="_user in sortedUsers" class="user" @contextmenu.prevent="e => dropdownRefs[_user._id].value[0].show(e)">
             <div class="user-content">
                 <h3>{{ _user.username }}</h3>
                 <p>ID: {{ _user._id }}</p>

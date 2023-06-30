@@ -1,7 +1,6 @@
 import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import { servers } from "../db.js";
 import path from "path";
-import type { CreateServerS2C } from "../../../Share/CreateServer.js"
 import { getSetting, setSetting } from "../config.js";
 import serverManager from "../serverManager.js";
 import { allowedSoftwares } from "../../../Share/Server.js";

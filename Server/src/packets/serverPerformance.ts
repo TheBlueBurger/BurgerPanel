@@ -1,10 +1,11 @@
 import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import type { ServerPerformancePacketS2C } from "../../../Share/Perf.js";
-import { cpuUsage, getMemoryUsage } from "../util/cpu.js"
+import { getMemoryUsage } from "../util/cpu.js"
 import { Permission } from "../../../Share/Permission.js";
 import hasPermission from "../util/permission.js";
 import { User } from "../../../Share/User.js";
 import { Request } from "../../../Share/Requests.js";
+import os from "node:os";
 
 export default class ServerPerformance extends Packet {
     name: Request = "serverPerformance";
@@ -19,7 +20,7 @@ export default class ServerPerformance extends Packet {
         this.lastUpdate = Date.now();
         let packet: ServerPerformancePacketS2C = {
             type: "serverPerformance",
-            load: cpuUsage(),
+            load: os.loadavg(),
             mem: getMemoryUsage(),
             platform: process.platform
         }
