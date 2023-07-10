@@ -19,7 +19,7 @@
             })(),
             (async() => {
                 logPath.value = await settings.getSetting("logging_logDir", reload) as string;
-            })
+            })()
         ])
     }
     await load();
