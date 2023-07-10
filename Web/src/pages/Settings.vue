@@ -126,7 +126,7 @@ async function renameUser(id: string) {
             placeholder: "New name",
             maxLength: 24
         }
-    }]));
+    }], `Set the username of '${(await users.getUserByID(id)).username}'`, 'OK_CANCEL'));
     let newName = modalResp?.inputs?.name;
     if(!newName) return;
     let resp = await sendRequest("editUser", {

@@ -157,7 +157,7 @@ class PacketHandler {
                 e: "Internal server error. Read the server logs for more details.",
                 n: data.n
             });
-            logger.log("Packet errored. " + data.n + " " + err, "error", LogLevel.ERROR);
+            logger.log(`Packet errored. User is ${client.data.auth?.user?.username} (${client.data.auth?.user?._id}) ${data.n} ${err}`, "error", LogLevel.ERROR);
         }
     }
 }
