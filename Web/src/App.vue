@@ -68,7 +68,7 @@ onMounted(() => {
       sendRequest("ping")
     }
   }, 30_000);
-  if (location.protocol == "http:" && !localStorage.getItem("ignore-unsecure-connection")) {
+  if (location.protocol == "http:" && !localStorage.getItem("ignore-unsecure-connection") && import.meta.env.PROD) {
     showInfoBox("HTTP Warning", "You are connecting over HTTP. Traffic will not be encrypted! You are recommended to use HTTPS for the best security.\n\nYou will not be shown this warning again.");
     localStorage.setItem("ignore-unsecure-connection", "1");
   }

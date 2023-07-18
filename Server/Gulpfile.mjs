@@ -21,8 +21,12 @@ async function installWebIfForgotten() {
     }
 }
 
+async function prepareBuildInfo() {
+    await import("./buildTools/buildInfo.mjs");
+}
+
 async function buildWeb() {
-    await import("./buildTools/packetsToFile.mjs")
+    await import("./buildTools/packetsToFile.mjs");
     execSync("pnpm build", {cwd: "../Web"});
 }
 
@@ -124,10 +128,18 @@ function buildAndBundle() {
     return series(
         clean,
         installWebIfForgotten,
+        prepareBuildInfo,
         parallel(buildWeb, series(buildServer, runRollup, runESBuild)),
         copyFiles,
         zip
     )
+}
+
+export async function prepare() {
+    return series(
+        clean,
+        prepareBuildInfo
+    )()
 }
 
 export default buildAndBundle();

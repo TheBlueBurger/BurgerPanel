@@ -1,3 +1,7 @@
+<script setup lang="ts">
+    import { buildInfo } from "@share/BuildInfo";
+</script>
+
 <template>
     <div id="main-about">
         <h1>About Burgerpanel</h1>
@@ -8,6 +12,12 @@
         <p>- <a href="https://github.com/TheBlueBurger" target="_blank">TheBlueBurger</a>: Most backend, most frontend, some CSS</p>
         <p>- <a href="https://github.com/TheRedXD" target="_blank">_TheRedex</a>: Some css, notification system</p>
         <p>- <a href="https://github.com/ArrayBuffer01" target="_blank">ArrayBuffer01</a>: Helping with backend and frontend</p>
+        <br/>
+        <h3>Build Info</h3>
+        <p>Version v{{ buildInfo.version }}</p>
+        <p>Built on {{ new Date(buildInfo.date).toLocaleString() }} by {{ buildInfo.compiledBy }} on {{ buildInfo.builtOn }}</p>
+        <p>Git Branch: {{ buildInfo.branch }}</p>
+        <p>Git Commit Hash: <a :href="'https://github.com/TheBlueBurger/BurgerPanel/commit/'+buildInfo.gitHash" target="_blank">{{ buildInfo.gitHash }}</a></p>
     </div>
 </template>
 

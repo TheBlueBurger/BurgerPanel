@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc && node buildTools/packetsToFile.mjs",
     "buildRelease": "gulp",
+    "prepare": "gulp prepare",
     "releaseTest": "npm run buildRelease && cd _build && node burgerpanel.mjs",
     "start": "BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js",
     "dev": "npm run build && npm run startInspect",

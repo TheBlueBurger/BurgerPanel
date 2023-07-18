@@ -31,6 +31,7 @@ body {
     margin: 0;
     padding: 0;
     /* box-sizing: border-box; */
+    scrollbar-width: none;
 }
 
 button {
@@ -150,4 +151,8 @@ td, th {
 
 #login-div input {
     background-color: #1b1b1b;
+}
+
+:root {
+    overflow-x: hidden;
 }

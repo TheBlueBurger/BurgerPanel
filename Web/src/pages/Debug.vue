@@ -10,6 +10,7 @@ import { useUser } from '../stores/user';
 import { useUsers } from '../stores/users';
 import { useSettings } from '../stores/settings';
 import Dropdown from '@components/Dropdown.vue';
+import { buildInfo } from '@share/BuildInfo';
 let showWarning = ref(import.meta.env.PROD);
 const user = useUser();
 const users = useUsers();
@@ -106,10 +107,11 @@ let dropdown = ref();
     </div>
     <div v-if="packetName">
         <textarea v-model="packetData" :style="{width: '500px', height: '250px'}" />
+        <br/>
+        <button @click="sendPacket">Send</button>
+        <h3>Output</h3>
+        <textarea readonly v-model="requestResponse" :style="{width: '500px', height: '250px'}" />
     </div>
-    <button @click="sendPacket">Send</button>
-    <h3>Output</h3>
-    <textarea readonly v-model="requestResponse" :style="{width: '500px', height: '250px'}" />
     <hr/>
     <h1>Modal debug</h1>
     <textarea v-model="modalInputData" :style="{width: '500px', height: '250px'}" />
@@ -118,6 +120,12 @@ let dropdown = ref();
     <h3>Output</h3>
     <textarea readonly v-model="modalOutputData" :style="{width: '500px', height: '250px'}"></textarea>
     <hr/>
+    <h1>Build Info</h1>
+    <p v-for="info of Object.keys(buildInfo)">
+        {{ info }}: {{ // @ts-ignore typescript stupidity
+        buildInfo[info] }}
+    </p>
+    <hr>
     <h1>Developer mode</h1>
         <p>Developer mode for your account is currently <b>{{ user.user?.devMode ? "enabled" : "disabled" }}</b>.</p>
         <button @click="toggleDevMode">{{ user.user?.devMode ? "Disable" : "Enable" }}</button>

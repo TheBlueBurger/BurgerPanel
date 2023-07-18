@@ -50,11 +50,12 @@
     })
 </script>
 <template>
-    <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
-        width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
-    }" :type="props.password ? 'password' : 'text'" @input="e => {if(modalMode) $emit('set', text)}" :class="{
-        'modal-mode': modalMode
-    }" :maxlength="props.maxLength">
+    <span id="textinput-root">
+        <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
+            width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
+        }" :type="props.password ? 'password' : 'text'" @input="e => {if(modalMode) $emit('set', text)}" :class="{
+            'modal-mode': modalMode
+        }" :maxlength="props.maxLength">
     <button v-if="disabled && !modalMode" @click="() => {if(!props.forceDisabled) disabled = false}" :style="
     {
         cursor: props.forceDisabled ? 'not-allowed' : 'pointer'
@@ -62,8 +63,18 @@
     " id="edit-btn">Edit</button>
     <button v-if="!disabled && !modalMode" @click="set" id="set-btn">Set</button>
     <button v-if="!disabled && !modalMode" @click="reset" id="cancel-btn">Cancel</button>
+</span>
 </template>
 <style scoped>
+input {
+    overflow-x: scroll;
+    scrollbar-width: unset;
+}
+input::-webkit-scrollbar {
+    width: unset;
+    height: unset;
+    display: unset;
+}
 .modal-mode {
     border-radius: 10px;
     border-right: 1px solid #504f4f;

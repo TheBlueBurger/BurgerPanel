@@ -14,6 +14,7 @@ import { Permission } from '../../Share/Permission.js';
 import { Request, RequestResponses } from '../../Share/Requests.js';
 import hasPermission from './util/permission.js';
 import logger, { LogLevel } from './logger.js';
+import {buildInfo} from "../../Share/BuildInfo.js";
 
 export const isProd = process.env.NODE_ENV == "production";
 let app = express();
@@ -259,6 +260,7 @@ export async function exit(signal?: string) {
 process.on("SIGINT", () => exit("INT"));
 process.on("SIGTERM", () => exit("TERM"));
 packetHandler.init().then(async () => {
+    logger.log(`BurgerPanel v${buildInfo.version} (${buildInfo.gitHash} on ${buildInfo.branch})`, "start", LogLevel.INFO);
     let port: number | undefined;
     portTry: try {
         port = await getSetting("webServerPort", true, true) as number;

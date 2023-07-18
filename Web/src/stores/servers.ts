@@ -60,9 +60,7 @@ export const useServers = defineStore("servers", () => {
         if(!pins) return [];
         let pinnedServers = await Promise.allSettled(pins.map(p => getServerByID(p, true)));
         if(pinnedServers.some(p => p.status == "rejected")) {
-            console.log("Pins are broken, prob deleted server, fixing it up");
-            await fixPins();
-            console.log("Fix successful!")
+            console.error("Pins are broken! at least one server cannot be found!");
         }
         return pinnedServers.filter(p => p.status == "fulfilled").map(p => {
             if(p.status != "fulfilled") throw new Error("Found rejected pin when they were already filtered!!!");
@@ -80,12 +78,6 @@ export const useServers = defineStore("servers", () => {
         let pins = useUser().user?.pins;
         if(!pins) return false;
         return pins.includes(server._id)
-    }
-    async function fixPins() {
-        await sendRequest("editUser", {
-            id: useUser().user?._id,
-            action: "fixPins"
-        })
     }
     return {servers, getServerByID, assignedServers, statuses, getAllServers, addServers, addStatuses, updateServer, removeServerFromCache, getPinnedServers, togglePin, isPinned}
 });

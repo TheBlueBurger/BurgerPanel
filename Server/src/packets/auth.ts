@@ -6,11 +6,15 @@ import { ServerStatuses } from "../../../Share/Server.js";
 import { hasServerPermission } from "../util/permission.js";
 import makeHash from "../util/makeHash.js";
 import { Request } from "../../../Share/Requests.js";
+import { User } from "../../../Share/User.js";
+import type { Model, Query } from "mongoose";
+import assert from "../util/assert.js";
 
 export default class Auth extends Packet {
     name: Request = "auth";
     requiresAuth: boolean = false;
     async handle(client: OurClient, data: any): ServerPacketResponse<"auth"> {
+        let filter: {username?: string; password?: string; token?: string} = {};
         if (client.data.auth?.authenticated) {
             if(!client.data.auth.user) throw new Error("Huh. client.data.auth.authenticated is true but client.data.auth.user doesn't exist?");
             return {
@@ -23,21 +27,25 @@ export default class Auth extends Packet {
                 }
                 if(typeof data.username != "string" || typeof data.password != "string") return;
                 try {
-                    client.data.auth.user = (await users.findOne({ username: data.username, password: makeHash(data.password) }).exec())?.toJSON();
+                    filter = { username: data.username, password: makeHash(data.password) };
                 } catch {
                     return "Invalid username or password";
                 }
             } else {
                 try {
-                    client.data.auth.user = (await users.findOne({ token: data.token }).exec())?.toJSON();
+                    if(typeof data.token != "string") return;
+                    filter = {token: data.token};
                 } catch {
                     return "Token is invalid";
                 }
             }
-            if (!client.data.auth.user) {
+            assert((typeof filter.username == "string" && typeof filter.password == "string") || (typeof filter.token == "string"));
+            let user = await users.findOne(filter).exec();
+            if (!user) {
                 logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);
                 return "Login failed!";
             }
+            client.data.auth.user = user.toJSON();
             if(lockdownMode && lockDownExcludedUser != client.data.auth.user._id) return;
             client.data.auth.authenticated = true;
             client.data.auth.token = client.data.auth.user.token;
@@ -54,6 +62,27 @@ export default class Auth extends Packet {
                     status: hasServerPermission(client.data.auth.user, server.toJSON(), "status") ? serverManager.getStatus(server.toJSON()) : "unknown"
                 }
             });
+            if(!user) throw new Error("user isnt defined");
+            let pins = user.pins;
+            if(pins != undefined) {
+                let newPins = [];
+                let broken = false;
+                for await(let pin of pins) { // makes sure the user doesnt have bugged pins
+                    try {
+                        let server = await servers.findById(pin).exec();
+                        if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) continue;
+                        newPins.push(pin);
+                    } catch {
+                        broken = true;
+                    }
+                }
+                if(broken) {
+                    logger.log(`${user.username} has at least one broken pin, removing it/them`, "debug", LogLevel.DEBUG);
+                    user.pins = newPins;
+                    await user.save();
+                    client.data.auth.user = user.toJSON();
+                }
+            }
             logger.log(`User ${client.data.auth.user.username} (${client.data.auth.user._id}) logged in.`, "login.success", LogLevel.INFO);
             return {
                 user: client.data.auth.user,

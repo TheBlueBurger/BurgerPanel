@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, Ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { _ServerPermissions, ServerPermissions, DefaultServerProfiles, serverProfilesDescriptions } from '@share/Permission';
+import { _ServerPermissions, ServerPermissions, DefaultServerProfiles, serverProfilesDescriptions, hasServerPermission } from '@share/Permission';
 import { Server } from '@share/Server';
 import { User } from '@share/User';
 import sendRequest from '../../util/request';
@@ -83,6 +83,11 @@ function isApplied(profile: string) {
         return userInAllowedUsers.value?.permissions.includes(p);
     })
 }
+function getDisplayedInfoText(permission: ServerPermissions): string | void {
+    if(userInAllowedUsers.value?.permissions.includes(permission)) return;
+    if(userInAllowedUsers.value?.permissions.includes("full")) return " (Has full server permission)";
+    if(hasServerPermission(user.value, server.value, permission)) return " (Has global permission)";
+}
 </script>
 <template>
     <RouterLink :to="{
@@ -110,7 +115,7 @@ function isApplied(profile: string) {
         <br/>
         <h2>Permissions</h2>
         <div v-for="perm in _ServerPermissions" v-if="userInAllowedUsers">
-            {{ perm }} - <span :class="(userInAllowedUsers.permissions.includes(perm) ? 'green' : 'red')">{{  userInAllowedUsers.permissions.includes(perm) ? "Yes" : "No" }}</span> <button v-if="myUser.hasServerPermission(server, perm) && myUser.hasServerPermission(server, 'set.allowedUsers.permissions.write')" @click="togglePerm(perm)">Toggle</button>
+            {{ perm }} - <span :class="(userInAllowedUsers.permissions.includes(perm) ? 'green' : 'red')">{{  userInAllowedUsers.permissions.includes(perm) ? "Yes" : "No" }}<span class="perm-info-text">{{ getDisplayedInfoText(perm) }}</span></span> <button v-if="myUser.hasServerPermission(server, perm) && myUser.hasServerPermission(server, 'set.allowedUsers.permissions.write')" @click="togglePerm(perm)">Toggle</button>
         </div>
         <div v-else>
             Could not find user in allowedUsers, weird
@@ -121,6 +126,9 @@ function isApplied(profile: string) {
     </div>
 </template>
 <style scoped>
+.perm-info-text {
+    color: #a7a3a3;
+}
 .red {
     color: red;
 }

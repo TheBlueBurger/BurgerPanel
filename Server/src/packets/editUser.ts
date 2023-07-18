@@ -114,19 +114,6 @@ export default class EditUser extends Packet {
                 return {
                     user: user.toJSON()
                 }
-            case "fixPins":
-                if(user._id.toHexString() != client.data.auth.user?._id) return "Not allowed to others";
-                let newPins = [];
-                for await(let pin of user.pins) {
-                    try {
-                        let server = await servers.findById(pin).exec();
-                        if(!server || !userHasAccessToServer(user.toJSON(), server.toJSON())) continue;
-                        newPins.push(pin);
-                    } catch {}
-                }
-                user.pins = newPins;
-                this.sendUserUpdated(user.toJSON());
-                break;
             case "togglePin":
                 if(user._id.toHexString() != client.data.auth.user?._id) return "Not allowed to others";
                 let server = await servers.findById(data.server).exec();
