@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 dependencies:
   blueutilities:
     specifier: ^1.2.2
@@ -14,8 +18,8 @@ dependencies:
     specifier: ^2.1.35
     version: 2.1.35
   mongoose:
-    specifier: ^7.3.0
-    version: 7.3.0
+    specifier: ^7.3.3
+    version: 7.3.3
   ws:
     specifier: ^8.13.0
     version: 8.13.0
@@ -347,7 +351,7 @@ packages:
   /@types/connect@3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
-      '@types/node': 18.11.18
+      '@types/node': 20.3.1
     dev: true
 
   /@types/estree@1.0.0:
@@ -2084,8 +2088,8 @@ packages:
       saslprep: 1.0.3
     dev: false
 
-  /mongoose@7.3.0:
-    resolution: {integrity: sha512-gvkV5qxmBkGohlk7VTeePMPM2OkQPeqVYZHvjoM4goOIK6G1eSfJMZwXV21asivXxlaz6OuP29TfGAKrKooDAg==}
+  /mongoose@7.3.3:
+    resolution: {integrity: sha512-g4NrRGIUEUYLeScaSChQR8i4Dlk9lR0UJzkK3r6TPJyqJ6ZWdRVP3oXfOG9Yn+hNeKcCJKfVEHo+jsU1rh3YTA==}
     engines: {node: '>=14.20.1'}
     dependencies:
       bson: 5.3.0
