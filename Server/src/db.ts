@@ -122,7 +122,7 @@ export let settings = db.model("Setting", new mongoose.Schema({
     },
     value: {
         type: String,
-        maxlength: 255,
+        maxlength: 1000,
     },
 }));
 

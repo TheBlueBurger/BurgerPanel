@@ -26,7 +26,7 @@ export default new class ServerManager {
 
     }
     async setupServer(server: Server) {
-        if (!this.servers[server._id]) this.createServerEntry(server);
+        this.createEntryIfNeeded(server);
         let path = server.path;
         await fs.mkdir(path, {
             recursive: true
@@ -64,7 +64,7 @@ export default new class ServerManager {
         await fs.writeFile(path + "/server.jar", Buffer.from(jarBuffer));
         // Create the eula.txt file
         await fs.writeFile(path + "/eula.txt", "eula=true\n");
-        await fs.writeFile(path + "/server.properties", `server-port=${server.port}
+        if(!await exists(path + "/server.properties")) await fs.writeFile(path + "/server.properties", `server-port=${server.port}
 enforce-secure-profile=false
 `);
     }
@@ -76,12 +76,16 @@ enforce-secure-profile=false
             stopping: false
         }
     }
+    createEntryIfNeeded(server: Server, update: boolean = true) {
+        if(!this.servers[server._id]) this.createServerEntry(server);
+        else if(update) this.servers[server._id].server = server;
+    }
     isAttachedToServer(client: OurClient, server: Server) {
         return this.servers[server._id] && this.servers[server._id].clientsAttached.some(c => c.data.clientID == client.data.clientID);
     }
     attachClientToServer(client: OurClient, server: Server) {
         if(client.type != "Websocket") throw new Error("This isnt a real client!");
-        if (!this.servers[server._id]) this.createServerEntry(server);
+        this.createEntryIfNeeded(server);
         this.servers[server._id].clientsAttached.push(client);
         return {
             lastLogs: this.servers[server._id].lastLogs,
@@ -101,7 +105,7 @@ enforce-secure-profile=false
         while (serverEntry.lastLogs.length > 100) serverEntry.lastLogs.shift();
     }
     async startServer(server: Server) {
-        if (!this.servers[server._id]) this.createServerEntry(server);
+        this.createEntryIfNeeded(server);
         await this.setupServer(server);
         let serverEntry = this.servers[server._id];
         if (serverEntry.childProcess) throw new Error("Server is already running: " + server._id);
@@ -146,10 +150,13 @@ enforce-secure-profile=false
         logger.log("Server " + server.name + " started.", "server.start", LogLevel.DEBUG);
     }
     async handleAutorestart(server: Server, timeout?: number) {
-        if(!server.autoRestart) return;
+        // lets check if it has been updated
+        let newServer = await servers.findById(server._id).exec();
+        if(!newServer) return logger.log(`Couldn't find the server in the database while handling auto restart. Did the server get deleted? ${server._id} ${server.name}`, "server.autorestart", LogLevel.ERROR);
+        if(!newServer.autoRestart) return;
         if(timeout) await promiseSleep(timeout);
         logger.log("Restarting stopped server: " + server.name, "server.autorestart");
-        await this.startServer(server);
+        await this.startServer(newServer.toJSON());
     }
     stopServer(server: Server) {
         return new Promise<void>(async resolve => {
@@ -236,7 +243,6 @@ enforce-secure-profile=false
         logger.log("Autostarting servers...", "server.autostart", LogLevel.DEBUG);
         let serversToStart = await servers.find({ autoStart: true }).exec();
         await Promise.all(serversToStart.map(async s => {
-            await this.setupServer(s.toJSON());
             this.startServer(s.toJSON())
         }));
     }
@@ -246,7 +252,7 @@ enforce-secure-profile=false
             n: "serverStatusUpdate",
             status,
             server: server._id
-        }))
+        }));
     }
     getStatus(server: Server): ServerStatus {
         if(this.servers[server._id.toString()]?.childProcess) return this.servers[server._id.toString()].stopping ? "stopping" : "running";

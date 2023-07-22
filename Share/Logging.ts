@@ -40,5 +40,4 @@ export let IDs = [
     "api",
     "debug"
 ] as const;
-// WARNING: Do not remove any of these before fixing the issue
 export type IDs = typeof IDs[number];

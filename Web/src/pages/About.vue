@@ -6,8 +6,8 @@
     <div id="main-about">
         <h1>About Burgerpanel</h1>
         <p>Burgerpanel is an open-source Minecraft Panel, created to be simple to use.</p>
-        <p>Burgerpanel is licensed under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank">AGPLv3 License</a></p>
-        <p style="margin: 10px;"><a href="https://github.com/TheBlueBurger/BurgerPanel" target="_blank">Github repository</a></p>
+        <p>Burgerpanel is licensed under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank">AGPLv3 License</a> on the <a href="https://github.com/TheBlueBurger/BurgerPanel" target="_blank">Github repository</a></p>
+        <br/>
         <h3>Credits</h3>
         <p>- <a href="https://github.com/TheBlueBurger" target="_blank">TheBlueBurger</a>: Most backend, most frontend, some CSS</p>
         <p>- <a href="https://github.com/TheRedXD" target="_blank">_TheRedex</a>: Some css, notification system</p>

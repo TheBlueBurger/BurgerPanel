@@ -70,10 +70,11 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
     logging_DisabledIDs: async(val) => {
         if(val === "") return true;
         let splitVal = val.split(",");
-        if(splitVal.some(v => {
-            return !IDs.includes(v as IDs); // why is this needed
-        })) throw new Error("Invalid value!!");
-        return true;
+        let newVal: IDs[] = [];
+        splitVal.forEach(v => {
+            if(IDs.includes(v as IDs)) newVal.push(v as IDs);
+        });
+        return newVal.join(",");
     },
     logging_DiscordWebHookURL: async(val) => {
         return /http(s)?:\/\/.+\..+/.test(val) || val == "disabled";

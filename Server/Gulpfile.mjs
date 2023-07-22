@@ -1,7 +1,6 @@
 import gulp from "gulp";
 const { series, parallel } = gulp;
-import { spawn, spawnSync, execSync } from "node:child_process";
-import { once } from "node:events";
+import { spawnSync, execSync } from "node:child_process";
 import fs, { existsSync, readdirSync, rmSync } from "node:fs";
 import esbuild from "esbuild";
 import { rollup } from "rollup";
@@ -56,11 +55,11 @@ async function runRollup() {
             "process.env.NODE_ENV": JSON.stringify('production'),
             preventAssignment: true
         })],
-          onwarn(msg) {
+        onwarn(msg) {
             if(/Circular dependency\: dist\/(.+) -> dist\/(.+)/.test(msg.message)) {
                 console.warn("Warning: " + msg.message);
             }
-          }
+        }
     });
     await build.write({
         format: "esm",

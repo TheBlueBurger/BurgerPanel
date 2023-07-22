@@ -62,21 +62,23 @@ export default new class Logger {
         if(logToFile && this.writeStream?.writable) this.writeStream.write(this.formatLog(message, id, level, false) + "\n");
         console.log(this.formatLog(message, id, level, true));
         if(!logNoMatterWhat && await this.isDisabled(id)) return;
-        if(emitWebhook) await this.sendDiscordWebhook(this.formatLog(message, id, level, false)).catch(err => this.log(err, "error", LogLevel.ERROR, false));
+        if(emitWebhook) await this.sendDiscordWebhook(this.formatLog(message, id, level, false), id, level).catch(err => this.log(err, "error", LogLevel.ERROR, false));
     }
     private formatLog(message: string, id?: IDs, level?: LogLevel, useColors?: boolean) {
-        let str = `[${LogLevel[level ?? LogLevel.INFO]}] ${id ? id + ": " : ''}${message}`
-        return useColors ? colors[level ?? LogLevel.INFO](str) : str
+        let str = `[${LogLevel[level ?? LogLevel.INFO]}] ${id ? id + ": " : ''}${message.replaceAll("\n", "\\n")}`;
+        return useColors ? colors[level ?? LogLevel.INFO](str) : str;
     }
     async isDisabled(id: IDs): Promise<boolean> {
         return (await getSetting("logging_DisabledIDs"))?.toString().split(",").includes(id as string) || false;
     }
-    async sendDiscordWebhook(message: string) {
+    async sendDiscordWebhook(message: string, id: IDs, level: LogLevel) {
         let discordWebHookURL = await getSetting("logging_DiscordWebHookURL");
         if(!discordWebHookURL) return;
         if(typeof discordWebHookURL != "string" || discordWebHookURL == "disabled") return;
         let headers = new Headers();
         headers.append("Content-Type", "application/json");
+        headers.append("X-BurgerPanel-ID", id);
+        headers.append("X-BurgerPanel-LogLevel", LogLevel[level ?? LogLevel.INFO]);
         await fetch(discordWebHookURL, {
             method: "post",
             headers,

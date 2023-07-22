@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && node buildTools/packetsToFile.mjs",
+    "build": "tsc && node buildTools/prepBuild.mjs",
     "buildRelease": "gulp",
     "prepare": "gulp prepare",
     "releaseTest": "npm run buildRelease && cd _build && node burgerpanel.mjs",
