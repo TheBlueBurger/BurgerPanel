@@ -69,7 +69,7 @@ async function changeVersion(newVersion: string) {
 }
 async function changeSoftware(newSoftware: string) {
     if(newSoftware) {
-        server.value = (await sendRequest("setServerOption", {id: props.server, version: newSoftware})).server;
+        server.value = (await sendRequest("setServerOption", {id: props.server, software: newSoftware})).server;
         events.emit("createNotification", `Server software changed to '${newSoftware}'`)
         servers.updateServer(server.value);
     }
