@@ -119,14 +119,15 @@ async function downloadPlugin(version: MRVersion, hash: string, pluginName: stri
                 </a> -->
                 <pre class="plugin-modal-desc">{{ viewingPluginInfo.description }}</pre>
                 <h3 v-if="viewingPluginInfo.source_url || viewingPluginInfo.wiki_url">Links</h3>
-                <a v-if="viewingPluginInfo.source_url" :href="viewingPluginInfo.source_url"><p>Source Code</p></a>
-                <a v-if="viewingPluginInfo.wiki_url" :href="viewingPluginInfo.wiki_url"><p>Wiki</p></a>
+                <a v-if="viewingPluginInfo.source_url" :href="viewingPluginInfo.source_url" target="_blank"><p>Source Code</p></a>
+                <a v-if="viewingPluginInfo.wiki_url" :href="viewingPluginInfo.wiki_url" target="_blank"><p>Wiki</p></a>
                 <button @click="getVersions(viewingPluginInfo.slug)" v-if="!versions">Download</button>
                 <div v-if="versions" v-for="version of versions">
                     <button @click="selectedVersion == version.id ? selectedVersion = undefined : selectedVersion = version.id">{{ version.name }}</button>
                     <div class="selected-version" v-if="selectedVersion == version.id">
                         <div class="box">
                             <h3>{{ version.name }}</h3>
+                            <p>Released at {{ new Date(version.date_published).toLocaleString() }}</p>
                             <br/>
                             <h4>Files</h4>
                             <div v-for="file of version.files">
