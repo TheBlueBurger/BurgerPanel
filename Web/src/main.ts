@@ -80,6 +80,15 @@ const router = createRouter({
             }
         },
         {
+            path: '/manage/server/:server/edit/plugins',
+            component: () => import('./pages/Management/DownloadPlugins.vue'),
+            props: true,
+            name: 'downloadPlugins',
+            meta: {
+                title: "Download plugins"
+            }
+        },
+        {
             path: '/manage',
             component: () => import('./pages/ManageServers.vue'),
             meta: {

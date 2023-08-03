@@ -1,6 +1,7 @@
 import { Config, ConfigValue } from "./Config";
 import { ServerPerformancePacketS2C } from "./Perf";
 import { Server, ServerStatus, ServerStatuses } from "./Server";
+import { ModrinthPluginResult, Plugin, Version } from "./Plugin";
 import { User } from "./User";
 
 export type RequestResponses = {
@@ -95,7 +96,19 @@ export type RequestResponses = {
     },
     startServer: undefined,
     stopServer: undefined,
-    writeToConsole: undefined
+    writeToConsole: undefined,
+    plugins: {
+        type: "searchResults",
+        results: ModrinthPluginResult[]
+    } | {
+        type: "pluginDetails",
+        details: Plugin
+    } | {
+        type: "pluginVersions",
+        versions: Version[]
+    } | {
+        type: "downloadSuccess"
+    }
 }
 
 

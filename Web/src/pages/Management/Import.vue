@@ -7,6 +7,7 @@ import { allowedSoftwares } from '@share/Server';
 import { modalInput } from '../../util/modal';
 import { useSettings } from '../../stores/settings';
 import { useUser } from '../../stores/user';
+import { useServers } from '../../stores/servers';
 
 let settings = useSettings();
 let router = useRouter();
@@ -59,6 +60,7 @@ let mem = ref(1024);
 let version = ref("");
 let software = ref();
 let port = ref(25565);
+let servers = useServers();
 async function importServer() {
     let resp = await sendRequest("importServer", {
         path: serverPath.value,
@@ -70,6 +72,7 @@ async function importServer() {
     });
     if(resp?.type != "success") return;
     event.emit("createNotification", "Server imported successfully");
+    servers.updateServer(resp.server);
     router.push({
         name: "manageServer",
         params: {

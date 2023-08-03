@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { hasPermission } from '@share/Permission';
+import { hasPermission, hasServerPermission } from '@share/Permission';
 import { Server } from '@share/Server';
 import { User } from '@share/User';
 import events from '../../util/event';
@@ -166,14 +166,22 @@ async function changeAutoRestart() {
         params: {
             server: props.server
         }
-    }"><button>View logs</button></RouterLink>
+    }" v-if="hasServerPermission(user.user, server, 'oldlogs.read')"><button>View logs</button></RouterLink>
     <RouterLink :to="{
         name: 'serverFiles',
         params: {
             server: props.server
         }
-    }">
+    }" v-if="hasServerPermission(user.user, server, 'serverfiles.read')">
         <button>Edit Files</button>
+    </RouterLink>
+    <RouterLink :to="{
+        name: 'downloadPlugins',
+        params: {
+            server: props.server
+        }
+    }" v-if="hasServerPermission(user.user, server, 'plugins.download')">
+        <button>Download Plugins</button>
     </RouterLink>
     <button @click="servers.togglePin(server)">{{ servers.isPinned(server) ? "Unpin" : "Pin" }}</button>
     <br/><hr/>

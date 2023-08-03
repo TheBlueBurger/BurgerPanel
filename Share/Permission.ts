@@ -1,6 +1,6 @@
 import { Server } from "./Server.js";
 import { User } from "./User.js";
-export const _ServerPermissions = ["set.autostart", "set.autorestart", "set.port", "set.software", "set.version", "set.mem", "set.name", "set.allowedUsers.add", "set.allowedUsers.remove", "set.allowedUsers.permissions.write", "console.read", "console.write", "status", "stop", "start", "kill", "delete", "oldlogs.read", "serverfiles.read", "serverfiles.write", "full"] as const;
+export const _ServerPermissions = ["set.autostart", "set.autorestart", "set.port", "set.software", "set.version", "set.mem", "set.name", "set.allowedUsers.add", "set.allowedUsers.remove", "set.allowedUsers.permissions.write", "console.read", "console.write", "status", "stop", "start", "kill", "delete", "oldlogs.read", "serverfiles.read", "serverfiles.write", "plugins.download", "full"] as const;
 export const _ServersPermissions = [
     "create",
     "import",
@@ -26,7 +26,7 @@ export const validPermissions: PermissionString[] = [
 // this is a mess.
 export const DefaultServerProfiles: {[name:  string]: ServerPermissions[]} = {
     "basic": ["console.read", "status"],
-    "trusted": ["console.read", "console.write", "status", "stop", "start", "oldlogs.read", "serverfiles.read"],
+    "trusted": ["console.read", "console.write", "status", "stop", "start", "oldlogs.read", "serverfiles.read", "plugins.download"],
     "admin": ["full"]
 };
 

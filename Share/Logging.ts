@@ -38,6 +38,7 @@ export let IDs = [
     "server.delete",
     "server.file.write",
     "api",
-    "debug"
+    "debug",
+    "plugin.download"
 ] as const;
 export type IDs = typeof IDs[number];

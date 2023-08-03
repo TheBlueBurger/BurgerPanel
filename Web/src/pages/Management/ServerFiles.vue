@@ -6,6 +6,8 @@
     import titleManager from '../../util/titleManager';
     import { confirmModal, showInfoBox } from '../../util/modal';
     import { useServers } from '../../stores/servers';
+import { hasServerPermission } from '@share/Permission';
+import { useUser } from '../../stores/user';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -107,6 +109,7 @@
         if(resp.type != "edit-success") return;
         showInfoBox("Save successful", `The file at ${path.value} has been successfully updated.`);
     }
+    let user = useUser();
 </script>
 <template>
     <div v-if="!finishedLoading">
@@ -118,7 +121,14 @@
         params: {
             server: props.server
         }
-    }"><button id="back-server-page-btn">Server Page</button></RouterLink></h1>
+    }"><button class="back-server-page-btn">Server Page</button></RouterLink><RouterLink :to="{
+        name: 'downloadPlugins',
+        params: {
+            server: props.server
+        }
+    }" v-if="path && path.toString().startsWith('/plugins') && hasServerPermission(user.user, server, 'plugins.download')">
+        <button class="back-server-page-btn">Download Plugins</button>
+    </RouterLink></h1>
     <div class="serverfiles">
 
         <RouterLink v-if="!['','/'].includes(path.toString())" :to="{
@@ -194,7 +204,7 @@ textarea {
     margin-right: 10px;
     color: #5f5f5f;
 }
-#back-server-page-btn {
+.back-server-page-btn {
     margin-top: -50px;
     position: relative;
     top: -5px;

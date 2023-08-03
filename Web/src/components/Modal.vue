@@ -31,6 +31,14 @@ let props = defineProps({
     whiteButtons: {
         type: Boolean,
         default: true
+    },
+    customMaxWidth: {
+        type: Number,
+        default: 1000
+    },
+    hideScrollbar: {
+        type: Boolean,
+        default: true
     }
 });
 let e = defineEmits(["close-btn-clicked", "done-clicked"]);
@@ -114,13 +122,15 @@ let blurRef = ref() as Ref<Element>;
 
 <template>
     <div id="blur" v-if="shouldShow" ref="blurRef">
-        <div id="modal-container">
+        <div id="modal-container" :style="{maxWidth: ((props.customMaxWidth ?? 1000) + 'px')}">
             <div id="modal">
                 <div id="modal-content">
                     <div id="close-btn" @click="closeModal">
                         X
                     </div>
-                    <div id="slot">
+                    <div id="slot" :class="{
+                        'no-scrollbar': hideScrollbar
+                    }">
                         <div id="slot-slot" v-if="!__isDefaultModal">
                             <slot />
                         </div>
@@ -229,8 +239,8 @@ let blurRef = ref() as Ref<Element>;
     flex-direction: column;
     border-radius: 10px;
     width: fit-content;
-    max-width: 1000px;
-    padding: 20px;
+    /*padding: 20px;*/
+    padding: 10px; /* changed to 10  -quad */
     height: fit-content;
     position: fixed;
     top: 0;
@@ -259,8 +269,8 @@ let blurRef = ref() as Ref<Element>;
     position: absolute;
     top: 0;
     right: 0;
-    margin-top: 1px;
-    margin-right: 3px;
+    margin-top: 8px;
+    margin-right: 8px;
     cursor: pointer;
     user-select: none;
 }
@@ -297,5 +307,8 @@ button {
 
 .whiteButtons button {
     color: white !important;
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
 }
 </style>

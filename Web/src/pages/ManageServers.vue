@@ -53,7 +53,10 @@ async function createServer() {
     }).catch(err => {
         serverCreating.value = false;
     });
-    if(resp?.server) manageServer(resp.server._id);
+    if(resp?.server) {
+        servers.updateServer(resp.server);
+        manageServer(resp.server._id);
+    }
 }
 function manageServer(id: string) {
     router.push({

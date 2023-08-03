@@ -73,7 +73,8 @@ export let servers = db.model("Server", new mongoose.Schema({
     name: {
         type: String,
         unique: true,
-        maxlength: 16
+        maxlength: 16,
+        required: true
     },
     path: {
         type: String,
@@ -84,7 +85,8 @@ export let servers = db.model("Server", new mongoose.Schema({
     mem: {
         type: Number,
         min: 0,
-        max: 99999
+        max: 99999,
+        required: true
     },
     allowedUsers: [{
         user: String,
@@ -94,16 +96,19 @@ export let servers = db.model("Server", new mongoose.Schema({
     version: {
         type: String,
         maxlength: 16,
+        required: true
     },
     software: {
         type: String,
         maxlength: 7,
+        required: true
     },
     port: {
         min: 1,
         max: 65535,
         type: Number,
-        unique: true
+        unique: true,
+        required: true
     },
     autoStart: {
         type: Boolean,

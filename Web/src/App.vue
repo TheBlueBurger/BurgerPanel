@@ -34,12 +34,14 @@ function createNotification(text: string) {
   }, 5000);
 }
 const user = useUser();
-events.value.on("createNotification", createNotification);
+let triggerUnmountPromise: (value: unknown) => void;
+let unmountPromise = new Promise(r => triggerUnmountPromise = r);
+events.value.on("createNotification", createNotification, unmountPromise);
 provide("events", events);
 let servers = useServers();
 events.value.on("serverStatusUpdate", (d) => {
   servers.statuses[d.server] = {status: d.status}
-})
+}, unmountPromise);
 let queuedPackets: any[] = [];
 events.value.on("sendPacket", (data: any) => {
   if (!connected.value) {
@@ -48,7 +50,7 @@ events.value.on("sendPacket", (data: any) => {
     return;
   }
   ws.value.send(JSON.stringify(data));
-});
+}, unmountPromise);
 let API_URL: string;
 if (import.meta.env.PROD) {
   API_URL = location.origin
@@ -63,6 +65,7 @@ provide("ws", ws);
 let lastID = ref(null) as Ref<string | null>;
 let pingInterval: number;
 onMounted(() => {
+  initWS();
   pingInterval = setInterval(() => { // if we're using cloudflare, we need to ping in order to make cloudflare not explode
     if (connected.value) {
       sendRequest("ping")
@@ -74,11 +77,12 @@ onMounted(() => {
   }
 });
 onUnmounted(() => {
+  triggerUnmountPromise(null); // this is so stupid
   clearInterval(pingInterval);
   ws.value.close();
 });
 function initWS() {
-  if(ws.value?.readyState == WebSocket.OPEN) return;
+  if(([WebSocket.OPEN, WebSocket.CONNECTING] as number[]).includes(ws.value?.readyState)) return;
   ws.value = new WebSocket(API_URL.replace("http", "ws"));
   ws.value.addEventListener("open", () => {
     connected.value = true;
@@ -113,7 +117,6 @@ function initWS() {
 }
 
 
-initWS();
 async function login(usingTokenOverride: boolean = false) {
   let authResp: void | RequestResponses["auth"];
   if (usingTokenLogin.value || usingTokenOverride) {
@@ -158,7 +161,7 @@ let token = ref("");
 
 events.value.on("logout", () => {
   showLoginScreen.value = true;
-});
+}, unmountPromise);
 let users = ref(new Map<string, User>());
 provide("users", users);
 
@@ -167,10 +170,10 @@ events.value.on("loginFailed", (data: AuthS2C) => {
   console.log("Login failed: " + data.message)
   loginMsg.value = data.message as string;
   showLoginScreen.value = true;
-});
+}, unmountPromise);
 events.value.on("yourUserEdited", newUser => {
   user.user = newUser.user;
-});
+}, unmountPromise);
 let showLoginScreen = ref(false);
 function gotoSetup(_currentRoute?: RouteLocationNormalized) {
   let currentRoute = _currentRoute ?? router.currentRoute.value;
@@ -228,7 +231,7 @@ let loginPassword = ref("");
 let hideMainContentMsg = computed(() => {
   if(user.user?.setupPending && router.currentRoute.value.name != "userSetup") return "Redirecting to user setup";
 });
-let shouldHideMainContent = computed(() => typeof hideMainContentMsg.value == "string")
+let shouldHideMainContent = computed(() => typeof hideMainContentMsg.value == "string");
 </script>
 
 <template>

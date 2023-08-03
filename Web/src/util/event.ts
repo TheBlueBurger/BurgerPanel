@@ -1,19 +1,28 @@
 export default new class EventEmitter {
-    private listeners: { [key: string]: ((...args: any[]) => void)[] } = {}; // this doesnt make any sense it is defined
+    private listeners: { [key: string]: ({callback: (...args: any[]) => void, i: number})[] } = {}; // this doesnt make any sense it is defined
     private onceListeners: { [key: string]: ((...args: any[]) => void)[] } = {};
+    private i = 0;
     // You might think "oh why arent these private?" but if they're private, vscode will scream at me because apparently its being used but not used at the same time?!?!?
     // edit: vscode has stopped being stupid
     constructor() {
+
     }
-    on(event: string, callback: (...args: any[]) => void) {
+    on(event: string, callback: (...args: any[]) => void, removePromise?: Promise<unknown>) {
         if (!this.listeners[event]) {
             this.listeners[event] = [];
         }
-        this.listeners[event].push(callback);
+        let id = this.i++;
+        this.listeners[event].push({
+            i: id,
+            callback
+        });
+        if(removePromise) removePromise.then(() => {
+            this.listeners[event] = this.listeners[event].filter(e => e.i != id);
+        });
     }
     emit(event: string, ...args: any[]) {
         if (typeof this.listeners[event] != "undefined") for (const callback of this.listeners[event]) {
-            callback(...args);
+            callback.callback(...args);
         }
         if (typeof this.onceListeners[event] != "undefined") for (const callback of this.onceListeners[event]) {
             callback(...args);
