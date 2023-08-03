@@ -17,7 +17,7 @@ export async function search(query: string, version: string) {
         query,
         facets: JSON.stringify([
             ["versions:" + version],
-            ["categories:paper"]
+            ["categories:paper", "categories:bukkit", "categories:spigot"]
         ])
     })
     return await sendModrinthRequest("/search?" + encodedQS);
@@ -27,7 +27,7 @@ export async function getPluginDetails(slug: string): Promise<Plugin> {
 }
 export async function getVersions(slug: string, version: string): Promise<Version[]> {
     let encodedQS = qs.encode({
-        loaders: JSON.stringify(["paper"]),
+        loaders: JSON.stringify(["paper", "bukkit", "spigot"]),
         game_versions: JSON.stringify([version])
     })
     return await sendModrinthRequest("/project/"+slug+"/version?" + encodedQS);

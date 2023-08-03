@@ -75,6 +75,14 @@ export default class ServerFiles extends Packet {
                     fileData: data.data,
                     type: "edit-success"
                 }
+            case "delete":
+                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.delete")) return "No permission";
+                let deleteFileStat = await fs.stat(pathToCheck);
+                if(!deleteFileStat.isFile()) return;
+                await fs.unlink(pathToCheck);
+                return {
+                    type: "delete-success"
+                }
         }
     }
 }

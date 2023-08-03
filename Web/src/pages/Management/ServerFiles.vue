@@ -8,6 +8,7 @@
     import { useServers } from '../../stores/servers';
 import { hasServerPermission } from '@share/Permission';
 import { useUser } from '../../stores/user';
+import Dropdown from '@components/Dropdown.vue';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -110,6 +111,8 @@ import { useUser } from '../../stores/user';
         showInfoBox("Save successful", `The file at ${path.value} has been successfully updated.`);
     }
     let user = useUser();
+    let dropdown: any = ref();
+    let dropdownFile = ref();
 </script>
 <template>
     <div v-if="!finishedLoading">
@@ -129,6 +132,30 @@ import { useUser } from '../../stores/user';
     }" v-if="path && path.toString().startsWith('/plugins') && hasServerPermission(user.user, server, 'plugins.download')">
         <button class="back-server-page-btn">Download Plugins</button>
     </RouterLink></h1>
+    <Dropdown :create-on-cursor="true" ref="dropdown">
+        <div id="dropdown-inner">
+            <button @click="() => {
+                router.push({
+                    query: {
+                        path: (path + '\/' + dropdownFile.name).replaceAll('\/\/', '\/'),
+                        type: 'read'
+                    }
+                })
+            }">Edit</button><br/>
+            <button @click="async () => {
+                dropdown.hide();
+                if(await confirmModal(`Delete ${dropdownFile.name}?`, `Sure you want to delete ${dropdownFile.name}? This can't be undone.`, true, true, true)) {
+                    await sendRequest('serverFiles', {
+                        id: props.server,
+                        action: 'delete',
+                        path: path + '/' + dropdownFile.name
+                    });
+                    getFiles();
+                    showInfoBox(`Deleted ${dropdownFile.name} successfully!`, `The file at ${dropdownFile.name} has been deleted.`);
+                }
+            }">Delete</button>
+        </div>
+    </Dropdown>
     <div class="serverfiles">
 
         <RouterLink v-if="!['','/'].includes(path.toString())" :to="{
@@ -150,7 +177,7 @@ import { useUser } from '../../stores/user';
                         path: (path + '\/' + file.name).replaceAll('\/\/', '\/'),
                         type: 'read'
                     }
-                }" class="link"><span class="entry file">{{ file.name }}</span></RouterLink>
+                }" class="link"><span class="entry file" @contextmenu.prevent="e => {dropdownFile = file;dropdown.show(e)}">{{ file.name }}</span></RouterLink>
             </div>
         </div>
     </div>
@@ -182,6 +209,11 @@ textarea {
 .serverfiles {
     padding: 20px;
 }
+#dropdown-inner button {
+    border-radius: 0;
+    width:100%;
+}
+
 .entry {
     display:block;
     /* margin-top: 3px; */

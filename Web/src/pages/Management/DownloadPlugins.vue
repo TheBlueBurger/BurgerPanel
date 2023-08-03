@@ -96,7 +96,7 @@ async function downloadPlugin(version: MRVersion, hash: string, pluginName: stri
             Nothing found :&#40;
         </div>
     </div>
-    <div v-for="plugin of hits" class="hit" @click="viewPluginInfo(plugin.slug)">
+    <div v-for="plugin of hits" class="hit" @click="viewPluginInfo(plugin.slug)" :key="plugin.project_id">
         <div :style="{display: 'flex'}">
             <img :src="plugin.icon_url" v-if="plugin.icon_url">
             <h2 class="plugin-title">{{ plugin.title }}</h2>
@@ -118,21 +118,25 @@ async function downloadPlugin(version: MRVersion, hash: string, pluginName: stri
                     <button>Open in Modrinth</button>
                 </a> -->
                 <pre class="plugin-modal-desc">{{ viewingPluginInfo.description }}</pre>
-                <h3>Links</h3>
+                <h3 v-if="viewingPluginInfo.source_url || viewingPluginInfo.wiki_url">Links</h3>
                 <a v-if="viewingPluginInfo.source_url" :href="viewingPluginInfo.source_url"><p>Source Code</p></a>
                 <a v-if="viewingPluginInfo.wiki_url" :href="viewingPluginInfo.wiki_url"><p>Wiki</p></a>
                 <button @click="getVersions(viewingPluginInfo.slug)" v-if="!versions">Download</button>
                 <div v-if="versions" v-for="version of versions">
-                    <div style="cursor: pointer;" @click="selectedVersion == version.id ? selectedVersion = undefined : selectedVersion = version.id">{{ version.name }}</div>
+                    <button @click="selectedVersion == version.id ? selectedVersion = undefined : selectedVersion = version.id">{{ version.name }}</button>
                     <div class="selected-version" v-if="selectedVersion == version.id">
-                        <br/>
-                        <div v-for="file of version.files">
-                            <button @click="downloadPlugin(version, file.hashes.sha512, viewingPluginInfo.title, file.filename)">{{ file.filename }}</button>
+                        <div class="box">
+                            <h3>{{ version.name }}</h3>
+                            <br/>
+                            <h4>Files</h4>
+                            <div v-for="file of version.files">
+                                <button @click="downloadPlugin(version, file.hashes.sha512, viewingPluginInfo.title, file.filename)">{{ file.filename }}</button>
+                            </div>
+                            <button v-if="!showChangelog" @click="showChangelog = true">Show changelog</button>
+                            <h2 v-if="showChangelog">Changelog</h2>
+                            <div class="md-plugin-modal changelog" v-if="showChangelog" v-html="parseMDSecurely(version.changelog)"></div>
                         </div>
                         <br/>
-                        <button v-if="!showChangelog" @click="showChangelog = true">Show changelog</button>
-                        <div class="md-plugin-modal" v-if="showChangelog" v-html="parseMDSecurely(version.changelog)"></div>
-                        <hr v-if="showChangelog">
                     </div>
                 </div>
                 <div v-html="parseMDSecurely(viewingPluginInfo.body)" class="md-plugin-modal" />
@@ -161,9 +165,18 @@ async function downloadPlugin(version: MRVersion, hash: string, pluginName: stri
     margin: 0 auto;
     display: flex;
 }*/
+.box {
+    border:#585858 1px solid;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: fit-content;
+}
 .gallery-img {
     max-width:500px;
     max-height: 500px;
+}
+.changelog {
+    margin-left: 10px;
 }
 .plugin-modal-title {
     display: flex;

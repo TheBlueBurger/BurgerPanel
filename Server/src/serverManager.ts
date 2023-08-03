@@ -22,6 +22,7 @@ export default new class ServerManager {
             stopping: boolean;
         }
     } = {};
+    disableServerStart: boolean = false;
     constructor() {
 
     }
@@ -105,6 +106,7 @@ enforce-secure-profile=false
         while (serverEntry.lastLogs.length > 100) serverEntry.lastLogs.shift();
     }
     async startServer(server: Server) {
+        if(this.disableServerStart) return;
         this.createEntryIfNeeded(server);
         await this.setupServer(server);
         let serverEntry = this.servers[server._id];
@@ -193,6 +195,7 @@ enforce-secure-profile=false
         this.updateStatus(server);
     }
     async stopAllServers() {
+        this.disableServerStart = true;
         await Promise.all(Object.values(this.servers).map(s => this.stopServer(s.server)));
     }
     detachFromServer(client: OurClient, server: string) {

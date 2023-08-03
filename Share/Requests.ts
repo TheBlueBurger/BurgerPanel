@@ -78,7 +78,7 @@ export type RequestResponses = {
     } | {
         fileData: string,
         type: "edit-success"
-    },
+    } | {type: "delete-success"},
     serverLogs: {
         files: string[],
         type: "list"
