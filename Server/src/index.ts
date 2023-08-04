@@ -9,7 +9,7 @@ import url from "node:url";
 import { getSetting, isValidKey, setSetting } from './config.js';
 import { once } from "node:events";
 import serverManager from './serverManager.js';
-import { servers, users } from './db.js';
+import { makeToken, servers, users } from './db.js';
 import { Permission } from '../../Share/Permission.js';
 import { Request, RequestResponses } from '../../Share/Requests.js';
 import hasPermission from './util/permission.js';
@@ -26,6 +26,7 @@ let httpServer = http.createServer(app);
 let wss = new WebSocketServer({ server: httpServer });
 if(!isProd) app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
     next();
 });
 app.use(express.json());
@@ -75,6 +76,24 @@ app.post("/api/request/:name", async (req, res, next) => {
         d: req.body
     });
 });
+
+app.post("/api/uploadfile/:id", (req, res) => {
+    let cb = httpUploadCallbacks[req.params.id];
+    if(!cb) return res.sendStatus(401);
+    let data = Buffer.from([]);
+    req.on("data", chunk => {
+        data = Buffer.concat([data, chunk]);
+        if(data.byteLength > 100_000_000) {
+            logger.log(`Attempted to upload too big file, over 100MB. ID: ${req.params.id}, destroying connection.`, "error", LogLevel.ERROR);
+            req.socket.destroy();
+        }
+    });
+    req.on("end", () => {
+        res.sendStatus(200);
+        cb(data);
+    });
+});
+app.options("/api/uploadfile/:id", (_,r) => r.sendStatus(200));
 
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 if(isProd) {
@@ -248,6 +267,28 @@ wss.on('connection', (_client) => {
         clients.splice(clients.indexOf(client), 1);
     });
 });
+let httpUploadCallbacks: {
+    [key: string]: (buf: Buffer) => void
+} = {};
+export function requestUpload(timeout: number = 60_000): (string | Promise<Buffer>)[] {
+    let id = makeToken();
+    while(typeof httpUploadCallbacks[id] != "undefined") {
+        id = makeToken();
+    }
+    return [id, new Promise((res, rej) => {
+        let cancelled = false;
+        httpUploadCallbacks[id] = (buf: Buffer) => {
+            if(cancelled) return;
+            clearTimeout(timeoutID);
+            res(buf);
+        }
+        let timeoutID = setTimeout(() => {
+            delete httpUploadCallbacks[id];
+            cancelled = true;
+            rej("timed out");
+        }, timeout);
+    })];
+}
 let exiting = false;
 export async function exit(signal?: string) {
     if(exiting) return;

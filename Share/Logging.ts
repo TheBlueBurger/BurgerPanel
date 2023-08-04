@@ -37,6 +37,8 @@ export let IDs = [
     "server.file.read",
     "server.delete",
     "server.file.write",
+    "server.file.delete",
+    "server.file.upload",
     "api",
     "debug",
     "plugin.download"

@@ -78,7 +78,12 @@ export type RequestResponses = {
     } | {
         fileData: string,
         type: "edit-success"
-    } | {type: "delete-success"},
+    } | {
+        type: "delete-success"
+    } | {
+        type: "uploadConfirm",
+        id: string
+    },
     serverLogs: {
         files: string[],
         type: "list"

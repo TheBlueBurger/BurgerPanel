@@ -1,4 +1,4 @@
-import { OurClient, Packet, ServerPacketResponse } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse, requestUpload } from "../index.js";
 import { servers, users } from "../db.js";
 import { hasServerPermission } from "../util/permission.js";
 import fs from "node:fs/promises";
@@ -13,7 +13,7 @@ export default class ServerFiles extends Packet {
     requiresAuth: boolean = false;
     async handle(client: OurClient, data: any): ServerPacketResponse<"serverFiles"> {
         let server = await servers.findById(data.id).exec();
-        if(!server || !hasServerPermission(client.data.auth.user, server?.toJSON(), "serverfiles.read")) return; //very bad!!!!
+        if(!server || !hasServerPermission(client.data.auth.user, server?.toJSON(), "serverfiles.read")) return "No perm"; //very bad!!!!
         // Make sure the user doesnt do anything spooky
         if(!data.path || typeof data.path != "string") return;
         if(/^[A-Za-z0-9\-_\.]+$/.test(data.path)) return;
@@ -24,7 +24,7 @@ export default class ServerFiles extends Packet {
         try {
             await fs.stat(pathToCheck)
         } catch {
-            return "Invalid path"; // very spooky
+            if(data.action != "upload") return "Invalid path"; // very spooky
         }
         // We should be safe now
         switch(data.action) {
@@ -79,9 +79,23 @@ export default class ServerFiles extends Packet {
                 if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.delete")) return "No permission";
                 let deleteFileStat = await fs.stat(pathToCheck);
                 if(!deleteFileStat.isFile()) return;
+                logger.log(`${client.data.auth.user?.username} is deleting ${data.path} in ${server.name}`, 'server.file.delete');
                 await fs.unlink(pathToCheck);
                 return {
                     type: "delete-success"
+                }
+            case "upload":
+                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.upload")) return "no permission to upload";
+                let [id, promise] = await requestUpload();
+                logger.log(`${client.data.auth.user?.username} is uploading ${data.path} to ${server.name} with upload ID '${id}'`, "server.file.upload");
+                if(!(promise instanceof Promise)) return;
+                if(typeof id != "string") return;
+                promise.then(async buf => {
+                    await fs.writeFile(pathToCheck, buf);
+                });
+                return {
+                    type: "uploadConfirm",
+                    id
                 }
         }
     }

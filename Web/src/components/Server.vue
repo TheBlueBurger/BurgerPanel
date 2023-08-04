@@ -4,10 +4,13 @@
     import ServerStatus from './ServerStatus.vue';
     import sendRequest from '@util/request';
     import { confirmModal } from '@util/modal';
+    import { hasServerPermission } from '@share/Permission';
+import { useUser } from '../stores/user';
 
     let props = defineProps<{
         server: ServerType
     }>();
+    let user = useUser();
     let servers = useServers();
     async function startServer(server: ServerType) {
         sendRequest("startServer", {id: server._id});
@@ -43,13 +46,13 @@
                         params: {
                             server: server._id
                         }
-                    }"><button>Files</button></RouterLink>
+                    }" v-if="hasServerPermission(user.user, server, 'serverfiles.read')"><button>Files</button></RouterLink>
                                         <RouterLink :to="{
                         name: 'viewLogs',
                         params: {
                             server: server._id
                         }
-                    }"><button>Logs</button></RouterLink>
+                    }" v-if="hasServerPermission(user.user, server, 'serverfiles.read')"><button>Logs</button></RouterLink>
                 </div>
             </RouterLink>
             </div>

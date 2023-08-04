@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { Ref, computed, ref, watch } from 'vue';
+    import { Ref, computed, inject, ref, watch } from 'vue';
     import { Server } from '@share/Server';
     import { useRouter } from 'vue-router';
     import sendRequest from '../../util/request';
@@ -9,6 +9,7 @@
 import { hasServerPermission } from '@share/Permission';
 import { useUser } from '../../stores/user';
 import Dropdown from '@components/Dropdown.vue';
+import Modal from '@components/Modal.vue';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -113,8 +114,78 @@ import Dropdown from '@components/Dropdown.vue';
     let user = useUser();
     let dropdown: any = ref();
     let dropdownFile = ref();
+    let currentlyUploadingFile: File | undefined;
+    let toUpload: Ref<File[]> = ref([]);
+    let showUploadModal = ref(false);
+    async function openUploadModal() {
+        currentlyUploadingFile = undefined;
+        showUploadModal.value = true;
+    }
+    async function onDrop(e: DragEvent) {
+        slightlyWhiteDivBg.value = false;
+        let droppedFiles = e.dataTransfer?.files;
+        if(!droppedFiles) return;
+        for(let file of Object.values(droppedFiles)) {
+            toUpload.value.push(file);
+        }
+    }
+    let slightlyWhiteDivBg = ref(false);
+    let uploading = ref(false);
+    function removeFromUploads(file: File) {
+        if(uploading.value) return;
+        toUpload.value = toUpload.value.filter(f => f != file);
+    }
+    let apiUrl: string = inject("API_URL") as string;
+    async function uploadFile(file: File) {
+        let resp = await sendRequest("serverFiles", {
+            action: "upload",
+            id: props.server,
+            path: path.value + "/" + file.name
+        });
+        if(resp.type != "uploadConfirm") return;
+        let arrayBuffer = await file.arrayBuffer();
+        let fetchRes = await fetch(apiUrl + "/api/uploadfile/" + resp.id, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/octet-stream"
+            },
+            body: arrayBuffer
+        });
+        if(!fetchRes.ok) throw new Error(await fetchRes.text());
+    }
+    let currentUploading: Ref<File | undefined> = ref()
+    async function uploadFiles() {
+        uploading.value = true;
+        while(true) {
+            let fileUploading = toUpload.value.shift();
+            if(!fileUploading) break;
+            currentUploading.value = fileUploading;
+            await uploadFile(fileUploading);
+        }
+        uploading.value = false;
+        showUploadModal.value = false;
+        getFiles();
+    }
 </script>
 <template>
+    <Modal v-if="showUploadModal" :button-type="''" @close-btn-clicked="showUploadModal = false;toUpload=[]">
+        <div v-if="!uploading">
+            <div id="upload-modal-drop-div" @dragover.prevent="slightlyWhiteDivBg = true" @drop.prevent="onDrop" @dragenter.prevent="console.log('drag');slightlyWhiteDivBg = true" @dragleave.prevent="console.log('undrag');slightlyWhiteDivBg = false" :class="{
+                slightlyWhite: slightlyWhiteDivBg
+            }">
+                <p>Drop files here</p>
+            </div>
+            <div v-if="toUpload.length != 0">
+                <div v-for="file of toUpload">
+                    {{ file.name }} <button @click="removeFromUploads(file)">Delete</button>
+                </div>
+                <button @click="uploadFiles">Upload {{ toUpload.length }} file{{ toUpload.length == 1 ? '' : 's' }}</button>
+            </div>
+        </div>
+        <div v-else>
+            Uploading {{ currentUploading?.name }} ({{ (currentUploading?.size ?? 0) / 1_000_000 }}MB)
+        </div>
+    </Modal>
     <div v-if="!finishedLoading">
         
     </div>
@@ -131,7 +202,7 @@ import Dropdown from '@components/Dropdown.vue';
         }
     }" v-if="path && path.toString().startsWith('/plugins') && hasServerPermission(user.user, server, 'plugins.download')">
         <button class="back-server-page-btn">Download Plugins</button>
-    </RouterLink></h1>
+    </RouterLink><button class="back-server-page-btn" @click="openUploadModal">Upload file</button></h1>
     <Dropdown :create-on-cursor="true" ref="dropdown">
         <div id="dropdown-inner">
             <button @click="() => {
@@ -141,8 +212,8 @@ import Dropdown from '@components/Dropdown.vue';
                         type: 'read'
                     }
                 })
-            }">Edit</button><br/>
-            <button @click="async () => {
+            }">Open</button><br v-if="hasServerPermission(user.user, server, 'serverfiles.delete')"/>
+            <button v-if="hasServerPermission(user.user, server, 'serverfiles.delete')" @click="async () => {
                 dropdown.hide();
                 if(await confirmModal(`Delete ${dropdownFile.name}?`, `Sure you want to delete ${dropdownFile.name}? This can't be undone.`, true, true, true)) {
                     await sendRequest('serverFiles', {
@@ -187,7 +258,7 @@ import Dropdown from '@components/Dropdown.vue';
             query: {
                 path: path.toString().split('/').slice(0, -1).join('/')
             }
-        }"><button>Go back</button></RouterLink> <button @click="saveFile">Save</button> <br/>
+        }"><button>Go back</button></RouterLink> <button @click="saveFile" v-if="hasServerPermission(user.user, server, 'serverfiles.write')">Save</button> <br/>
         <textarea v-model="fileData"></textarea>
     </div>
 </template>
@@ -240,5 +311,20 @@ textarea {
     margin-top: -50px;
     position: relative;
     top: -5px;
+}
+#upload-modal-drop-div {
+    width: 500px;
+    height: 200px;
+    border: white 1px solid;
+    margin: 10px;
+    text-align: center;
+    align-items: center;
+    display: flex;
+}
+#upload-modal-drop-div > p {
+    margin: 0 auto;
+}
+.slightlyWhite {
+    background-color: #6b6b6b;
 }
 </style>
