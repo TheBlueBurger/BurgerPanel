@@ -2,7 +2,7 @@ import { OurClient, Packet, ServerPacketResponse, lockDownExcludedUser, lockdown
 import { servers, users } from "../db.js";
 import serverManager, { userHasAccessToServer } from "../serverManager.js";
 import logger, { LogLevel } from "../logger.js";
-import { ServerStatuses } from "../../../Share/Server.js";
+import { Server, ServerStatuses } from "../../../Share/Server.js";
 import { hasServerPermission } from "../util/permission.js";
 import makeHash from "../util/makeHash.js";
 import { Request } from "../../../Share/Requests.js";
@@ -65,17 +65,29 @@ export default class Auth extends Packet {
             if(!user) throw new Error("user isnt defined");
             let pins = user.pins;
             if(pins != undefined) {
-                let newPins = [];
+                let newPins: string[] = [];
                 let broken = false;
+                /*
                 for await(let pin of pins) { // makes sure the user doesnt have bugged pins
                     try {
                         let server = await servers.findById(pin).exec();
-                        if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) continue;
+                        if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) throw new Error("");
                         newPins.push(pin);
                     } catch {
                         broken = true;
                     }
                 }
+                */
+                await Promise.allSettled(pins.map(pin => new Promise(async (r) => {
+                    try {
+                        let server = await servers.findById(pin).exec();
+                        if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) throw new Error("");
+                        newPins.push(pin);
+                    } catch {
+                        broken = true;
+                    }
+                    r(0);
+                })));
                 if(broken) {
                     logger.log(`${user.username} has at least one broken pin, removing it/them`, "debug", LogLevel.DEBUG);
                     user.pins = newPins;

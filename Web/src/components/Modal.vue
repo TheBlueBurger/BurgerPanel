@@ -301,7 +301,7 @@ function onBlurClick(e: MouseEvent) {
 }
 
 .bg-green {
-    background-color: #77E080;
+    background-color: #59ad60;
 }
 
 .bg-gray {

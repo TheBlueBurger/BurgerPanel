@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { Ref, computed, inject, ref, watch } from 'vue';
+    import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
     import { Server } from '@share/Server';
     import { useRouter } from 'vue-router';
     import sendRequest from '../../util/request';
@@ -115,11 +115,9 @@ import event from '@util/event';
     let user = useUser();
     let dropdown: any = ref();
     let dropdownFile = ref();
-    let currentlyUploadingFile: File | undefined;
     let toUpload: Ref<File[]> = ref([]);
     let showUploadModal = ref(false);
     async function openUploadModal() {
-        currentlyUploadingFile = undefined;
         showUploadModal.value = true;
     }
     async function onDrop(e: DragEvent) {
@@ -137,25 +135,34 @@ import event from '@util/event';
         toUpload.value = toUpload.value.filter(f => f != file);
     }
     let apiUrl: string = inject("API_URL") as string;
+    // [[file, error]]
+    let failedFiles: Ref<(Error | File)[][]> = ref([]);
     async function uploadFile(file: File) {
-        let resp = await sendRequest("serverFiles", {
-            action: "upload",
-            id: props.server,
-            path: path.value + "/" + file.name
-        });
-        if(resp.type != "uploadConfirm") return;
-        let arrayBuffer = await file.arrayBuffer();
-        let fetchRes = await fetch(apiUrl + "/api/uploadfile/" + resp.id, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/octet-stream"
-            },
-            body: arrayBuffer
-        });
-        if(!fetchRes.ok) throw new Error(await fetchRes.text());
+        try {
+            if(file.size > 100_000_000) throw new Error("Too big!");
+            let resp = await sendRequest("serverFiles", {
+                action: "upload",
+                id: props.server,
+                path: path.value + "/" + file.name
+            });
+            if(resp.type != "uploadConfirm") return;
+            let arrayBuffer = await file.arrayBuffer();
+            let fetchRes = await fetch(apiUrl + "/api/uploadfile/" + resp.id, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/octet-stream"
+                },
+                body: arrayBuffer
+            });
+            if(!fetchRes.ok) throw new Error(`Server sent: '${await fetchRes.text()}'. Upload ID: ${resp.id}`);
+        } catch(err) {
+            failedFiles.value.push([file, err as Error])
+        }
     }
     let currentUploading: Ref<File | undefined> = ref()
     async function uploadFiles() {
+        failedFiles.value = [];
+        totalSize.value = toUpload.value.map(a => a.size).reduce((a,b) => a+b);
         uploading.value = true;
         while(true) {
             let fileUploading = toUpload.value.shift();
@@ -164,17 +171,52 @@ import event from '@util/event';
             await uploadFile(fileUploading);
         }
         uploading.value = false;
+        currentUploading.value = undefined;
         showUploadModal.value = false;
+        if(failedFiles.value.length != 0) {
+            await showInfoBox(`Failed to upload ${failedFiles.value.length} file${failedFiles.value.length==1?'':'s'}`, failedFiles.value.map(failedFile => `${failedFile[0].name}: ${failedFile[1]}`).join(`\n`))
+        }
         getFiles();
     }
+    let uploadedSize = computed(() => {
+        if(!totalSize.value) return 0;
+        let fileSizes = toUpload.value.map(a => a.size);
+        if(fileSizes.length == 0) return 0;
+        return totalSize.value - fileSizes.reduce((a,b) => a+b);
+    })
     let modalFileChooser: Ref<HTMLInputElement | undefined> = ref();
-    function addFiles(f: FileList | null) {
+    function addFiles(f: FileList | null | undefined) {
         if(!f) return;
         Array.from(f).forEach(f => toUpload.value.push(f))
     }
+    let totalSize: Ref<number | undefined> = ref();
+    function onDropAnywhere(e: DragEvent) {
+        e.preventDefault();
+        if(readingFile.value) return;
+        if(showUploadModal.value) return;
+        if(e.dataTransfer?.files?.length == 0) return;
+        showUploadModal.value = true;
+        addFiles(e.dataTransfer?.files);
+    }
+    function prevent(e: Event) {
+        e.preventDefault();
+    }
+    onMounted(() => {
+        window.addEventListener("drop", onDropAnywhere);
+        window.addEventListener("dragover", prevent);
+    });
+    onUnmounted(() => {
+        window.removeEventListener("drop", onDropAnywhere);
+        window.removeEventListener("dragover", prevent);
+    });
+    function closeModal() {
+        if(uploading.value) return;
+        showUploadModal.value = false;
+        toUpload.value = [];
+    }
 </script>
 <template>
-    <Modal v-if="showUploadModal" :button-type="''" @close-btn-clicked="showUploadModal = false;toUpload=[]">
+    <Modal v-if="showUploadModal" :button-type="''" @close-btn-clicked="closeModal">
         <div v-if="!uploading">
             <div id="upload-modal-drop-div" @dragover.prevent="slightlyWhiteDivBg = true" @drop.prevent="onDrop" @dragenter.prevent="console.log('drag');slightlyWhiteDivBg = true" @dragleave.prevent="console.log('undrag');slightlyWhiteDivBg = false" :class="{
                 slightlyWhite: slightlyWhiteDivBg
@@ -186,13 +228,31 @@ import event from '@util/event';
             </div>
             <div v-if="toUpload.length != 0">
                 <div v-for="file of toUpload">
-                    {{ file.name }} <button @click="removeFromUploads(file)">Delete</button>
+                    {{ file.name }} ({{ (file?.size ?? 0) / 1_000_000 }}MB) <span style="color: red;">{{ file.size > 100_000_000 ? "Too big! " : " " }}</span><button @click="removeFromUploads(file)">Delete</button>
                 </div>
                 <button @click="uploadFiles">Upload {{ toUpload.length }} file{{ toUpload.length == 1 ? '' : 's' }}</button>
             </div>
         </div>
-        <div v-else>
+        <div v-else style="width:300px">
             Uploading {{ currentUploading?.name }} ({{ (currentUploading?.size ?? 0) / 1_000_000 }}MB)
+            <br/>
+            <div :style="{
+                width: '290px',
+                height: '5px',
+                borderRadius: '3px',
+                margin: '0 auto',
+                marginTop: '5px',
+                border: 'white 1px solid'
+            }">
+                <div id="bar" :style="{
+                    backgroundColor: 'white',
+                    height: '5px',
+                    width: ((uploadedSize / (totalSize ?? 0)) * 290) + 'px'
+                }" />
+            </div>
+            <div>
+                {{ (uploadedSize / 1_000_000).toFixed(3) }} / {{ ((totalSize ?? 0) / 1_000_000).toFixed(3) }} MB
+            </div>
         </div>
     </Modal>
     <div v-if="!finishedLoading">

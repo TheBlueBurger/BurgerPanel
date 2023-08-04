@@ -45,6 +45,7 @@ export default class Plugins extends Packet {
                 if(typeof data.hash != "string") return "No sha512";
                 let file = await getFile(data.version, data.hash);
                 if(!file) return "File isnt found";
+                if(!await exists(server.path + "/plugins")) await fs.mkdir(server.path + "/plugins");
                 if(await exists(server.path + "/plugins/" + file.filename)) return "Already installed!";
                 logger.log(`${client.data.auth.user?.username} is downloading plugin ${file.filename} in ${server.name}`, "plugin.download", LogLevel.INFO);
                 let jar = await fetch(file.url, {

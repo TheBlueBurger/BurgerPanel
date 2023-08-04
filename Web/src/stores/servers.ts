@@ -60,7 +60,7 @@ export const useServers = defineStore("servers", () => {
         if(!pins) return [];
         let pinnedServers = await Promise.allSettled(pins.map(p => getServerByID(p, true)));
         if(pinnedServers.some(p => p.status == "rejected")) {
-            console.error("Pins are broken! at least one server cannot be found!");
+            console.error("Pins are broken! at least one server cannot be found!", pinnedServers.filter(p => p.status == "rejected"));
         }
         return pinnedServers.filter(p => p.status == "fulfilled").map(p => {
             if(p.status != "fulfilled") throw new Error("Found rejected pin when they were already filtered!!!");

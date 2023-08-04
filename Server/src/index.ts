@@ -76,20 +76,23 @@ app.post("/api/request/:name", async (req, res, next) => {
         d: req.body
     });
 });
-
+let maxUploadSize = 100_000_000;
 app.post("/api/uploadfile/:id", (req, res) => {
     let cb = httpUploadCallbacks[req.params.id];
     if(!cb) return res.sendStatus(401);
+    if(isNaN(parseInt(req.headers["content-length"] ?? "a")) || parseInt(req.headers["content-length"] ?? "a") > maxUploadSize) {
+        return res.status(400).send("Too big file!");
+    }
     let data = Buffer.from([]);
     req.on("data", chunk => {
         data = Buffer.concat([data, chunk]);
-        if(data.byteLength > 100_000_000) {
-            logger.log(`Attempted to upload too big file, over 100MB. ID: ${req.params.id}, destroying connection.`, "error", LogLevel.ERROR);
+        if(data.byteLength > maxUploadSize) {
+            logger.log(`Client lied about size. ID: ${req.params.id}, destroying connection.`, "error", LogLevel.ERROR);
             req.socket.destroy();
         }
     });
     req.on("end", () => {
-        if(data.byteLength > 100_000_000) return;
+        if(data.byteLength > maxUploadSize) return;
         res.sendStatus(200);
         cb(data);
     });
