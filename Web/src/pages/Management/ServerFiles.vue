@@ -166,14 +166,22 @@ import Modal from '@components/Modal.vue';
         showUploadModal.value = false;
         getFiles();
     }
+    let modalFileChooser: Ref<HTMLInputElement | undefined> = ref();
+    function addFiles(f: FileList | null) {
+        if(!f) return;
+        Array.from(f).forEach(f => toUpload.value.push(f))
+    }
 </script>
 <template>
     <Modal v-if="showUploadModal" :button-type="''" @close-btn-clicked="showUploadModal = false;toUpload=[]">
         <div v-if="!uploading">
             <div id="upload-modal-drop-div" @dragover.prevent="slightlyWhiteDivBg = true" @drop.prevent="onDrop" @dragenter.prevent="console.log('drag');slightlyWhiteDivBg = true" @dragleave.prevent="console.log('undrag');slightlyWhiteDivBg = false" :class="{
                 slightlyWhite: slightlyWhiteDivBg
-            }">
-                <p>Drop files here</p>
+            }" @click="modalFileChooser?.click()">
+                <p>Drop files here or click to open file chooser</p>
+                <input type="file" style="visibility:hidden;position:absolute;" ref="modalFileChooser" multiple @change.prevent="e => {
+                    addFiles((e.target as HTMLInputElement).files);
+                }">
             </div>
             <div v-if="toUpload.length != 0">
                 <div v-for="file of toUpload">
@@ -202,7 +210,7 @@ import Modal from '@components/Modal.vue';
         }
     }" v-if="path && path.toString().startsWith('/plugins') && hasServerPermission(user.user, server, 'plugins.download')">
         <button class="back-server-page-btn">Download Plugins</button>
-    </RouterLink><button class="back-server-page-btn" @click="openUploadModal">Upload file</button></h1>
+    </RouterLink><button class="back-server-page-btn" @click="openUploadModal">Upload files</button></h1>
     <Dropdown :create-on-cursor="true" ref="dropdown">
         <div id="dropdown-inner">
             <button @click="() => {
@@ -320,6 +328,7 @@ textarea {
     text-align: center;
     align-items: center;
     display: flex;
+    cursor: pointer;
 }
 #upload-modal-drop-div > p {
     margin: 0 auto;

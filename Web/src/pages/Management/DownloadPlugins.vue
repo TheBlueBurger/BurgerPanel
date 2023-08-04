@@ -103,6 +103,7 @@ async function downloadPlugin(version: MRVersion, hash: string, pluginName: stri
         </div>
         <p class="plugin-desc">{{ plugin.description }}</p>
     </div>
+    <br/>
     <Modal :button-type="''" v-if="viewingPlugin" @close-btn-clicked="viewingPlugin = ''" :custom-max-width="1300" :hide-scrollbar="true">
         <div v-if="viewingPluginInfo" class="modaldata">
             <div :style="{display: 'flex'}">

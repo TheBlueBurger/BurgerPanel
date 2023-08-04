@@ -89,6 +89,7 @@ app.post("/api/uploadfile/:id", (req, res) => {
         }
     });
     req.on("end", () => {
+        if(data.byteLength > 100_000_000) return;
         res.sendStatus(200);
         cb(data);
     });
@@ -279,6 +280,7 @@ export function requestUpload(timeout: number = 60_000): (string | Promise<Buffe
         let cancelled = false;
         httpUploadCallbacks[id] = (buf: Buffer) => {
             if(cancelled) return;
+            delete httpUploadCallbacks[id];
             clearTimeout(timeoutID);
             res(buf);
         }
