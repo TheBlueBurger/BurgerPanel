@@ -78,7 +78,7 @@ app.post("/api/request/:name", async (req, res, next) => {
 });
 let maxUploadSize = 100_000_000;
 app.post("/api/uploadfile/:id", (req, res) => {
-    let cb = httpUploadCallbacks[req.params.id];
+    let cb = httpUploadCallbacks.get(req.params.id);
     if(!cb) return res.sendStatus(401);
     if(isNaN(parseInt(req.headers["content-length"] ?? "a")) || parseInt(req.headers["content-length"] ?? "a") > maxUploadSize) {
         return res.status(400).send("Too big file!");
@@ -94,7 +94,7 @@ app.post("/api/uploadfile/:id", (req, res) => {
     req.on("end", () => {
         if(data.byteLength > maxUploadSize) return;
         res.sendStatus(200);
-        cb(data);
+        if(cb) cb(data);
     });
 });
 app.options("/api/uploadfile/:id", (_,r) => r.sendStatus(200));
@@ -271,24 +271,22 @@ wss.on('connection', (_client) => {
         clients.splice(clients.indexOf(client), 1);
     });
 });
-let httpUploadCallbacks: {
-    [key: string]: (buf: Buffer) => void
-} = {};
+let httpUploadCallbacks: Map<string, (b: Buffer) => void> = new Map()
 export function requestUpload(timeout: number = 60_000): (string | Promise<Buffer>)[] {
     let id = makeToken();
-    while(typeof httpUploadCallbacks[id] != "undefined") {
+    while(typeof httpUploadCallbacks.get(id) != "undefined") {
         id = makeToken();
     }
     return [id, new Promise((res, rej) => {
         let cancelled = false;
-        httpUploadCallbacks[id] = (buf: Buffer) => {
+        httpUploadCallbacks.set(id,(buf: Buffer) => {
             if(cancelled) return;
-            delete httpUploadCallbacks[id];
+            httpUploadCallbacks.delete(id);
             clearTimeout(timeoutID);
             res(buf);
-        }
+        });
         let timeoutID = setTimeout(() => {
-            delete httpUploadCallbacks[id];
+            httpUploadCallbacks.delete(id);
             cancelled = true;
             rej("Timed out while waiting for upload id " + id);
         }, timeout);
