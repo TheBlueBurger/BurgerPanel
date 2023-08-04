@@ -80,6 +80,7 @@ let maxUploadSize = 100_000_000;
 app.post("/api/uploadfile/:id", (req, res) => {
     let cb = httpUploadCallbacks.get(req.params.id);
     if(!cb) return res.sendStatus(401);
+    if(typeof cb != "function") return res.sendStatus(401); // in case
     if(isNaN(parseInt(req.headers["content-length"] ?? "a")) || parseInt(req.headers["content-length"] ?? "a") > maxUploadSize) {
         return res.status(400).send("Too big file!");
     }
