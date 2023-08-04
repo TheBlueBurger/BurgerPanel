@@ -118,11 +118,19 @@ let shouldButtonsBeWhiteLabeled = computed(() => {
     else return !!defaultModalData.value?.whiteLabels;
 });
 let blurRef = ref() as Ref<Element>;
+let containerRef = ref() as Ref<Element>;
+function onBlurClick(e: MouseEvent) {
+    let composedPath = e.composedPath();
+    let found = composedPath.some((el) => {
+        return el == containerRef.value
+    });
+    if(!found) closeModal();
+}
 </script>
 
 <template>
-    <div id="blur" v-if="shouldShow" ref="blurRef">
-        <div id="modal-container" :style="{maxWidth: ((props.customMaxWidth ?? 1000) + 'px')}">
+    <div id="blur" v-if="shouldShow" ref="blurRef" @click="onBlurClick">
+        <div id="modal-container" :style="{maxWidth: ((props.customMaxWidth ?? 1000) + 'px')}" ref="containerRef">
             <div id="modal">
                 <div id="modal-content">
                     <div id="close-btn" @click="closeModal">

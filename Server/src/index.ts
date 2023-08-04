@@ -287,7 +287,7 @@ export function requestUpload(timeout: number = 60_000): (string | Promise<Buffe
         let timeoutID = setTimeout(() => {
             delete httpUploadCallbacks[id];
             cancelled = true;
-            rej("timed out");
+            rej("Timed out while waiting for upload id " + id);
         }, timeout);
     })];
 }

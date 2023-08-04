@@ -10,6 +10,7 @@ import { hasServerPermission } from '@share/Permission';
 import { useUser } from '../../stores/user';
 import Dropdown from '@components/Dropdown.vue';
 import Modal from '@components/Modal.vue';
+import event from '@util/event';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -203,14 +204,14 @@ import Modal from '@components/Modal.vue';
         params: {
             server: props.server
         }
-    }"><button class="back-server-page-btn">Server Page</button></RouterLink><RouterLink :to="{
+    }"><button class="back-server-page-btn">Server Page</button></RouterLink><button class="back-server-page-btn" @click="openUploadModal">Upload files</button><RouterLink :to="{
         name: 'downloadPlugins',
         params: {
             server: props.server
         }
     }" v-if="path && path.toString().startsWith('/plugins') && hasServerPermission(user.user, server, 'plugins.download')">
         <button class="back-server-page-btn">Download Plugins</button>
-    </RouterLink><button class="back-server-page-btn" @click="openUploadModal">Upload files</button></h1>
+    </RouterLink></h1>
     <Dropdown :create-on-cursor="true" ref="dropdown">
         <div id="dropdown-inner">
             <button @click="() => {
@@ -230,7 +231,7 @@ import Modal from '@components/Modal.vue';
                         path: path + '/' + dropdownFile.name
                     });
                     getFiles();
-                    showInfoBox(`Deleted ${dropdownFile.name} successfully!`, `The file at ${dropdownFile.name} has been deleted.`);
+                    event.emit('createNotification', `${dropdownFile.name} has been removed.`)
                 }
             }">Delete</button>
         </div>
