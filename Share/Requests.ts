@@ -83,6 +83,9 @@ export type RequestResponses = {
     } | {
         type: "uploadConfirm",
         id: string
+    } | {
+        type: "downloadConfirm",
+        id: string
     },
     serverLogs: {
         files: string[],

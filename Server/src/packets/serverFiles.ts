@@ -1,4 +1,4 @@
-import { OurClient, Packet, ServerPacketResponse, requestUpload } from "../index.js";
+import { OurClient, Packet, ServerPacketResponse, requestDownload, requestUpload } from "../index.js";
 import { servers, users } from "../db.js";
 import { hasServerPermission } from "../util/permission.js";
 import fs from "node:fs/promises";
@@ -16,7 +16,6 @@ export default class ServerFiles extends Packet {
         if(!server || !hasServerPermission(client.data.auth.user, server?.toJSON(), "serverfiles.read")) return "No perm"; //very bad!!!!
         // Make sure the user doesnt do anything spooky
         if(!data.path || typeof data.path != "string") return;
-        if(/^[A-Za-z0-9\-_\.]+$/.test(data.path)) return;
         if(data.path.includes("..")) return; // just in case
         let pathToCheck = path.join(server.path, data.path);
         if(!pathToCheck.startsWith(server.path)) return;
@@ -96,6 +95,14 @@ export default class ServerFiles extends Packet {
                 return {
                     type: "uploadConfirm",
                     id
+                }
+            case "download":
+                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.download")) return "no permission to download";
+                let downloadID = requestDownload(pathToCheck);
+                logger.log(`${client.data.auth.user?.username} is downloading ${data.path} in ${server.name}`, "server.file.download");
+                return {
+                    type: "downloadConfirm",
+                    id: downloadID
                 }
         }
     }

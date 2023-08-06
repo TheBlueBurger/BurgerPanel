@@ -51,7 +51,7 @@ export default class Plugins extends Packet {
                 let jar = await fetch(file.url, {
                     headers: mrHeaders
                 });
-                if (!jar.ok || !jar.body) "Request isn't OK";
+                if (!jar.ok || !jar.body) return "Request isn't OK";
                 let jarBuffer = await jar.arrayBuffer();
                 await fs.writeFile(server.path + "/plugins/" + file.filename, Buffer.from(jarBuffer));
                 return {

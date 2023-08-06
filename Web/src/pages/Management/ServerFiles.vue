@@ -214,8 +214,24 @@ import event from '@util/event';
         showUploadModal.value = false;
         toUpload.value = [];
     }
+    async function downloadFile(path: string) {
+        if(dropdown.value) {
+            dropdown.value.hide();
+        }
+        let resp = await sendRequest("serverFiles", {
+            path,
+            id: props.server,
+            action: "download"
+        });
+        if(resp.type != "downloadConfirm") return;
+        if(!downloadAnchor.value) return;
+        downloadAnchor.value.href = apiUrl + "/api/downloadfile/" + resp.id;
+        downloadAnchor.value.click();
+    }
+    let downloadAnchor: Ref<HTMLAnchorElement | undefined> = ref();
 </script>
 <template>
+    <a style="position: absolute;visibility: hidden;" ref="downloadAnchor" />
     <Modal v-if="showUploadModal" :button-type="''" @close-btn-clicked="closeModal">
         <div v-if="!uploading">
             <div id="upload-modal-drop-div" @dragover.prevent="slightlyWhiteDivBg = true" @drop.prevent="onDrop" @dragenter.prevent="console.log('drag');slightlyWhiteDivBg = true" @dragleave.prevent="console.log('undrag');slightlyWhiteDivBg = false" :class="{
@@ -293,7 +309,8 @@ import event from '@util/event';
                     getFiles();
                     event.emit('createNotification', `${dropdownFile.name} has been removed.`)
                 }
-            }">Delete</button>
+            }">Delete</button><br v-if="hasServerPermission(user.user, server, 'serverfiles.download')">
+            <button v-if="hasServerPermission(user.user, server, 'serverfiles.download')" @click="downloadFile(path + '/' + dropdownFile.name)">Download</button>
         </div>
     </Dropdown>
     <div class="serverfiles">
@@ -327,7 +344,7 @@ import event from '@util/event';
             query: {
                 path: path.toString().split('/').slice(0, -1).join('/')
             }
-        }"><button>Go back</button></RouterLink> <button @click="saveFile" v-if="hasServerPermission(user.user, server, 'serverfiles.write')">Save</button> <br/>
+        }"><button>Go back</button></RouterLink> <button @click="saveFile" v-if="hasServerPermission(user.user, server, 'serverfiles.write')">Save</button> <button @click="() => typeof path == 'string' ? downloadFile(path) : 0" v-if="hasServerPermission(user.user, server, 'serverfiles.download')">Download File</button> <br/>
         <textarea v-model="fileData"></textarea>
     </div>
 </template>

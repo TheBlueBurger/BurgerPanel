@@ -80,7 +80,7 @@ let maxUploadSize = 100_000_000;
 app.post("/api/uploadfile/:id", (req, res) => {
     let cb = httpUploadCallbacks.get(req.params.id);
     if(!cb) return res.sendStatus(401);
-    if(typeof cb != "function") return res.sendStatus(401); // in case
+    if(typeof cb != "function") return res.sendStatus(500); // in case
     if(isNaN(parseInt(req.headers["content-length"] ?? "a")) || parseInt(req.headers["content-length"] ?? "a") > maxUploadSize) {
         return res.status(400).send("Too big file!");
     }
@@ -99,7 +99,12 @@ app.post("/api/uploadfile/:id", (req, res) => {
     });
 });
 app.options("/api/uploadfile/:id", (_,r) => r.sendStatus(200));
-
+app.get("/api/downloadfile/:id", (req, res) => {
+    let path = httpDownloadRequests.get(req.params.id);
+    if(typeof path != "string") return res.sendStatus(401);
+    httpDownloadRequests.delete(req.params.id);
+    res.download(path);
+})
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 if(isProd) {
     app.use(express.static(path.join(__dirname, "Web")));
@@ -272,7 +277,19 @@ wss.on('connection', (_client) => {
         clients.splice(clients.indexOf(client), 1);
     });
 });
-let httpUploadCallbacks: Map<string, (b: Buffer) => void> = new Map()
+let httpUploadCallbacks: Map<string, (b: Buffer) => void> = new Map();
+let httpDownloadRequests: Map<string, string> = new Map();
+export function requestDownload(fullPath: string, timeout: number = 60_000) {
+    let id = makeToken();
+    while(typeof httpDownloadRequests.get(id) != "undefined") {
+        id = makeToken();
+    }
+    httpDownloadRequests.set(id, fullPath);
+    setTimeout(() => {
+        if(typeof httpDownloadRequests.get(id) != "undefined") httpDownloadRequests.delete(id);
+    }, timeout);
+    return id;
+}
 export function requestUpload(timeout: number = 60_000): (string | Promise<Buffer>)[] {
     let id = makeToken();
     while(typeof httpUploadCallbacks.get(id) != "undefined") {
