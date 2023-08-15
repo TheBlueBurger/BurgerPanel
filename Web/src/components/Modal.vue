@@ -54,7 +54,8 @@ let inputResponses = ref({}) as Ref<{
 let currentID = -1;
 function doScroll() {
     if(!shouldShow.value || !blurRef.value) return;
-    if((blurRef.value as any).scrollIntoViewIfNeeded) (blurRef.value as any).scrollIntoViewIfNeeded();
+    // "as any" since it hasnt been added to types since firefox doesnt support it for some reason
+    if((blurRef.value as any)?.scrollIntoViewIfNeeded) (blurRef.value as any).scrollIntoViewIfNeeded();
     else blurRef.value.scrollIntoView()
 }
 watch(shouldShow, () => {
@@ -66,7 +67,7 @@ onMounted(() => {
         if(defaultModalShow.value) {
             throw new Error(`Got request to show modal while modal is already showing! Old: ${JSON.stringify(defaultModalData.value)}. New: ${JSON.stringify(d)}`);
         }
-        console.log("Creating (default) modal with data", d);
+        if(import.meta.env.DEV) console.log("Creating (default) modal with data", d);
         inputResponses.value = {};
         currentID = d.id;
         defaultModalData.value = d;

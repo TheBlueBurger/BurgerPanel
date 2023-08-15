@@ -18,7 +18,7 @@ function show(e: MouseEvent) {
     checkElementInterval = setInterval(() => {
         if(items.value) clearInterval(checkElementInterval);
         else return;
-        console.log({
+        if(import.meta.env.DEV) console.log({
             screenX,
             screenY,
             divWidth: items.value?.clientWidth,
@@ -35,7 +35,7 @@ function show(e: MouseEvent) {
         // if(cornerY > screenY) {
         //     clientY = clientY - cornerY + screenY;
         // }
-        console.log(`Math.min(${screenX}-${items.value?.clientWidth} -> ${screenX-items.value?.clientWidth}, ${clientX}) -> ${Math.min(screenX-items.value?.clientWidth, clientX)}`)
+        if(import.meta.env.DEV) console.log(`Math.min(${screenX}-${items.value?.clientWidth} -> ${screenX-items.value?.clientWidth}, ${clientX}) -> ${Math.min(screenX-items.value?.clientWidth, clientX)}`)
         clientX = Math.min(screenX-items.value?.clientWidth, clientX);
         clientY = Math.min(screenY-items.value?.clientHeight, clientY);
         currentX.value = clientX;

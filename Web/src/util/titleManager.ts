@@ -3,13 +3,14 @@ export default new class TitleManager {
     private titleSuffix: string = " - BurgerPanel";
     private defaultTitle: string = "BurgerPanel";
     constructor() {
-
+        this._setTitle(this.defaultTitle);
     }
     setTitle(title: string) {
         this._setTitle(this.titlePrefix + title + this.titleSuffix);
     }
     private _setTitle(title: string) {
-        console.log("Setting title to", title)
+        if(document.title == title) return;
+        if(import.meta.env.DEV) console.log("Setting title to", title)
         document.title = title;
     }
     resetTitle() {

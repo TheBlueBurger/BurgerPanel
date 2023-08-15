@@ -1,6 +1,6 @@
 export default new class EventEmitter {
-    private listeners: { [key: string]: ({callback: (...args: any[]) => void, i: number})[] } = {}; // this doesnt make any sense it is defined
-    private onceListeners: { [key: string]: ((...args: any[]) => void)[] } = {};
+    listeners: { [key: string]: ({callback: (...args: any[]) => void, i: number})[] } = {}; // this doesnt make any sense it is defined
+    onceListeners: { [key: string]: ((...args: any[]) => void)[] } = {};
     private i = 0;
     // You might think "oh why arent these private?" but if they're private, vscode will scream at me because apparently its being used but not used at the same time?!?!?
     // edit: vscode has stopped being stupid
@@ -12,11 +12,13 @@ export default new class EventEmitter {
             this.listeners[event] = [];
         }
         let id = this.i++;
+        if(import.meta.env.DEV) console.log(`Adding event listener '${event}'`)
         this.listeners[event].push({
             i: id,
             callback
         });
         if(removePromise) removePromise.then(() => {
+            if(import.meta.env.DEV) console.log(`Event handler '${event}' removed after promise resolved`);
             this.listeners[event] = this.listeners[event].filter(e => e.i != id);
         });
     }

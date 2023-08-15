@@ -25,6 +25,8 @@ let attached = ref(false);
 let user = useUser();
 
 loadingServerFromAPI.value = true;
+let triggerUnmountPromise: (value: unknown) => void;
+let unmountPromise = new Promise(r => triggerUnmountPromise = r);
 // Attach to server
 if (!attached.value) {
   let resp = await sendRequest("attachToServer", {_id: props.server}).catch(err => {
@@ -52,7 +54,7 @@ events.on("serverOutput-" + props.server, data => {
   setTimeout(() => {
     if (thisID == n) ignoreNextScroll.value = false;
   }, 250);
-});
+}, unmountPromise);
 let n = 0;
 let autoScrollInterrupted = ref(false);
 let ignoreNextScroll = ref(false);
@@ -62,10 +64,10 @@ function startServer() {
 }
 events.on("serverExited-" + props.server, data => {
   logs.value.push("Server exited with code " + data.code + "\n");
-});
+}, unmountPromise);
 events.on("serverErrored-" + props.server, data => {
   logs.value.push("Server errored: " + data.error + "\n");
-});
+}, unmountPromise);
 async function stopServer() {
   if(await confirmModal("Stop server", "Are you sure you want to stop the server? Unsaved data will be saved.", true, true, true)) await sendRequest("stopServer", {id: props.server})
 }
@@ -73,7 +75,8 @@ async function killServer() {
   if(await confirmModal("Kill server", "Are you sure you want to KILL this server? All unsaved data will be GONE.", true, true, true)) await sendRequest("killServer", {id: props.server})
 }
 onUnmounted(() => {
-  sendRequest("detachFromServer", {id: props.server})
+  sendRequest("detachFromServer", {id: props.server});
+  triggerUnmountPromise(null);
 });
 let consoleInput = ref("");
 function sendCommand() {
