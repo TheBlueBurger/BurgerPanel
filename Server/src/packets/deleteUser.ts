@@ -10,7 +10,7 @@ export default class DeleteUser extends Packet {
     permission: Permission = "users.delete";
     async handle(client: OurClient, data: any): ServerPacketResponse<"deleteUser"> {
         if(!client.data.auth.user) return;
-        let userToDelete = await users.findById(data.id).exec();
+        let userToDelete = await users.findById(data.id);
         if (!userToDelete) {
             return "User doesnt exist";
         }

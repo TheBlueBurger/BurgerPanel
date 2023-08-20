@@ -40,7 +40,7 @@ app.post("/api/request/:name", async (req, res, next) => {
     if(!token) return res.status(400).json({
         error: "Missing token"
     });
-    let user = await users.findOne({token}).exec();
+    let user = await users.findOne({token});
     if(!user) return res.status(401).json({
         error: "Invalid token"
     });
@@ -184,7 +184,7 @@ class PacketHandler {
         } catch (err) {
             client.json({
                 r: data.r,
-                e: "Internal server error. Read the server logs for more details.",
+                e: isProd ? "Internal server error. Read the server logs for more details." : `${err}`,
                 n: data.n
             });
             logger.log(`Packet errored. User is ${client.data.auth?.user?.username} (${client.data.auth?.user?._id}) ${data.n} ${err}`, "error", LogLevel.ERROR);
@@ -353,7 +353,7 @@ packetHandler.init().then(async () => {
         let dataStr = data.toString().trim();
         switch (dataStr) {
             case "users-table":
-                var userlist = await users.find({}, {}, { limit: 256 });
+                var userlist = await users.getAll();
                 console.table(userlist.map(u => u.toJSON()).map(u => ({
                     _id: u._id.toString(),
                     name: u.username,
@@ -362,7 +362,7 @@ packetHandler.init().then(async () => {
                 break;
             case "users":
             case "users-list":
-                var userlist = await users.find({}, {}, { limit: 256 });
+                var userlist = await users.getAll();
                 console.log("---------");
                 for (let user of userlist.values()) {
                     console.log("Username: " + user.username);
@@ -382,7 +382,7 @@ packetHandler.init().then(async () => {
                 break;
             case "servers":
                 console.log("---------");
-                for (let server of await (await servers.find({}, {}, { limit: 256 })).values()) {
+                for (let server of await (await servers.getAll()).values()) {
                     console.log("Server ID: " + server._id);
                     console.log("Server name: " + server.name);
                     console.log("Server port: " + server.port);
@@ -444,16 +444,16 @@ packetHandler.init().then(async () => {
             await logger.log(`${option} is being changed to ${value} in the console`, "settings.change", LogLevel.INFO);
             await setSetting(option, value);
         } else if(dataStr.startsWith("start ")) {
-            let server = await servers.findOne({name: dataStr.split(" ")[1]}).exec();
+            let server = await servers.findOne({name: dataStr.split(" ")[1]});
             try {
-                if(!server) server = await servers.findById(dataStr.split(" ")[1]).exec();
+                if(!server) server = await servers.findById(dataStr.split(" ")[1]);
             } catch {}
             if(!server) return logger.log("Server not found. Searched both by name and ID. Use 'servers' for a server list", "error", LogLevel.ERROR, false);
             serverManager.startServer(server?.toJSON());
         } else if(dataStr.startsWith("stop ")) {
-            let server = await servers.findOne({name: dataStr.split(" ")[1]}).exec();
+            let server = await servers.findOne({name: dataStr.split(" ")[1]});
             try {
-                if(!server) server = await servers.findById(dataStr.split(" ")[1]).exec();
+                if(!server) server = await servers.findById(dataStr.split(" ")[1]);
             } catch {}
             if(!server) return logger.log("Server not found. Searched both by name and ID. Use 'servers' for a server list", "error", LogLevel.ERROR, false);
             serverManager.stopServer(server?.toJSON());
@@ -462,15 +462,22 @@ packetHandler.init().then(async () => {
             logger.log(`${lockDownExcludedUser} is now excluded.`, "info", LogLevel.WARNING);
         } else if(dataStr.startsWith("delete-user ")) {
             let deleteUserID = dataStr.split(" ")[1];
-            let deleteUser = await users.findById(deleteUserID).exec();
+            let deleteUser = await users.findById(deleteUserID);
             if(!deleteUser) return logger.log(`${deleteUserID} cant be found.`, "error", LogLevel.ERROR);
-            await deleteUser?.deleteOne();
+            await deleteUser?.delete();
             logger.log(`${deleteUser?.username} is now removed.`, "info");
         }
     });
-    let adminUser = await users.findOne({
-        permissions: "full"
-    }).exec();
+    let adminUser: User | undefined;
+    if(users.isJSONCollection()) {
+        adminUser = (await users.getAll()).find(a => a.permissions.includes("full"))?.toJSON();
+    } else if(users.isMongoDBDatabaseProvider()) {
+        // @ts-ignore
+        adminUser = await users._getModel.findOne({
+            // @ts-ignore
+            permissions: "full"
+        });
+    }
     if(!adminUser) {
         await logger.log("Unable to find admin user, creating one...", "start", LogLevel.DEBUG);
         let adminUser = await users.create({
@@ -481,8 +488,6 @@ packetHandler.init().then(async () => {
         await logger.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token, "start", LogLevel.INFO, false);
     }
 });
-process.on("uncaughtException", errHandler);
-process.on("unhandledRejection", errHandler);
 function errHandler(err: any) {
     logger.log("Uncaught error: " + err, "error", LogLevel.ERROR, false, true, true).catch((err2) => {
         console.log("Error while logging error?!?!?: " + err2 + ". Original error: " + err);

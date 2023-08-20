@@ -58,7 +58,7 @@ async function createUser() {
     users.users.push(resp.user);
 }
 async function deleteUser(user: User) {
-    if(!await confirmModal("Delete user?", "Are you sure you want to remove the user " + user.username + "?")) return;
+    if(!await confirmModal("Delete user?", "Are you sure you want to remove the user " + user.username + "?", true, true, true)) return;
     await sendRequest("deleteUser", {
         id: user._id
     });
@@ -248,8 +248,8 @@ async function renameUser(id: string) {
         padding-bottom: 75px;
         padding-right: 10px;
     }
-.setting-span {
-    cursor: help;
-    margin-right: 10px;
-}
+    .setting-span {
+        cursor: help;
+        margin-right: 10px;
+    }
 </style>

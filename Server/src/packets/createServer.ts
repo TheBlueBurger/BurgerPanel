@@ -20,7 +20,7 @@ export default class CreateServer extends Packet {
         // Ensure the server name is unique
         if ((await servers.countDocuments({
             name: data.name
-        }).exec()) > 0) {
+        })) > 0) {
             return "Server name already taken"
         }
         if (data.name.length > 16) {
@@ -57,10 +57,10 @@ export default class CreateServer extends Packet {
         let server = await servers.create({
             name: data.name,
             allowedUsers: [{
-                user: client.data.auth.user?._id,
+                user: client.data.auth.user?._id || "THIS SHOULD NEVER EVER HAPPEN",
                 permissions: ["full"]
             }],
-            mem: parseInt(data.mem) || await getSetting("defaultMemory"),
+            mem: parseInt(data.mem) || parseInt((await getSetting("defaultMemory")).toString()),
             path: serverPath,
             software,
             version,

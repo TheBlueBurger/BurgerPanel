@@ -9,6 +9,7 @@ import { Request } from "../../../Share/Requests.js";
 import { User } from "../../../Share/User.js";
 import type { Model, Query } from "mongoose";
 import assert from "../util/assert.js";
+import { DatabaseObject } from "../db/databaseProvider.js";
 
 export default class Auth extends Packet {
     name: Request = "auth";
@@ -40,7 +41,7 @@ export default class Auth extends Packet {
                 }
             }
             assert((typeof filter.username == "string" && typeof filter.password == "string") || (typeof filter.token == "string"));
-            let user = await users.findOne(filter).exec();
+            let user = await users.findOne(filter);
             if (!user) {
                 logger.log("Failed login attempt!", "login.fail", LogLevel.WARNING);
                 return "Login failed!";
@@ -50,15 +51,22 @@ export default class Auth extends Packet {
             client.data.auth.authenticated = true;
             client.data.auth.token = client.data.auth.user.token;
             // Get the server list for the user
-            let allowedServers = await servers.find({
-                "allowedUsers.user": client.data.auth.user?._id
-            }).exec();
+            let allowedServers: DatabaseObject<Server>[];
+            if(servers.isJSONCollection()) {
+                allowedServers = (await servers.getAll()).filter(s => s.allowedUsers.some(a => a.user == client.data.auth.user?._id));
+            } else if(servers.isMongoDBDatabaseProvider()) {
+                // @ts-ignore
+                allowedServers = await servers.find({
+                    // @ts-ignore
+                    "allowedUsers.user": client.data.auth.user?._id
+                });
+            } else throw new Error("unknown db type");
             allowedServers.filter(server => {
                 return userHasAccessToServer(client.data.auth.user, server.toJSON())
             });
             let statuses: ServerStatuses = {};
             allowedServers.forEach(server => {
-                statuses[server._id.toHexString()] = {
+                statuses[server._id.toString()] = {
                     status: hasServerPermission(client.data.auth.user, server.toJSON(), "status") ? serverManager.getStatus(server.toJSON()) : "unknown"
                 }
             });
@@ -70,7 +78,7 @@ export default class Auth extends Packet {
                 /*
                 for await(let pin of pins) { // makes sure the user doesnt have bugged pins
                     try {
-                        let server = await servers.findById(pin).exec();
+                        let server = await servers.findById(pin);
                         if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) throw new Error("");
                         newPins.push(pin);
                     } catch {
@@ -80,7 +88,7 @@ export default class Auth extends Packet {
                 */
                 await Promise.allSettled(pins.map(pin => new Promise(async (r) => {
                     try {
-                        let server = await servers.findById(pin).exec();
+                        let server = await servers.findById(pin);
                         if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) throw new Error("");
                         newPins.push(pin);
                     } catch {

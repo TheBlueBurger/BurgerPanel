@@ -12,7 +12,7 @@ export default class SetServerOption extends Packet {
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"setServerOption"> {
         if (!data.id) return;
-        let server = await servers.findById(data.id).exec();
+        let server = await servers.findById(data.id);
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
             return "Server not found";
         }
@@ -20,7 +20,7 @@ export default class SetServerOption extends Packet {
             // Check if the name is already taken
             if(!hasServerPermission(client.data.auth.user, server.toJSON(), "set.name")) return "Not allowed";
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the name of ${server.name} (${server._id}) to ${data.name}`, "server.change-name");
-            let serverWithSameName = await servers.findOne({ name: data.name }).exec();
+            let serverWithSameName = await servers.findOne({ name: data.name });
             if (serverWithSameName) {
                 return "Already taken";
             }
@@ -39,7 +39,7 @@ export default class SetServerOption extends Packet {
                         if(server.allowedUsers.some(au => au.user == data?.allowedUsers?.user)) {
                             return "Already added!"
                         }
-                        let newUser = await users.findById(data.allowedUsers.user).exec();
+                        let newUser = await users.findById(data.allowedUsers.user);
                         if(!newUser) return;
                         server.allowedUsers.push({permissions: [], user: data?.allowedUsers?.user});
                         logger.log(`User ${client.data.auth.user?.username} added user ${newUser.username} to the server ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
@@ -66,7 +66,7 @@ export default class SetServerOption extends Packet {
                     let permission = data?.allowedUsers?.permission;
                     let user = data?.allowedUsers?.user;
                     if(!user) return;
-                    let userData = await users.findById(user).exec();
+                    let userData = await users.findById(user);
                     if(!userData) return;
                     if(!userHasAccessToServer(userData.toJSON(), server.toJSON())) return;
                     if(!_ServerPermissions.includes(permission)) return;
@@ -95,7 +95,7 @@ export default class SetServerOption extends Packet {
                         if(!server) return true;
                         return !hasServerPermission(client.data.auth.user, server.toJSON(), p)
                     })) return;
-                    let userToApplyProfile = await users.findById(userToApplyProfileID).exec();
+                    let userToApplyProfile = await users.findById(userToApplyProfileID);
                     if(!userToApplyProfile || !userHasAccessToServer(userToApplyProfile.toJSON(), server.toJSON())) return;
                     server.allowedUsers = server.allowedUsers.map(au => {
                         if(au.user == userToApplyProfileID) {

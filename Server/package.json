@@ -8,9 +8,11 @@
     "buildRelease": "gulp",
     "prepare": "gulp prepare",
     "releaseTest": "npm run buildRelease && cd _build && node burgerpanel.mjs",
-    "start": "BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js",
+    "start": "node dist/Server/src/index.js",
     "dev": "npm run build && npm run startInspect",
-    "startInspect": "NODE_OPTIONS=\"--inspect\" BURGERPANEL_MONGODB=mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel node dist/Server/src/index.js"
+    "devDebug": "npm run build && npm run startInspectBreak",
+    "startInspect": "node --inspect dist/Server/src/index.js",
+    "startInspectBreak": "node --inspect-brk dist/Server/src/index.js"
   },
   "type": "module",
   "keywords": [],

@@ -1,4 +1,4 @@
-import { allowedSoftwares, Server, ServerStatus } from "../../Share/Server.js"
+import { AllowedSoftware, allowedSoftwares, Server, ServerStatus } from "../../Share/Server.js"
 import { clients, OurClient } from "./index.js"
 import { ChildProcess, spawn } from "node:child_process"
 import { User } from "../../Share/User.js";
@@ -111,7 +111,7 @@ enforce-secure-profile=false
         await this.setupServer(server);
         let serverEntry = this.servers[server._id];
         if (serverEntry.childProcess) throw new Error("Server is already running: " + server._id);
-        let childProcess = spawn("java", ["-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", "-jar", "server.jar", "--nogui"], {
+        let childProcess = spawn("java", ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", "-jar", "server.jar", "--nogui"], {
             cwd: server.path,
             stdio: "pipe",
         });
@@ -153,7 +153,7 @@ enforce-secure-profile=false
     }
     async handleAutorestart(server: Server, timeout?: number) {
         // lets check if it has been updated
-        let newServer = await servers.findById(server._id).exec();
+        let newServer = await servers.findById(server._id);
         if(!newServer) return logger.log(`Couldn't find the server in the database while handling auto restart. Did the server get deleted? ${server._id} ${server.name}`, "server.autorestart", LogLevel.ERROR);
         if(!newServer.autoRestart) return;
         if(timeout) await promiseSleep(timeout);
@@ -230,21 +230,21 @@ enforce-secure-profile=false
         let serverEntry = this.servers[server._id];
         if (serverEntry?.childProcess) throw new Error("Server is running. Please stop it before changing the version.");
         await fs.rm(server.path + "/server.jar", { force: true });
-        await servers.findByIdAndUpdate(server._id, { $set: { version } }).exec();
+        await servers.findByIdAndUpdate(server._id, { version });
     }
-    async editSoftware(server: Server, software: string) {
+    async editSoftware(server: Server, software: AllowedSoftware) {
         if (!allowedSoftwares.includes(software)) throw new Error("Invalid software: " + software);
         let serverEntry = this.servers[server._id];
         if (serverEntry?.childProcess) throw new Error("Server is running. Please stop it before changing the software.");
         await fs.rm(server.path + "/server.jar", { force: true });
-        await servers.findByIdAndUpdate(server._id, { $set: { software } }).exec();
+        await servers.findByIdAndUpdate(server._id, { software });
     }
     deleteServerFromCache(server: Server) {
         if (this.servers[server._id]) delete this.servers[server._id];
     }
     async autoStartServers() {
         logger.log("Autostarting servers...", "server.autostart", LogLevel.DEBUG);
-        let serversToStart = await servers.find({ autoStart: true }).exec();
+        let serversToStart = await servers.find({ autoStart: true });
         await Promise.all(serversToStart.map(async s => {
             this.startServer(s.toJSON())
         }));
