@@ -130,7 +130,9 @@ function onBlurClick(e: MouseEvent) {
 </script>
 
 <template>
-    <div id="blur" v-if="shouldShow" ref="blurRef" @click="onBlurClick">
+    <div id="blur" v-if="shouldShow" ref="blurRef" @click="onBlurClick" :style="{
+        zIndex: __isDefaultModal ? 1050 : 1040
+    }">
         <div id="modal-container" :style="{maxWidth: ((props.customMaxWidth ?? 1000) + 'px')}" ref="containerRef">
             <div id="modal">
                 <div id="modal-content">

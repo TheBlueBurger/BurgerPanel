@@ -9,6 +9,7 @@ import titleManager from '../../util/titleManager';
 import { confirmModal } from '../../util/modal';
 import { useUser } from '../../stores/user';
 import { useServers } from '../../stores/servers';
+import { hasServerPermission } from '@share/Permission';
 let router = useRouter();
 let props = defineProps<{
   server: string;
@@ -115,7 +116,7 @@ function onScrolled() {
     <br />
     Logs:
     <textarea readonly ref="serverTextArea" @scroll="onScrolled">{{ logs.join("") }}</textarea>
-    <div class="console-input"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Write here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
+    <div class="console-input" v-if="hasServerPermission(user.user, server, 'console.write')"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Write here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
     <br/>
   </div>
   <div v-else>
