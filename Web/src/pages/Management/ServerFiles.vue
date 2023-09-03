@@ -12,6 +12,7 @@
     import Modal from '@components/Modal.vue';
     import event from '@util/event';
     import axios, { AxiosProgressEvent } from "axios";
+    import TextInput from '@components/TextInput.vue';
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -267,9 +268,41 @@
     }
     let downloadAnchor: Ref<HTMLAnchorElement | undefined> = ref();
     let eta = computed(() => (((totalSize.value??0)-uploadTotal.value) / (lastSafeRate.value)));
+    let newType = ref("file");
+    let newName = ref("");
+    let showNewDialog = ref(false);
+    async function createNew() {
+        await sendRequest("serverFiles", {
+            action: "new",
+            type: newType.value,
+            path: path.value + "/" + newName.value,
+            id: server.value?._id
+        });
+        showNewDialog.value = false;
+        if(newType.value == "folder" && openWhenCreated.value) router.push({query: {path: path.value + "/" + newName.value}});
+    }
+    let openWhenCreated = ref(false);
 </script>
 <template>
     <a style="position: absolute;visibility: hidden;" ref="downloadAnchor" />
+    <Modal button-type="" @close-btn-clicked="showNewDialog = false" v-if="showNewDialog">
+        <h1 style="margin-bottom:10px">New</h1>
+        <TextInput :modal-mode="true" default="" @set="a => newName = a" :initial-editing="true" placeholder="Name" />
+        <br/>
+        <button :style="{
+            backgroundColor: newType == 'file' ? '#e3dede' : undefined,
+            color: newType == 'file' ? 'black' : 'white',
+            marginBottom: '15px'
+        }" @click="newType = 'file'" :disabled="newType == 'file'">File</button><button :style="{
+            backgroundColor: newType == 'folder' ? '#e3dede' : undefined,
+            color: newType == 'folder' ? 'black' : 'white'
+        }" @click="newType = 'folder'" :disabled="newType == 'folder'">Folder</button>
+        <br v-if="newType != 'folder'"/>
+        <div v-if="newType == 'folder'">
+            Enter folder when created <input type="checkbox" v-model="openWhenCreated">
+        </div>
+        <button @click="createNew">Create</button>
+    </Modal>
     <Modal v-if="showUploadModal" :button-type="''" @close-btn-clicked="closeModal">
         <div v-if="!uploading">
             <div id="upload-modal-drop-div" @dragover.prevent="slightlyWhiteDivBg = true" @drop.prevent="onDrop" @dragenter.prevent="console.log('drag');slightlyWhiteDivBg = true" @dragleave.prevent="console.log('undrag');slightlyWhiteDivBg = false" :class="{
@@ -329,7 +362,7 @@
         }
     }" v-if="path && path.toString().startsWith('/plugins') && hasServerPermission(user.user, server, 'plugins.download')">
         <button class="back-server-page-btn">Download Plugins</button>
-    </RouterLink></h1>
+    </RouterLink><button class="back-server-page-btn" @click="newName = '';showNewDialog = true">New</button></h1>
     <Dropdown :create-on-cursor="true" ref="dropdown">
         <div id="dropdown-inner">
             <button @click="() => {

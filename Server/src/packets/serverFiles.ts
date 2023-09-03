@@ -11,7 +11,7 @@ import { getSetting } from "../config.js";
 
 export default class ServerFiles extends Packet {
     name: Request = "serverFiles";
-    requiresAuth: boolean = false;
+    requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"serverFiles"> {
         let server = await servers.findById(data.id);
         if(!server || !hasServerPermission(client.data.auth.user, server?.toJSON(), "serverfiles.read")) return "No perm"; //very bad!!!!
@@ -21,10 +21,12 @@ export default class ServerFiles extends Packet {
         let pathToCheck = path.join(server.path, data.path);
         if(!pathToCheck.startsWith(server.path)) return;
         // Lastly check if it actually exists
+        let found = false;
         try {
-            await fs.stat(pathToCheck)
+            await fs.stat(pathToCheck);
+            found = true;
         } catch {
-            if(data.action != "upload") return "Invalid path"; // very spooky
+            if(data.action != "upload" && data.action != "new") return "Invalid path"; // very spooky
         }
         // We should be safe now
         switch(data.action) {
@@ -104,6 +106,19 @@ export default class ServerFiles extends Packet {
                 return {
                     type: "downloadConfirm",
                     id: downloadID
+                }
+            case "new":
+                if(found) return "Already exists!";
+                logger.log(`${client.data.auth.user?.username} is creating ${data.path} in ${server.name}`, "server.file.write");
+                switch(data.type) {
+                    case "folder":
+                        await fs.mkdir(pathToCheck)
+                        break;
+                    case "file":
+                        (await fs.open(pathToCheck, "a")).close();
+                        break;
+                    default:
+                        return "invalid type";
                 }
         }
     }
