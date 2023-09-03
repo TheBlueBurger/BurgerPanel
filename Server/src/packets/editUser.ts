@@ -96,7 +96,7 @@ export default class EditUser extends Packet {
                 logger.log(`${client.data.auth.user?.username} is resetting the token of ${user.username}`, "user.token.reset")
                 user.token = makeToken();
                 
-                clients.filter(c => c.data.auth.user?._id == client.data.auth.user?._id).forEach(cl => {
+                clients.filter(c => c.data.auth.user?._id == user._id.toString()).forEach(cl => {
                     if(cl != client) cl.close();
                 });
                 await user.save();
