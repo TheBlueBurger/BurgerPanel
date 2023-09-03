@@ -10,10 +10,10 @@ export default class GetAllServers extends Packet {
     requiresAuth: boolean = true;
     permission: Permission = "servers.all.view";
     async handle(client: OurClient, data: any): ServerPacketResponse<"getAllServers"> {
-        let serverList = await servers.find({}, {}, { limit: Infinity }).exec();
+        let serverList = await servers.getAll();
         let statuses = {} as ServerStatuses;
         serverList.forEach(server => {
-            statuses[server._id.toHexString()] = {
+            statuses[server._id.toString()] = {
                 status: hasServerPermission(client.data.auth.user, server.toJSON(), "status") ? serverManager.getStatus(server.toJSON()) : "unknown"
             }
         });

@@ -13,7 +13,7 @@ export default class GetUserData extends Packet {
         if(!data.id || typeof data.id != "string") {
             return "User not provided";
         }
-        let user = await users.findById(data.id).exec();
+        let user = await users.findById(data.id);
         if (user) return {
             user: filterUserData(user.toJSON())
         }

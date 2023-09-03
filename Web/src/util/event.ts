@@ -15,11 +15,11 @@ export default new class EventEmitter {
         if(import.meta.env.DEV) console.log(`Adding event listener '${event}'`)
         this.listeners[event].push({
             i: id,
-            callback
+            callback //a
         });
         if(removePromise) removePromise.then(() => {
-            if(import.meta.env.DEV) console.log(`Event handler '${event}' removed after promise resolved`);
             this.listeners[event] = this.listeners[event].filter(e => e.i != id);
+            if(import.meta.env.DEV) console.log(`Event handler '${event}' removed after promise resolved, now has ${this.listeners[event].length} listener${this.listeners[event].length == 1 ? '' : 's'}`);
         });
     }
     emit(event: string, ...args: any[]) {

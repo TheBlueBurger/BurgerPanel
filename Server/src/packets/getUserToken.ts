@@ -13,7 +13,7 @@ export default class GetUserToken extends Packet {
         let userID = data.id;
         if (!userID) return;
         let user: User | undefined;
-        user = (await users.findById(userID).exec())?.toJSON();
+        user = (await users.findById(userID))?.toJSON();
         if (!user) return "User not found";
         logger.log(`User ${client.data.auth.user?.username} (${client.data.auth.user?._id}) is getting the token of ${user.username} (${user._id})!!`, "user.token.read", LogLevel.WARNING);
         return {

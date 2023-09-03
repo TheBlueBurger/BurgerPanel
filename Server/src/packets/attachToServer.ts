@@ -8,7 +8,7 @@ export default class AttachToServer extends Packet {
     name: Request = "attachToServer";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"attachToServer"> {
-        let server = await servers.findById(data._id).exec();
+        let server = await servers.findById(data._id);
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
             return "Server not found";
         }

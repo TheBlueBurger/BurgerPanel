@@ -12,7 +12,7 @@ export default class Plugins extends Packet {
     name: Request = "plugins";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"plugins"> {
-        let server = await servers.findById(data.server).exec();
+        let server = await servers.findById(data.server);
         if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) return "Server not found";
         if(!hasServerPermission(client.data.auth.user, server?.toJSON(), "plugins.download")) return "no permission";
         switch(data.type) {

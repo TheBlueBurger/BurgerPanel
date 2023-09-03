@@ -120,7 +120,7 @@ async function copyFiles() {
     fs.copyFileSync("../LICENSE", "_build/LICENSE.txt");
     fs.copyFileSync("../README.md", "_build/README.txt");
     fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
-    fs.writeFileSync("_build/mongodb_url.txt", "mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel");
+    fs.writeFileSync("_build/mongodb_url.txt", "json:data.json");
 }
 
 function buildAndBundle() {

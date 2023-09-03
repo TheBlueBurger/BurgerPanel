@@ -45,14 +45,14 @@ export async function modalInput(title: string, inputs: ModalData["inputs"], des
     });
     if(["OK","YES"].includes(modalResp.type)) return modalResp;
 }
-export async function confirmModal(title: string, description: string, grayNo: boolean = false, reversedButtonColors: boolean = false, whiteButtons: boolean = false) {
+export async function confirmModal(title: string, description: string, grayNo: boolean = false, reversedButtonColors: boolean = false, whiteLabels: boolean = false) {
     return (await requestModal({
         title,
         description,
         confirmButtonType: "CONFIRM",
         grayNo,
         reversedButtonColors,
-        whiteLabels: whiteButtons
+        whiteLabels: whiteLabels
     })).type == "YES";
 }
 export async function requestModal(data: ModalData): Promise<ModalResp> {

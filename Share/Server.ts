@@ -1,5 +1,6 @@
 import { ServerPermissions } from "./Permission";
-
+export const allowedSoftwares = ["purpur", "paper", "vanilla"] as const;
+export type AllowedSoftware = typeof allowedSoftwares[number];
 export interface Server {
     _id: string;
     name: string;
@@ -10,13 +11,12 @@ export interface Server {
         permissions: ServerPermissions[];
     }[];
     version: string;
-    software: "vanilla" | "purpur" | "paper";
+    software: AllowedSoftware;
     port: number;
     autoStart: boolean;
     autoRestart: boolean;
 }
 
-export const allowedSoftwares = ["purpur", "paper", "vanilla"];
 export type ServerStatus = "running" | "stopping" | "stopped" | "unknown";
 export type ServerStatuses = {
     [id: string]: {

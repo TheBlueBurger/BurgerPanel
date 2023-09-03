@@ -9,7 +9,7 @@ export default class KillServer extends Packet {
     name: Request = "killServer";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"killServer"> {
-        let server = await servers.findById(data.id).exec();
+        let server = await servers.findById(data.id);
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
             return "Not found"
         }

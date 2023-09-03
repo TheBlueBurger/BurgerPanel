@@ -9,7 +9,7 @@ export default class WriteToConsole extends Packet {
     name: Request = "writeToConsole";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"writeToConsole"> {
-        let server = await servers.findById(data.id).exec();
+        let server = await servers.findById(data.id);
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
             return "Server not found!";
         }

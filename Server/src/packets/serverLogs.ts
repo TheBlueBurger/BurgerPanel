@@ -13,7 +13,7 @@ export default class ServerLogs extends Packet {
     name: Request = "serverLogs";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"serverLogs"> {
-        let server = await servers.findById(data.id).exec();
+        let server = await servers.findById(data.id);
         if (!server || !hasServerPermission(client.data.auth.user, server.toJSON(), "oldlogs.read")) return "No perm";
         if(!server.path) return; // ?!?!?!
         let logPath = path.join(server.path, "logs");
