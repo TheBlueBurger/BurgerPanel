@@ -68,13 +68,13 @@ export default class ImportServer extends Packet {
         let server = await servers.create({
             name: data.name,
             version: data.version,
-            mem: data.mem,
+            mem: parseInt(data.mem),
             software: data.software,
             allowedUsers: [{
                 user: client.data.auth.user?._id || "",
                 permissions: ["full"]
             }],
-            port: data.port,
+            port: parseInt(data.port),
             path: data.path,
         });
         try {

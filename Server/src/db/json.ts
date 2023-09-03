@@ -1,8 +1,7 @@
 // unrecommended for large servers
-import DatabaseProvider, { Collection, DatabaseLookupFilter, DatabaseObject, DatabaseSchema, DatabaseSchemaInnerType, DatabaseType, isFollowingSchema } from "./databaseProvider.js"
+import DatabaseProvider, { Collection, DatabaseLookupFilter, DatabaseObject, DatabaseSchema, DatabaseSchemaInnerType, DatabaseType } from "./databaseProvider.js"
 import path from "node:path";
 import url from "node:url";
-import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import { exists } from "../util/exists.js";
 import nodeCrypto from "node:crypto";
@@ -80,7 +79,7 @@ export class JSONCollection<T extends DatabaseType> extends Collection<T> {
                 await newObj.delete();
             },
             async save() {
-                if(!isFollowingSchema(this, that.schema)) throw new Error("Doesnt follow schema!");
+                await that.assertsFollowsSchema(this.toJSON());
                 await this.delete();
                 await that.insert(this.toJSON());
             },
@@ -98,6 +97,7 @@ export class JSONCollection<T extends DatabaseType> extends Collection<T> {
         return newObj;
     }
     private insert(obj: T) {
+        this.assertsFollowsSchema(obj);
         this.databaseProvider.currentFullJSON[this.name].push(obj);
         this.databaseProvider.saveJSON();
     }
@@ -113,8 +113,56 @@ export class JSONCollection<T extends DatabaseType> extends Collection<T> {
     }
     async create(data: Partial<Omit<T, "_id">>): Promise<DatabaseObject<T>> {
         let newData = this.bootstrapNecessaryTypes(data);
+        await this.assertsFollowsSchema(newData);
         this.insert(newData);
         return this.createDatabaseObject(newData);
+    }
+    async assertsFollowsSchema(data: T, schema: DatabaseSchema<T> = this.schema): Promise<never | undefined> {
+        for await(let key of Object.keys(schema)) {
+            let obj = schema[key as keyof typeof schema];
+            if(Array.isArray(obj)) {
+                // @ts-ignore
+                for await(let dObj of Object.values(data[key] ?? [])) {
+                    try {
+                        await this.assertsFollowsSchema({
+                            _id:"A",
+                            __: dObj
+                            // @ts-ignore
+                        } as any as T, {_id:{type:"String"},__: obj[0]});
+                    } catch(err) {
+                        throw new Error(`Cannot validate object in array .${key}: ${(err as Error).message ?? err}`);
+                    }
+                }
+            } else {
+                // @ts-ignore
+                let databaseObj: any = data[key];
+                if(obj.required) {
+                    if(typeof databaseObj == "undefined") throw new Error(`.${key} is undefined when its required`);
+                } else {
+                    if(typeof databaseObj == "undefined") continue;
+                }
+                if(obj.unique) {
+                    if(schema != this.schema) throw new Error("Unique isnt allowed in arrays");
+                    // @ts-ignore
+                    let foundItems = await this.find({[key as keyof typeof T]: databaseObj});
+                    let foundItemsWithoutSameID = foundItems.filter(a => a._id != data._id);
+                    if(foundItemsWithoutSameID.length) throw new Error(`.${key} isnt unique!`);
+                }
+                if(obj.type == "number") {
+                    if(typeof databaseObj != "number") throw new Error(`.${key} isnt a number when type is`);
+                    if(isNaN(databaseObj)) throw new Error(`.${key} is nan`);
+                    if(typeof obj.max == "number" && databaseObj > obj.max) throw new Error(`.${key} is too big (${databaseObj}) when ${obj.max} is max`);
+                    if(typeof obj.min == "number" && databaseObj < obj.min) throw new Error(`.${key} is too small (${databaseObj}) when ${obj.min} is min`);
+                } else if(obj.type == "String") {
+                    if(typeof databaseObj != "string") throw new Error(`.${key} isnt a string when type is`);
+                    if(typeof obj.maxlength == "number" && databaseObj.length > obj.maxlength) throw new Error(`String .${key} is too long!`);
+                } else if(obj.type == "Date") {
+                    if(typeof databaseObj != "number" || !Number.isInteger(databaseObj)) throw new Error(`.${key} is supposed to be a number because it's a date but it isnt`);
+                } else if(obj.type == "boolean") {
+                    if(typeof databaseObj != "boolean") throw new Error(`.${key} isnt a boolean when its supposed to be one!`);
+                }
+            }
+        }
     }
     bootstrapNecessaryTypes(data: Partial<Omit<T, "_id">>, schema: DatabaseSchema<T> = this.schema, includeID: boolean = true): T {
         let newData: any = {};
@@ -165,6 +213,7 @@ export class JSONCollection<T extends DatabaseType> extends Collection<T> {
                 // @ts-ignore
                 obj[key as keyof typeof obj] = newData[key as keyof typeof newData];
             }
+            await obj.save();
         }
     }
     async countDocuments(filter: Partial<T>): Promise<number> {

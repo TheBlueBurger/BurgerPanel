@@ -1,14 +1,16 @@
+import type mongoose from "mongoose";
 import type { JSONCollection } from "./json.js";
+import type { MongooseCollection } from "./mongo.js";
 export default class DatabaseProvider {
     constructor() {
 
     }
-    init() {this._unImplemented()}
+    async init() {this._unImplemented()}
     private _unImplemented() {
         throw new Error("Uninplemented database function!");
     }
     // @ts-expect-error
-    getCollection<T extends DatabaseType>(name: string, schema: DatabaseSchema<T>): Collection<T> {this._unImplemented()}
+    getCollection<T extends DatabaseType>(name: string, schema: DatabaseSchema<T>, mongooseSchema: mongoose.Schema): Collection<T> {this._unImplemented()}
 }
 export type DatabaseLookupFilter<T> = Partial<T>
 export class Collection<T extends DatabaseType> {
@@ -22,8 +24,7 @@ export class Collection<T extends DatabaseType> {
         throw new Error("Uninplemented database function!");
     }
     isJSONCollection(): this is JSONCollection<T> {return false}
-    // FIXME: fix when mongo implemented
-    isMongoDBDatabaseProvider(): this is string {return false}
+    isMongoDBDatabaseProvider(): this is MongooseCollection<T> {return false}
     create(data: Partial<Omit<T, "_id">>): Promise<DatabaseObject<T>> {this._unImplemented()}
     upsert(findBy: DatabaseLookupFilter<T>, newData: Partial<Omit<T, "_id">>): Promise<void> {this._unImplemented()}
     countDocuments(filter: DatabaseLookupFilter<T>): Promise<number> {this._unImplemented()}
@@ -48,7 +49,7 @@ export type DatabaseSchemaInnerType = {
     default?: any
 }
 export type DatabaseSchema<T> = {
-    [name in keyof T]: DatabaseSchemaInnerType | [DatabaseSchemaInnerType] | [{[key: string]: DatabaseSchemaInnerType}]
+    [name in keyof T]: DatabaseSchemaInnerType | [DatabaseSchemaInnerType] | [{[key: string]: DatabaseSchemaInnerType | [DatabaseSchemaInnerType]}]
 };
 export function isFollowingSchema<T>(obj: DatabaseObject<T>, schema: DatabaseSchema<T>) {
     return true; // TODO: fix

@@ -8,6 +8,7 @@ import DatabaseProvider, { DatabaseSchema, DatabaseType } from './db/databasePro
 import JSONDatabaseProvider from './db/json.js';
 import { User } from '../../Share/User.js';
 import { Server } from '../../Share/Server.js';
+import MongoDatabaseProvider from './db/mongo.js';
 // use mongoose unless u want to pain urself
 mongoose.set("strictQuery", false);
 if(process.env.BURGERPANEL_MONGOOSE_DEBUG) mongoose.set("debug", true)
@@ -34,14 +35,13 @@ let databaseManager = new class DatabaseManager {
     databaseProvider: DatabaseProvider;
     constructor() {
         if(mongoURL?.startsWith("json:")) this.databaseProvider = new JSONDatabaseProvider(mongoURL.replace("json:", ""));
-        //else this.databaseProvider = new MongoDatabaseProvider(mongoURL);
-        else this.databaseProvider = new DatabaseProvider();
+        else this.databaseProvider = new MongoDatabaseProvider(mongoURL as string);
     }
     async _init() {
         await this.databaseProvider.init();
     }
-    collection<T extends DatabaseType>(name: string, schema: DatabaseSchema<T>) {
-        return this.databaseProvider.getCollection<T>(name, schema);
+    collection<T extends DatabaseType>(name: string, schema: DatabaseSchema<T>, mongooseSchema: mongoose.Schema) {
+        return this.databaseProvider.getCollection<T>(name, schema, mongooseSchema);
     }
 }
 await databaseManager._init();
@@ -57,7 +57,41 @@ export let users = databaseManager.collection<User>("User", {
     devMode: {type: "boolean", default: false},
     password: {type: "String"},
     pins: [{type: "String", default: []}]
-});
+}, new mongoose.Schema({
+    username: {
+        type: String,
+        unique: true,
+        maxlength: 24,
+        required: true
+    },
+    createdAt: { type: Date, default: Date.now },
+    token: {
+        type: String,
+        default: makeToken
+    },
+    permissions: {
+        type: [String],
+        default: []
+    },
+    password: {
+        type: String
+    },
+    setupPending: {
+        type: Boolean,
+        default: true
+    },
+    devMode: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
+    pins: [{
+        type: String,
+        max: 3,
+        default: [],
+        validate: [(v: any) => v.length >= 10, "Too many pinned servers"]
+    }]
+}));
 
 export let servers = databaseManager.collection<Server>("Server", {
     name: {
@@ -80,7 +114,7 @@ export let servers = databaseManager.collection<Server>("Server", {
     },
     allowedUsers: [{
         user: {type: "String"},
-        permissions: {type: "String"},
+        permissions: [{type: "String"}],
     }],
     version: {
         type: "String",
@@ -110,7 +144,56 @@ export let servers = databaseManager.collection<Server>("Server", {
     _id: {
         type: "String"
     }
-});
+}, new mongoose.Schema({
+    name: {
+        type: String,
+        unique: true,
+        maxlength: 16,
+        required: true
+    },
+    path: {
+        type: String,
+        unique: true,
+        maxlength: 255,
+        required: true
+    },
+    mem: {
+        type: Number,
+        min: 0,
+        max: 99999,
+        required: true
+    },
+    allowedUsers: [{
+        user: String,
+        permissions: [String],
+        /*roles: [mongoose.Types.ObjectId]*/
+    }],
+    version: {
+        type: String,
+        maxlength: 16,
+        required: true
+    },
+    software: {
+        type: String,
+        maxlength: 7,
+        required: true
+    },
+    port: {
+        min: 1,
+        max: 65535,
+        type: Number,
+        unique: true,
+        required: true
+    },
+    autoStart: {
+        type: Boolean,
+        default: false
+    },
+    autoRestart: {
+        type: Boolean,
+        default: false
+    }
+}));
 
 export let settings = databaseManager.collection<{_id: string, key: string, value: string}>("Setting", {
     key: {
@@ -125,4 +208,14 @@ export let settings = databaseManager.collection<{_id: string, key: string, valu
     _id: {
         type: "String"
     }
-});
+}, new mongoose.Schema({
+    key: {
+        type: String,
+        unique: true,
+        maxlength: 255,
+    },
+    value: {
+        type: String,
+        maxlength: 1000,
+    },
+}));

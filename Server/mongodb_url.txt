@@ -1,1 +1,1 @@
-json:data.json
+mongodb://burgerpanel:burgerpanel@localhost:27017/burgerpanel

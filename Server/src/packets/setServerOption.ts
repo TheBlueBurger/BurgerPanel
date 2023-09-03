@@ -103,7 +103,7 @@ export default class SetServerOption extends Packet {
                         }
                         return au;
                     });
-                    logger.log(`${client.data.auth.user?.username} set applied profile ${profileName} of ${userToApplyProfile.username} in ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
+                    logger.log(`${client.data.auth.user?.username} applied profile ${profileName} of ${userToApplyProfile.username} in ${server.name}`, "server.allowedUsers.changed", LogLevel.INFO);
             }
         }
         if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port")) {
