@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { Ref, inject, ref, onMounted, watch, computed } from 'vue';
 import { Server, allowedSoftwares } from '@share/Server';
-import EventEmitter from '../util/event';
+import EventEmitter from '@util/event';
 import { RouteLocationNormalized, useRouter } from 'vue-router';
-import ServerStatus from "@components/ServerStatus.vue";
-import sendRequest from '../util/request';
-import { useUser } from '../stores/user';
-import { useServers } from '../stores/servers';
-import { useSettings } from '../stores/settings';
+import sendRequest from '@util/request';
+import { useUser } from '@stores/user';
+import { useServers } from '@stores/servers';
+import { useSettings } from '@stores/settings';
 import ServerVue from '@components/Server.vue';
 
 let settings = useSettings();

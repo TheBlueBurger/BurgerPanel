@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Ref, computed, inject } from 'vue';
+import { Ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import TextInput from '@components/TextInput.vue';
-import event from '../util/event';
-import sendRequest from '../util/request';
-import { useUser } from '../stores/user';
-import { useServers } from '../stores/servers';
+import event from '@util/event';
+import sendRequest from '@util/request';
+import { useUser } from '@stores/user';
+import { useServers } from '@stores/servers';
 
 let router = useRouter();
 let servers = useServers();

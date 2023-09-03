@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import Perf from '@components/Perf.vue';
-import titleManager from '../util/titleManager';
+import titleManager from '@util/titleManager';
 import Server from '@components/Server.vue';
-import { useServers } from '../stores/servers';
+import { useServers } from '@stores/servers';
 titleManager.setTitle("Home");
 let servers = useServers();
 let pinnedServers = await servers.getPinnedServers();

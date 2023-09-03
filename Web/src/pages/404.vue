@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import titleManager from '../util/titleManager';
+import titleManager from '@util/titleManager';
 
 let router = useRouter();
 titleManager.setTitle("404 Not Found");

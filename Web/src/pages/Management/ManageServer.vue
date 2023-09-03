@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Ref, ref, onUnmounted, computed } from 'vue';
 import { Server } from '@share/Server';
-import events from '../../util/event';
+import events from '@util/event';
 import { useRouter } from 'vue-router';
 import ServerStatus from '@components/ServerStatus.vue';
-import sendRequest from '../../util/request';
-import titleManager from '../../util/titleManager';
-import { confirmModal } from '../../util/modal';
-import { useUser } from '../../stores/user';
-import { useServers } from '../../stores/servers';
+import sendRequest from '@util/request';
+import titleManager from '@util/titleManager';
+import { confirmModal } from '@util/modal';
+import { useUser } from '@stores/user';
+import { useServers } from '@stores/servers';
 import { hasServerPermission } from '@share/Permission';
 let router = useRouter();
 let props = defineProps<{

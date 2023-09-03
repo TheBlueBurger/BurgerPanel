@@ -290,7 +290,7 @@ export function requestDownload(fullPath: string, timeout: number = 60_000) {
     }, timeout);
     return id;
 }
-export function requestUpload(timeout: number = 60_000): (string | Promise<Buffer>)[] {
+export function requestUpload(timeout: number = 600_000): (string | Promise<Buffer>)[] {
     let id = makeToken();
     while(typeof httpUploadCallbacks.get(id) != "undefined") {
         id = makeToken();

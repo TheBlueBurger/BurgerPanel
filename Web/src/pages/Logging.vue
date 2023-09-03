@@ -1,9 +1,9 @@
 <script setup lang="ts">
     import { ref } from 'vue';
-    import { useSettings } from '../stores/settings';
+    import { useSettings } from '@stores/settings';
     import { IDs } from "@share/Logging";
     import TextInput from '@components/TextInput.vue';
-    import sendRequest from '../util/request';
+    import sendRequest from '@util/request';
     let settings = useSettings();
     let logPath = ref("");
     let webhookURL = ref("");

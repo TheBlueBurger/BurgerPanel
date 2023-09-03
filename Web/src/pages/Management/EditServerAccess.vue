@@ -4,12 +4,12 @@ import { useRouter } from 'vue-router';
 import { _ServerPermissions, ServerPermissions, DefaultServerProfiles, serverProfilesDescriptions, hasServerPermission } from '@share/Permission';
 import { Server } from '@share/Server';
 import { User } from '@share/User';
-import sendRequest from '../../util/request';
-import titleManager from '../../util/titleManager';
-import { showInfoBox } from '../../util/modal';
-import { useUser } from '../../stores/user';
-import { useServers } from '../../stores/servers';
-import { useUsers } from '../../stores/users';
+import sendRequest from '@util/request';
+import titleManager from '@util/titleManager';
+import { showInfoBox } from '@util/modal';
+import { useUser } from '@stores/user';
+import { useServers } from '@stores/servers';
+import { useUsers } from '@stores/users';
 
 let props = defineProps({
     server: {

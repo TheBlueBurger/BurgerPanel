@@ -17,7 +17,8 @@
       "@assets/*": ["./src/assets/*"],
       "@components/*": ["./src/components/*"],
       "@util/*": ["./src/util/*"],
-      "@share/*": ["../Share/*"]
+      "@share/*": ["../Share/*"],
+      "@stores/*": ["./src/stores/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],

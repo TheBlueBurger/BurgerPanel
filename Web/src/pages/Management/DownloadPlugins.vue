@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, ref, watch } from 'vue';
-import { useServers } from '../../stores/servers';
+import { useServers } from '@stores/servers';
 import TextInput from '@components/TextInput.vue';
 import sendRequest from '@util/request';
 import { ModrinthPluginResult, Plugin as MRPlugin, Version as MRVersion } from '@share/Plugin';

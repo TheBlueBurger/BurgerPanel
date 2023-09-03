@@ -2,15 +2,16 @@
     import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
     import { Server } from '@share/Server';
     import { useRouter } from 'vue-router';
-    import sendRequest from '../../util/request';
-    import titleManager from '../../util/titleManager';
-    import { confirmModal, showInfoBox } from '../../util/modal';
-    import { useServers } from '../../stores/servers';
-import { hasServerPermission } from '@share/Permission';
-import { useUser } from '../../stores/user';
-import Dropdown from '@components/Dropdown.vue';
-import Modal from '@components/Modal.vue';
-import event from '@util/event';
+    import sendRequest from '@util/request';
+    import titleManager from '@util/titleManager';
+    import { confirmModal, showInfoBox } from '@util/modal';
+    import { useServers } from '@stores/servers';
+    import { hasServerPermission } from '@share/Permission';
+    import { useUser } from '@stores/user';
+    import Dropdown from '@components/Dropdown.vue';
+    import Modal from '@components/Modal.vue';
+    import event from '@util/event';
+    import axios, { AxiosProgressEvent } from "axios";
     let finishedLoading = ref(false);
     let server = ref() as Ref<undefined | Server>;
     let props = defineProps({
@@ -137,8 +138,17 @@ import event from '@util/event';
     let apiUrl: string = inject("API_URL") as string;
     // [[file, error]]
     let failedFiles: Ref<(Error | File)[][]> = ref([]);
+    let uploadProgress = ref() as Ref<undefined | AxiosProgressEvent>;
+    let totalPercentage = computed(() => {
+        if(typeof totalSize.value == "undefined") return 0;
+        return (((uploadTotal.value??0) / (totalSize.value??0)) * 100);
+    });
+    let uploadTotal = computed(() => {
+        return (uploadedSize.value+(NaNprevent(uploadProgress.value?.loaded)));
+    })
     async function uploadFile(file: File) {
         try {
+            uploadProgress.value = undefined;
             if(file.size > 100_000_000) throw new Error("Too big!");
             let resp = await sendRequest("serverFiles", {
                 action: "upload",
@@ -147,14 +157,24 @@ import event from '@util/event';
             });
             if(resp.type != "uploadConfirm") return;
             let arrayBuffer = await file.arrayBuffer();
-            let fetchRes = await fetch(apiUrl + "/api/uploadfile/" + resp.id, {
+            /*let fetchRes = await fetch(apiUrl + "/api/uploadfile/" + resp.id, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/octet-stream"
                 },
                 body: arrayBuffer
             });
-            if(!fetchRes.ok) throw new Error(`Server sent: '${await fetchRes.text()}'. Upload ID: ${resp.id}`);
+            if(!fetchRes.ok) throw new Error(`Server sent: '${await fetchRes.text()}'. Upload ID: ${resp.id}`);*/
+            await axios.post(apiUrl + "/api/uploadfile/" + resp.id, arrayBuffer, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/octet-stream",
+                },
+                onUploadProgress(p) {
+                    if(typeof p.rate == "number") lastSafeRate.value = p.rate;
+                    uploadProgress.value = p;
+                }
+            })
         } catch(err) {
             failedFiles.value.push([file, err as Error])
         }
@@ -162,13 +182,16 @@ import event from '@util/event';
     let currentUploading: Ref<File | undefined> = ref()
     async function uploadFiles() {
         failedFiles.value = [];
+        uploaded.value = [];
         totalSize.value = toUpload.value.map(a => a.size).reduce((a,b) => a+b);
         uploading.value = true;
+        let count = toUpload.value.length;
         while(true) {
             let fileUploading = toUpload.value.shift();
             if(!fileUploading) break;
             currentUploading.value = fileUploading;
             await uploadFile(fileUploading);
+            uploaded.value.push(fileUploading.size)
         }
         uploading.value = false;
         currentUploading.value = undefined;
@@ -176,13 +199,14 @@ import event from '@util/event';
         if(failedFiles.value.length != 0) {
             await showInfoBox(`Failed to upload ${failedFiles.value.length} file${failedFiles.value.length==1?'':'s'}`, failedFiles.value.map(failedFile => `${failedFile[0].name}: ${failedFile[1]}`).join(`\n`))
         }
+        event.emit("createNotification", `${count-failedFiles.value.length}/${count} file${count == 1 ? "" : "s"} uploaded successfully!`);
         getFiles();
     }
+    let uploaded = ref([0]);
     let uploadedSize = computed(() => {
-        if(!totalSize.value) return 0;
-        let fileSizes = toUpload.value.map(a => a.size);
-        if(fileSizes.length == 0) return 0;
-        return totalSize.value - fileSizes.reduce((a,b) => a+b);
+        let totalUploadFinished = 0;
+        uploaded.value.forEach(a => totalUploadFinished += a);
+        return totalUploadFinished ?? 0
     })
     let modalFileChooser: Ref<HTMLInputElement | undefined> = ref();
     function addFiles(f: FileList | null | undefined) {
@@ -228,7 +252,14 @@ import event from '@util/event';
         downloadAnchor.value.href = apiUrl + "/api/downloadfile/" + resp.id;
         downloadAnchor.value.click();
     }
+    let lastSafeRate = ref(1000);
+    function NaNprevent(value: number | undefined, defaultValue: number = 0, allowInfinity: boolean = false) {
+        if(typeof value == "undefined") return defaultValue;
+        if(Number.isNaN(value) || typeof value != "number") return defaultValue;
+        return value;
+    }
     let downloadAnchor: Ref<HTMLAnchorElement | undefined> = ref();
+    let eta = computed(() => (((totalSize.value??0)-uploadTotal.value) / (lastSafeRate.value)));
 </script>
 <template>
     <a style="position: absolute;visibility: hidden;" ref="downloadAnchor" />
@@ -263,11 +294,14 @@ import event from '@util/event';
                 <div id="bar" :style="{
                     backgroundColor: 'white',
                     height: '5px',
-                    width: ((uploadedSize / (totalSize ?? 0)) * 290) + 'px'
+                    width: ((parseInt(totalPercentage.toString()) * 2.9) + 'px')
                 }" />
             </div>
             <div>
-                {{ (uploadedSize / 1_000_000).toFixed(3) }} / {{ ((totalSize ?? 0) / 1_000_000).toFixed(3) }} MB
+                Uploaded {{ (uploadTotal / 1_000_000).toFixed(3) }} MB / {{ ((totalSize ?? 0) / 1_000_000).toFixed(3) }} MB.<br/>
+                {{ ((uploadProgress?.rate??0)/1000).toFixed(2) }} KB/s
+                ETA: {{ Math.floor(eta / 60) }}m {{ Math.floor(eta % 60) }}s<br/>
+                {{ totalPercentage.toFixed(2) }}%
             </div>
         </div>
     </Modal>

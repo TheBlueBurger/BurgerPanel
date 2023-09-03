@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import event from '../../util/event';
-import sendRequest from '../../util/request';
+import event from '@util/event';
+import sendRequest from '@util/request';
 import { allowedSoftwares } from '@share/Server';
-import { modalInput } from '../../util/modal';
-import { useSettings } from '../../stores/settings';
-import { useUser } from '../../stores/user';
-import { useServers } from '../../stores/servers';
+import { modalInput } from '@util/modal';
+import { useSettings } from '@stores/settings';
+import { useUser } from '@stores/user';
+import { useServers } from '@stores/servers';
 
 let settings = useSettings();
 let router = useRouter();

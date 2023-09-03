@@ -9,9 +9,9 @@ import Dropdown from "@components/Dropdown.vue"
 import sendRequest from "@util/request";
 import titleManager from "@util/titleManager";
 import { confirmModal, modalInput, showInfoBox } from "@util/modal";
-import { useUser } from "../stores/user";
-import { useUsers } from "../stores/users";
-import { useSettings } from "../stores/settings";
+import { useUser } from "@stores/user";
+import { useUsers } from "@stores/users";
+import { useSettings } from "@stores/settings";
 let settings = useSettings();
 let router = useRouter();
 const user = useUser();

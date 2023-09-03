@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import TextInput from '@components/TextInput.vue';
-import event from '../util/event';
-import sendRequest from '../util/request';
-import { confirmModal } from '../util/modal';
-import { useUser } from '../stores/user';
+import event from '@util/event';
+import sendRequest from '@util/request';
+import { confirmModal } from '@util/modal';
+import { useUser } from '@stores/user';
 
 const user = useUser();
 
