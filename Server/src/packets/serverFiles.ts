@@ -7,6 +7,7 @@ import mime from "mime-types";
 import { allowedFileNames, allowedMimeTypes } from "../../../Share/Server.js";
 import { Request } from "../../../Share/Requests.js";
 import logger, { LogLevel } from "../logger.js";
+import { getSetting } from "../config.js";
 
 export default class ServerFiles extends Packet {
     name: Request = "serverFiles";
@@ -47,7 +48,7 @@ export default class ServerFiles extends Packet {
                     return "File is over size limit (320kb)"
                 }
                 let mimeData = mime.lookup(pathToCheck);
-                if(!allowedMimeTypes.includes(mimeData.toString()) && !allowedFileNames.includes(data.path)) {
+                if(!allowedMimeTypes.includes(mimeData.toString()) && !allowedFileNames.includes(data.path) && !await getSetting("bypassFileTypeLimitations")) {
                     return "Disallowed type!"
                 }
                 logger.log(`${client.data.auth.user?.username} is reading ${data.path} in ${server.name}`, "server.file.read", LogLevel.INFO);
@@ -63,7 +64,7 @@ export default class ServerFiles extends Packet {
                     return "File is over size limit (320kb)"
                 }
                 let writeMimeData = mime.lookup(pathToCheck);
-                if(!allowedMimeTypes.includes(writeMimeData.toString()) && !allowedFileNames.includes(data.path)) {
+                if(!allowedMimeTypes.includes(writeMimeData.toString()) && !allowedFileNames.includes(data.path) && !await getSetting("bypassFileTypeLimitations")) {
                     return "Disallowed type!"
                 }
                 if(typeof data.data != "string") return "Missing data";

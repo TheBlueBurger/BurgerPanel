@@ -179,13 +179,14 @@
             failedFiles.value.push([file, err as Error])
         }
     }
-    let currentUploading: Ref<File | undefined> = ref()
+    let currentUploading: Ref<File | undefined> = ref();
+    let totalUploadCount = ref(0);
     async function uploadFiles() {
         failedFiles.value = [];
         uploaded.value = [];
         totalSize.value = toUpload.value.map(a => a.size).reduce((a,b) => a+b);
         uploading.value = true;
-        let count = toUpload.value.length;
+        totalUploadCount.value = toUpload.value.length;
         while(true) {
             let fileUploading = toUpload.value.shift();
             if(!fileUploading) break;
@@ -199,10 +200,10 @@
         if(failedFiles.value.length != 0) {
             await showInfoBox(`Failed to upload ${failedFiles.value.length} file${failedFiles.value.length==1?'':'s'}`, failedFiles.value.map(failedFile => `${failedFile[0].name}: ${failedFile[1]}`).join(`\n`))
         }
-        event.emit("createNotification", `${count-failedFiles.value.length}/${count} file${count == 1 ? "" : "s"} uploaded successfully!`);
+        event.emit("createNotification", `${totalUploadCount.value-failedFiles.value.length}/${totalUploadCount.value} file${totalUploadCount.value == 1 ? "" : "s"} uploaded successfully!`);
         getFiles();
     }
-    let uploaded = ref([0]);
+    let uploaded = ref([] as number[]);
     let uploadedSize = computed(() => {
         let totalUploadFinished = 0;
         uploaded.value.forEach(a => totalUploadFinished += a);
@@ -297,11 +298,12 @@
                     width: ((parseInt(totalPercentage.toString()) * 2.9) + 'px')
                 }" />
             </div>
-            <div>
+            <div style="text-align: center;">
                 Uploaded {{ (uploadTotal / 1_000_000).toFixed(3) }} MB / {{ ((totalSize ?? 0) / 1_000_000).toFixed(3) }} MB.<br/>
                 {{ ((uploadProgress?.rate??0)/1000).toFixed(2) }} KB/s
                 ETA: {{ Math.floor(eta / 60) }}m {{ Math.floor(eta % 60) }}s<br/>
-                {{ totalPercentage.toFixed(2) }}%
+                {{ totalPercentage.toFixed(2) }}%<br/>
+                {{ uploaded.length }} / {{ totalUploadCount }} completed
             </div>
         </div>
     </Modal>

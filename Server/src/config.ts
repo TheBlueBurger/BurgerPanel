@@ -92,7 +92,8 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
     defaultMemory: async(val) => {
         let valNum = Number(val);
         return valNum >= 0 && !isNaN(valNum)
-    }
+    },
+    bypassFileTypeLimitations: boolValidator,
 }
 export function isValidKey(key: string | undefined): key is keyof Config {
     if(typeof key != "string") return false;
