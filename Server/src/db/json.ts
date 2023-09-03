@@ -179,6 +179,7 @@ export class JSONCollection<T extends DatabaseType> extends Collection<T> {
                 } else {
                     // @ts-ignore
                     newData[key] = Object.values(this.bootstrapNecessaryTypes(data[key] ?? {}, insideArr, false));
+                    newData[key] = newData[key].filter((a: any) => a != undefined); // this is the most stupid fix for it randomly being null but it works so idc
                 }
             } else {
                 if((schema[key as keyof typeof schema] as DatabaseSchemaInnerType)?.default && typeof data[key as keyof typeof data] == "undefined") {

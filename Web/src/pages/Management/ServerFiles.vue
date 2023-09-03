@@ -27,7 +27,12 @@
     let readingFile = computed(() => {
         return isReading();
     });
+    let uploading = ref(false);
     function setTitle() {
+        if(uploading.value) {
+            titleManager.setTitle(`${totalPercentage.value.toFixed(0)}% (${Math.floor(eta.value / 60)}m ${Math.floor(eta.value % 60)}s)`);
+            return;
+        }
         titleManager.setTitle(`${server.value?.name}${path.value.toString().startsWith("/") ? "" : "/"}${path.value} - File reader`);
     }
     watch(path, () => {
@@ -130,7 +135,6 @@
         }
     }
     let slightlyWhiteDivBg = ref(false);
-    let uploading = ref(false);
     function removeFromUploads(file: File) {
         if(uploading.value) return;
         toUpload.value = toUpload.value.filter(f => f != file);
@@ -172,6 +176,7 @@
                 },
                 onUploadProgress(p) {
                     if(typeof p.rate == "number") lastSafeRate.value = p.rate;
+                    setTitle();
                     uploadProgress.value = p;
                 }
             })
@@ -202,6 +207,7 @@
         }
         event.emit("createNotification", `${totalUploadCount.value-failedFiles.value.length}/${totalUploadCount.value} file${totalUploadCount.value == 1 ? "" : "s"} uploaded successfully!`);
         getFiles();
+        setTitle();
     }
     let uploaded = ref([] as number[]);
     let uploadedSize = computed(() => {
@@ -281,15 +287,16 @@
                 <button @click="uploadFiles">Upload {{ toUpload.length }} file{{ toUpload.length == 1 ? '' : 's' }}</button>
             </div>
         </div>
-        <div v-else style="width:300px">
-            Uploading {{ currentUploading?.name }} ({{ (currentUploading?.size ?? 0) / 1_000_000 }}MB)
+        <div v-else style="width:350px">
+            {{ currentUploading?.name }}
             <br/>
             <div :style="{
                 width: '290px',
                 height: '5px',
                 borderRadius: '3px',
                 margin: '0 auto',
-                marginTop: '5px',
+                marginTop: '10px',
+                marginBottom: '10px',
                 border: 'white 1px solid'
             }">
                 <div id="bar" :style="{
@@ -299,11 +306,10 @@
                 }" />
             </div>
             <div style="text-align: center;">
-                Uploaded {{ (uploadTotal / 1_000_000).toFixed(3) }} MB / {{ ((totalSize ?? 0) / 1_000_000).toFixed(3) }} MB.<br/>
-                {{ ((uploadProgress?.rate??0)/1000).toFixed(2) }} KB/s
-                ETA: {{ Math.floor(eta / 60) }}m {{ Math.floor(eta % 60) }}s<br/>
-                {{ totalPercentage.toFixed(2) }}%<br/>
-                {{ uploaded.length }} / {{ totalUploadCount }} completed
+                {{ (uploadTotal / 1_000_000).toFixed(3) }}/{{ ((totalSize ?? 0) / 1_000_000).toFixed(3) }}MB @ {{ ((uploadProgress?.rate??0)/1000).toFixed(2) }} KB/s<br/>
+                <span style="float:left">ETA: {{ Math.floor(eta / 60) }}m {{ Math.floor(eta % 60) }}s</span>
+                {{ totalPercentage.toFixed(2) }}%
+                <span style="float:right">{{ uploaded.length }} / {{ totalUploadCount }} completed</span>
             </div>
         </div>
     </Modal>
