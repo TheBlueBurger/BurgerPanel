@@ -68,19 +68,19 @@ export default class ImportServer extends Packet {
         let server = await servers.create({
             name: data.name,
             version: data.version,
-            mem: data.mem,
+            mem: parseInt(data.mem),
             software: data.software,
             allowedUsers: [{
-                user: client.data.auth.user?._id,
+                user: client.data.auth.user?._id || "",
                 permissions: ["full"]
             }],
-            port: data.port,
+            port: parseInt(data.port),
             path: data.path,
         });
         try {
             await serverManager.changePort(server.toJSON(), data.port); // if the user changes the port when importing the server, it will be changed in server files as well
         } catch {
-            logger.log(`Could not change the port to the user specified one while importing the server ${server._id.toHexString()} (${server.name}), assuming the user is correct`, "server.import", LogLevel.WARNING);
+            logger.log(`Could not change the port to the user specified one while importing the server ${server._id.toString()} (${server.name}), assuming the user is correct`, "server.import", LogLevel.WARNING);
         }
         return {
             server: server.toJSON(),

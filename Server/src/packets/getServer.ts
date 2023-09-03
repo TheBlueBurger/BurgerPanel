@@ -9,7 +9,7 @@ export default class GetServer extends Packet {
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"getServer"> {
         if (!data.id) return;
-        let server = await servers.findById(data.id).exec();
+        let server = await servers.findById(data.id);
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
             return "Server not found";
         }

@@ -14,7 +14,7 @@ export default class EditUser extends Packet {
     async handle(client: OurClient, data: any): ServerPacketResponse<"editUser"> {
         let action = data.action;
         if (!data.id) return; // it sends it as user, should be .id
-        let user = await users.findById(data.id).exec();
+        let user = await users.findById(data.id);
         if(!user) return;
         switch (action) {
             case "setPermission":
@@ -50,7 +50,7 @@ export default class EditUser extends Packet {
                 this.sendUserUpdated(user.toJSON());
                 break;
             case "changePassword":
-                if(client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.password.change")) {
+                if(client.data.auth.user?._id != user._id.toString() && !hasPermission(client.data.auth.user, "users.password.change")) {
                     return "You do not have permission to edit this user's password"
                 }
                 let newPassword = data.password;
@@ -67,8 +67,8 @@ export default class EditUser extends Packet {
                 this.sendUserUpdated(user.toJSON());
                 break;
             case "changeUsername":
-                if (!hasPermission(client.data.auth.user, "users.username.change.all") && !(client.data.auth.user?._id == user._id.toHexString() && !hasPermission(client.data.auth.user, "users.username.change.self")))
-                    return `You do not have permission to edit the username of ${client.data.auth.user?._id == user._id.toHexString() ? "yourself" : "this person"}!`;
+                if (!hasPermission(client.data.auth.user, "users.username.change.all") && !(client.data.auth.user?._id == user._id.toString() && !hasPermission(client.data.auth.user, "users.username.change.self")))
+                    return `You do not have permission to edit the username of ${client.data.auth.user?._id == user._id.toString() ? "yourself" : "this person"}!`;
                     
                     if (typeof data.username != "string") return "Not a string!";
 
@@ -81,7 +81,7 @@ export default class EditUser extends Packet {
                     this.sendUserUpdated(user.toJSON());
                 break;
             case "finishSetup":
-                if (user._id.toHexString() != client.data.auth.user?._id) return; //impossible
+                if (user._id.toString() != client.data.auth.user?._id) return; //impossible
                     
                 if (typeof client.data.auth.user?.password != "string") {
                     return "Set a password first!"
@@ -92,7 +92,7 @@ export default class EditUser extends Packet {
                 break;
             
             case "resetToken":
-                if (client.data.auth.user?._id != user._id.toHexString() && !hasPermission(client.data.auth.user, "users.token.reset")) return;
+                if (client.data.auth.user?._id != user._id.toString() && !hasPermission(client.data.auth.user, "users.token.reset")) return;
                 logger.log(`${client.data.auth.user?.username} is resetting the token of ${user.username}`, "user.token.reset")
                 user.token = makeToken();
                 
@@ -105,7 +105,7 @@ export default class EditUser extends Packet {
                     token: user.token
                 }
             case "toggleDev":
-                if(client.data.auth.user?._id != user._id.toHexString()) {
+                if(client.data.auth.user?._id != user._id.toString()) {
                     return "Not allowed to other users"
                 }
                 user.devMode = !user.devMode;
@@ -115,10 +115,11 @@ export default class EditUser extends Packet {
                     user: user.toJSON()
                 }
             case "togglePin":
-                if(user._id.toHexString() != client.data.auth.user?._id) return "Not allowed to others";
-                let server = await servers.findById(data.server).exec();
+                if(user._id.toString() != client.data.auth.user?._id) return "Not allowed to others";
+                let server = await servers.findById(data.server);
                 if(!server || !userHasAccessToServer(user.toJSON(), server.toJSON())) return "Server not found";
-                if(user.pins && user.pins.includes(server._id.toHexString())) user.pins = user.pins.filter(pin => pin != server?._id.toHexString());
+                if(!user.pins) user.pins = [];
+                if(user.pins && user.pins.includes(server._id.toString())) user.pins = user.pins.filter(pin => pin != server?._id.toString());
                 else user.pins.push(server._id.toString());
                 if(user.pins.length >= 10) return "Too many pins!";
                 this.sendUserUpdated(user.toJSON());

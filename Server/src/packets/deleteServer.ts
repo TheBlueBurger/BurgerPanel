@@ -11,7 +11,7 @@ export default class DeleteServer extends Packet {
     async handle(client: OurClient, data: any): ServerPacketResponse<"deleteServer"> {
         if(!client.data.auth.user) return;
         // Ensure the server exists
-        let server = await servers.findById(data.id).exec();
+        let server = await servers.findById(data.id);
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
             return "Server does not exist"
         }

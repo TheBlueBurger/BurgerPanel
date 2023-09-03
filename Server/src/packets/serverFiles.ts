@@ -13,7 +13,7 @@ export default class ServerFiles extends Packet {
     name: Request = "serverFiles";
     requiresAuth: boolean = false;
     async handle(client: OurClient, data: any): ServerPacketResponse<"serverFiles"> {
-        let server = await servers.findById(data.id).exec();
+        let server = await servers.findById(data.id);
         if(!server || !hasServerPermission(client.data.auth.user, server?.toJSON(), "serverfiles.read")) return "No perm"; //very bad!!!!
         // Make sure the user doesnt do anything spooky
         if(!data.path || typeof data.path != "string") return;

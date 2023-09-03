@@ -9,7 +9,7 @@ export default class StopServer extends Packet {
     name: Request = "stopServer";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"stopServer"> {
-        let server = await servers.findById(data.id).exec();
+        let server = await servers.findById(data.id);
         if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
             return "Server not found";
         }

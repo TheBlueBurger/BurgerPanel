@@ -7,14 +7,14 @@ import { isValidPermissionString } from '../../Share/Permission.js';
 import { settings } from './db.js';
 import { IDs } from '../../Share/Logging.js';
 import { exists } from "./util/exists.js";
-import { allowedSoftwares } from "../../Share/Server.js";
+import { type AllowedSoftware, allowedSoftwares } from "../../Share/Server.js";
 import isValidMCVersion from "./util/isValidMCVersion.js";
 export async function getSetting(key: keyof typeof defaultConfig, ignoreForcedChangeConfig?: boolean, errorIfNotSet?: boolean): Promise<ConfigValue> {
     let cachedSetting = cachedSettings[key];
     if (typeof cachedSetting != "undefined" && !errorIfNotSet) {
         return cachedSetting;
     }
-    let databaseOption = await settings.findOne({ key }).exec();
+    let databaseOption = await settings.findOne({ key });
     if (!databaseOption?.value) {
         if (errorIfNotSet) throw new Error(key + " must be set in the settings!");
         if (forcedChangeConfig.includes(key) && !ignoreForcedChangeConfig) throw new Error(key + " must be set in the settings!");
@@ -64,7 +64,7 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
         return true;
     },
     defaultMCSoftware: async(val) => {
-        if(!allowedSoftwares.includes(val)) throw new Error("Invalid software");
+        if(!allowedSoftwares.includes(val as AllowedSoftware)) throw new Error("Invalid software");
         return true;
     },
     logging_DisabledIDs: async(val) => {
@@ -120,9 +120,7 @@ export async function setSetting<K extends keyof Config>(key: K, value: Config[K
     }
     if (typeof value !== typeof defaultConfig[key as keyof typeof defaultConfig]) throw new Error("Invalid config value. Expected " + typeof defaultConfig[key as keyof typeof defaultConfig] + " but got " + typeof value);
     // Set it in the database with upsert
-    await settings.updateOne({
-        key
-    }, { value }, { upsert: true }).exec();
+    await settings.upsert({key}, {value: value.toString()});
     cachedSettings[key] = value;
     return value;
 }

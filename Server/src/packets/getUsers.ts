@@ -9,7 +9,7 @@ export default class GetUsers extends Packet {
     requiresAuth: boolean = true;
     permission: Permission = "users.view";
     async handle(client: OurClient, data: any): ServerPacketResponse<"getUsers"> {
-        let userList = await users.find({}, {}, { limit: 10_000_000 }).exec();
+        let userList = await users.getAll();
         let filteredUserList = userList.map(usr => filterUserData(usr.toJSON()));
         return {
             userList: filteredUserList
