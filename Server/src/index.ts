@@ -488,6 +488,8 @@ packetHandler.init().then(async () => {
         await logger.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token, "start", LogLevel.INFO, false);
     }
 });
+process.on("uncaughtException", errHandler);
+process.on("unhandledRejection", errHandler);
 function errHandler(err: any) {
     logger.log("Uncaught error: " + err, "error", LogLevel.ERROR, false, true, true).catch((err2) => {
         console.log("Error while logging error?!?!?: " + err2 + ". Original error: " + err);
