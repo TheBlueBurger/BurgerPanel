@@ -399,7 +399,6 @@ packetHandler.init().then(async () => {
                 }
                 break;
             case "exit":
-            case "stop":
             case "quit":
                 exit();
                 break;
@@ -425,7 +424,7 @@ packetHandler.init().then(async () => {
                 console.log("users: List all users");
                 console.log("gen-admin-user: Generate a admin user");
                 console.log("servers: List all servers")
-                console.log("stop: Stop all servers and exit");
+                console.log("exit: Stop all servers and exit");
                 console.log("set-opt <option> <value>: Sets a setting");
                 console.log("start <server>: Start a server");
                 console.log("stop <server>: Stop a server");

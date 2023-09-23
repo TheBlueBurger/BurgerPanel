@@ -186,20 +186,23 @@ function gotoSetup(_currentRoute?: RouteLocationNormalized) {
     }
   })
 }
-router.beforeEach(async (guard, fromGuard) => {
-  if (guard.path != fromGuard.path) {
-    if (typeof guard.meta.title == "string") titleManager.setTitle(guard.meta.title);
+router.afterEach((guardTo, guardFrom) => {
+  if (guardTo.path != guardFrom.path) {
+    if (typeof guardTo.meta.title == "string" && guardTo.meta?.setTitle !== false) titleManager.setTitle(guardTo.meta.title);
     else titleManager.resetTitle();
   }
+});
+router.beforeEach(async (guard, fromGuard) => {
   if (guard.name != "userSetup" && user.user?.setupPending) {
     gotoSetup(guard);
+    return false;
   }
   // Logs in with the token provided in the ?useToken= query
   if (guard.query.useToken) {
     console.log("Using token from query.");
     if (user.user) {
       console.log("Already logged in, ignoring token.")
-      return;
+      return true;
     }
     console.log("Checking if connected...")
     console.time();

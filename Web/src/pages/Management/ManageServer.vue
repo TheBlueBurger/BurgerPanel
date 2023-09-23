@@ -114,7 +114,6 @@ function onScrolled() {
     <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
     <span class="server-status"><ServerStatus :server="server._id" /></span>
     <br />
-    Logs:
     <textarea readonly ref="serverTextArea" @scroll="onScrolled">{{ logs.join("") }}</textarea>
     <div class="console-input" v-if="hasServerPermission(user.user, server, 'console.write')"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Write here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
     <br/>
@@ -127,7 +126,7 @@ function onScrolled() {
 textarea {
   resize: none;
   width: 95%;
-  height: calc(100vh - 190px);
+  height: calc(100vh - 170px);
   overflow-y: scroll;
   border-radius: 7px;
   border-bottom-left-radius: 0px;
@@ -136,6 +135,7 @@ textarea {
   /* Center */
   margin-left: auto;
   margin-right: auto;
+  margin-top: 5px;
   display: block;
   /* Color */
   background-color: #000000;

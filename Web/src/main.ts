@@ -23,7 +23,8 @@ const router = createRouter({
             props: true,
             name: "editUserPermissions",
             meta: {
-                title: "User Permissions"
+                title: "User Permissions",
+                setTitle: false
             }
         },
         {
@@ -32,7 +33,8 @@ const router = createRouter({
             props: true,
             name: 'manageServer',
             meta: {
-                title: "Server Console"
+                title: "Server Console",
+                setTitle: false
             }
         },
         {
@@ -41,7 +43,8 @@ const router = createRouter({
             props: true,
             name: 'editServer',
             meta: {
-                title: "Edit server"
+                title: "Edit server",
+                setTitle: false
             }
         },
         {
@@ -50,7 +53,8 @@ const router = createRouter({
             props: true,
             name: 'viewLogs',
             meta: {
-                title: "Server logs"
+                title: "Server logs",
+                setTitle: false
             }
         },
         {
@@ -59,7 +63,8 @@ const router = createRouter({
             props: true,
             name: "editServerAccess",
             meta: {
-                title: "Server Access"
+                title: "Server Access",
+                setTitle: false
             }
         },
         {
@@ -68,7 +73,8 @@ const router = createRouter({
             props: true,
             name: "serverFiles",
             meta: {
-                title: "Server Files"
+                title: "Server Files",
+                setTitle: false
             }
         },
         {
@@ -85,7 +91,8 @@ const router = createRouter({
             props: true,
             name: 'downloadPlugins',
             meta: {
-                title: "Download plugins"
+                title: "Download plugins",
+                setTitle: false
             }
         },
         {

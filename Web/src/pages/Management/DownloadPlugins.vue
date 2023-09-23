@@ -8,6 +8,7 @@ import Modal from '@components/Modal.vue';
 import { showInfoBox } from '@util/modal';
 import dompurify from "dompurify"
 import { parse as markedParse } from 'marked';
+import titleManager from '@util/titleManager';
 function parseMDSecurely(dirtyText: string) {
     return dompurify.sanitize(markedParse(dirtyText));
 }
@@ -21,6 +22,7 @@ let servers = useServers();
 let query: string = "";
 let loading = ref(false);
 let server = ref(await servers.getServerByID(props.server));
+titleManager.setTitle("Download plugins in " + server.value.name);
 let hits: Ref<ModrinthPluginResult[] | undefined> = ref();
 async function search() {
     loading.value = true;
