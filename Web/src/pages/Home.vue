@@ -9,13 +9,19 @@ let pinnedServers = await servers.getPinnedServers();
 </script>
 
 <template>
-    <Perf />
-    <div id="servers-container">
-        <Server v-for="pinnedServer of pinnedServers" :server="pinnedServer" />
+    <div class="home-container">
+        <div id="performance"><Perf /></div>
+        <div id="servers-container">
+            <Server v-for="pinnedServer of pinnedServers" :server="pinnedServer" />
+        </div>
     </div>
 </template>
 
 <style scoped>
+    .home-container {
+        margin: 10px;
+        display: block;
+    }
     * {
         padding: 10px;
     }
@@ -23,5 +29,14 @@ let pinnedServers = await servers.getPinnedServers();
         display: flex;
         flex-wrap:wrap;
         justify-content: center;
+        position: relative;
+        box-sizing: border-box;
+    }
+    #performance {
+        display: block;
+        margin: 0 auto;
+        position: relative;
+        box-sizing: border-box;
+        width: fit-content;
     }
 </style>

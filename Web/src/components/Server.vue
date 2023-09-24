@@ -59,14 +59,24 @@ import { useUser } from '../stores/user';
 </template>
 
 <style scoped>
+    .status {
+        margin-bottom: 5px;
+    }
+    br {
+        margin-bottom: 5px;
+    }
     .server {
-        background-color: #2e2e2e;
+        /* background-color: #2e2e2e; */
         min-width: 300px;
-        margin-left: 10px;
-        border-radius: 10px;
+        /* margin-left: 10px; */
+        margin: 5px;
+        /* border-radius: 10px; */
         justify-content: left;
         margin-bottom: 5px;
         text-align: center;
+        border: 1px #333030 solid;
+        background-color: #201f1f;
+        border-radius:10px;
     }
     .server > * {
         text-decoration: none;
@@ -74,16 +84,20 @@ import { useUser } from '../stores/user';
     }
     .green {
         background-color: #1b7436;
+        border-color: #2da852;
     }
     .red {
         background-color: #af0a0a;
+        border-color: #e03737;
     }
     .red[disabled] {
         background-color: #7e0707;
+        border-color: #a52525;
         color: #8f8f8f;
     }
     .green[disabled] {
         background-color: #185300;
+        border-color: #196b32;
         color: #8f8f8f;
     }
     .server > * {
@@ -91,6 +105,7 @@ import { useUser } from '../stores/user';
     }
     .servername {
         font-size:xx-large;
+        margin-bottom: 5px;
     }
     #servers-container {
         display: flex;
@@ -100,5 +115,8 @@ import { useUser } from '../stores/user';
     .server-content {
         padding-bottom: 50px;
         padding-right: 10px;
+    }
+    button {
+        margin: 2px;
     }
 </style>

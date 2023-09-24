@@ -4,7 +4,7 @@ let user = useUser();
 </script>
 <template>
     <div id="navbar">
-        <span id="title"><RouterLink to="/" class="no-text-dec">Burgerpanel</RouterLink></span>
+        <RouterLink to="/" class="no-text-dec"><div id="title-div"><div id="inner-title-div"><p id="title">Burgerpanel</p></div></div></RouterLink>
         <div v-if="user.user" class="loggedin-only">
             <span class="item link"><RouterLink to="/manage">Servers</RouterLink></span>
           <span class="item link" v-if="user.hasPermission('settings.read') || user.hasPermission('users.view')"><RouterLink to="/settings">Settings</RouterLink></span>
@@ -34,7 +34,17 @@ let user = useUser();
         color: white;
         font-size: 30px;
         cursor: pointer;
-        margin-left: 5px;
+        padding-left: 10px;
+        display: block;
+        position: relative;
+        top: calc(50% - 15px);
+    }
+    #inner-title-div {
+        height: 100%;
+    }
+    #title-div {
+        display: inline-block;
+        height: 50px;
     }
     .no-text-dec {
         text-decoration: none;
@@ -61,6 +71,7 @@ let user = useUser();
     #logout-btn {
         margin-left: 1px;
         padding: 10px;
+        margin-right: 5px;
     }
     #inner-user {
         margin-left: 25px;

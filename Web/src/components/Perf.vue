@@ -28,7 +28,7 @@ onMounted(() => {
 });
 </script>
 <template>
-    <div>
+    <div class="perf">
         <h1>System Performance</h1>
         <div v-if="perf != null">
             <p v-if="perf.load"><b>Load:</b> 1m: {{ perf?.load[0] }} 5m: {{ perf.load[1] }} 15m: {{ perf.load[2] }}</p>
@@ -47,3 +47,19 @@ onMounted(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+    .perf {
+        border: 1px #333030 solid;
+        background-color: #201f1f;
+        border-radius:10px;
+        padding: 10px 15px;
+        width: fit-content;
+    }
+    h1 {
+        margin-bottom: 10px;
+    }
+    p {
+        margin-bottom: 5px;
+    }
+</style>
