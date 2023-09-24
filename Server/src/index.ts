@@ -15,8 +15,10 @@ import { Request, RequestResponses } from '../../Share/Requests.js';
 import hasPermission from './util/permission.js';
 import logger, { LogLevel } from './logger.js';
 import {buildInfo} from "../../Share/BuildInfo.js";
+import pluginHandler, {mixinHandler} from "./plugin.js";
 // a
 export const isProd = process.env.NODE_ENV == "production";
+
 let app = express();
 if(!isProd) app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);
@@ -30,6 +32,10 @@ if(!isProd) app.use((req, res, next) => {
     next();
 });
 app.use(express.json());
+app.use(async (req, res, next) => {
+    if(await mixinHandler.handle("httpRequest", {req, res})) return;
+    next();
+});
 app.post("/api/request/:name", async (req, res, next) => {
     if(lockdownMode) return;
     if(!packetHandler.packets[req.params.name]) return next();
@@ -146,6 +152,9 @@ class PacketHandler {
     }
     async handle(client: OurClient, data: any) {
         let packet = this.packets[data.n];
+        if(await mixinHandler.handle("beforeIncomingPacketHandle", {
+            client, data, packet
+        })) return;
         if (!packet) {
             logger.log(`User ${client.data.auth.user?.username || "(not logged in)"} attempted to use non-existing packet: ${data.n}`, "packet.invalid-packet", LogLevel.WARNING);
             return;
@@ -223,7 +232,7 @@ export interface OurWebsocketClient extends OurClient,WebSocket {
     type: "Websocket"
 }
 
-let packetHandler = new PacketHandler();
+export let packetHandler = new PacketHandler();
 let logging = false;
 let loggingIgnore: string[] = [];
 export let lockdownMode = false;
@@ -242,10 +251,14 @@ wss.on('connection', (_client) => {
         clientID: genClientID()
     };
     client.type = "Websocket";
-    client.json = (data: any) => {
+    client.json = async (data: any) => {
         if (logging && !loggingIgnore.includes(data.type)) {
             console.log("SEND", data);
         }
+        if(await mixinHandler.handle("beforeSendJSONToClient", {
+            client,
+            data
+        })) return;
         _client.send(JSON.stringify(data));
     };
     clients.push(client);
@@ -253,13 +266,20 @@ wss.on('connection', (_client) => {
         console.log("WS error", err);
         serverManager.handleDisconnect(client);
         clients.splice(clients.indexOf(client), 1);
-    })
-    client.on('message', (message) => {
+    });
+    mixinHandler.handle("clientConnection", {
+        client
+    });
+    client.on('message', async (message) => {
         try {
             let data = JSON.parse(message.toString());
             if (logging && !loggingIgnore.includes(data.type)) {
                 console.log("RECV", data);
             }
+            if(await mixinHandler.handle("onClientMessage", {
+                client,
+                data
+            })) return;
             packetHandler.handle(client, data);
         } catch (err) {
             try {
@@ -344,8 +364,9 @@ packetHandler.init().then(async () => {
             }
         }
     }
-    httpServer.listen(port, () => {
+    httpServer.listen(port, async () => {
         logger.log(`Running on port ${port}`, "start", LogLevel.INFO);
+        await pluginHandler.init();
         console.log("Type 'help' for help");
         serverManager.autoStartServers();
     });

@@ -17,3 +17,6 @@ export default async function sendRequest<T extends Request>(packetName: T, data
     }
     return resp.d;
 }
+export async function sendRequestIgnoredType(packetName: string, data: any = {}, infoBoxIfError: boolean = true) {
+    return await sendRequest(packetName as Request, data, infoBoxIfError);
+}

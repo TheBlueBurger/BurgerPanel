@@ -4,7 +4,7 @@ import type { AuthS2C } from "@share/Auth";
 import { User } from "@share/User";
 import { useUser } from "./stores/user";
 import EventEmitter from "@util/event";
-import sendRequest from "@util/request";
+import sendRequest, {sendRequestIgnoredType} from "@util/request";
 import "./style.css";
 import Navbar from "@components/Navbar.vue";
 import { RouteLocationNormalized, useRouter } from "vue-router";
@@ -19,6 +19,9 @@ let router = useRouter();
 let events = ref(EventEmitter);
 event.once("reload", () => {
   location.reload();
+});
+event.once("gotoURL", (data) => {
+  location.href = data.to;
 });
 let notifications = ref([] as string[]);
 let notificationQueue: string[] = [];
@@ -36,6 +39,27 @@ function createNotification(text: string) {
 const user = useUser();
 let triggerUnmountPromise: (value: unknown) => void;
 let unmountPromise = new Promise(r => triggerUnmountPromise = r);
+event.once("gotoURLRouter", (data) => {
+  router.push(data.to);
+});
+event.on("getClientState", (_data) => {
+  sendRequestIgnoredType("currentClientState", {
+    shouldHideMainContent: shouldHideMainContent.value,
+    showLoginScreen: showLoginScreen.value,
+    user: user.user,
+    currentRoute: router.currentRoute.value,
+    hasToken: token.value != "" || router.currentRoute.value.query.useToken || (typeof localStorage.getItem("token") == "string" && localStorage.getItem("token") != ""),
+    location: {
+      href: location.href,
+      search: location.search,
+      pathname: location.pathname
+    }
+  });
+});
+event.on("tokenUpdated", (data) => {
+  console.log(`Token updated`);
+  localStorage.setItem("token", data.newToken);
+});
 events.value.on("createNotification", createNotification, unmountPromise);
 provide("events", events);
 let servers = useServers();
@@ -124,6 +148,8 @@ async function login(usingTokenOverride: boolean = false) {
       token: token.value
     }, false).catch((err) => {
       loginMsg.value = err;
+      token.value = "";
+      localStorage.removeItem("token");
       showLoginScreen.value = true;
     });
   } else {

@@ -1,4 +1,3 @@
-import "./index.js"
 import chalk from "chalk";
 import {IDs} from "../../Share/Logging.js";
 import { getSetting, setSetting } from "./config.js";
