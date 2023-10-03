@@ -59,18 +59,19 @@ async function getLog(logName: string) {
 }
 </script>
 <template>
+    <div class="button-container">
     <RouterLink :to="{
         name: 'editServer',
         params: {
             server: props.server
         }
-    }" v-if="!viewingLog"><button>Go back</button></RouterLink>
+    }" v-if="!viewingLog"><button class="smallbuttons">Go back</button></RouterLink>
         <RouterLink :to="{
         name: 'serverFiles',
         params: {
             server: props.server
         }
-    }" v-if="!viewingLog && server && user.hasServerPermission(server, 'serverfiles.read')"><button>View all files</button></RouterLink>
+    }" v-if="!viewingLog && server && user.hasServerPermission(server, 'serverfiles.read')"><button class="smallbuttons">View all files</button></RouterLink></div>
     <h1 v-if="!viewingLog">Logs for <span class="codeblock">{{ server?.name }}</span>:</h1>
     <div v-for="log in logs" class="logname" v-if="!viewingLog">
         <RouterLink :to="{
@@ -90,11 +91,22 @@ async function getLog(logName: string) {
             params: {
                 server: props.server
             }
-        }"><button>Go back</button></RouterLink>
+        }"><button class="lastbutton">Go back</button></RouterLink>
         <textarea readonly>{{ logData }}</textarea>
     </div>
 </template>
 <style scoped>
+    .button-container {
+        margin-top: 10px;
+        margin-left: 20px;
+    }
+    .lastbutton {
+        margin-left: 40px;
+        margin-bottom: 10px;
+    }
+    .smallbuttons {
+        margin-right: 5px;
+    }
     .logname {
         display:block;
         background-color: #3b3a3a60;
@@ -123,19 +135,19 @@ async function getLog(logName: string) {
     textarea {
     resize: none;
     width: 95%;
-    height: calc(100vh - 190px);
+    height: calc(100vh - 220px);
     overflow-y: scroll;
     border-radius: 7px;
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-    border: none;
     /* Center */
     margin-left: auto;
     margin-right: auto;
     display: block;
     /* Color */
-    background-color: #000000;
-    color: white;
+    background-color: #0e0e0e;
+    border: 1px solid #302e2c;
+    color: #e8dc8d;
+    padding: 10px;
+    outline: none;
     }
     a {
         text-decoration: none;

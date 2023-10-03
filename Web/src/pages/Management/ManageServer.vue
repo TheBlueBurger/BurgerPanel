@@ -107,7 +107,8 @@ function onScrolled() {
 
 <template>
   <div v-if="server">
-    <h2>{{ server.name }}</h2>
+    <h2>Server: {{ server.name }}</h2>
+    <h4>Server ID: {{ server._id }}</h4>
     <button @click="startServer()" :disabled="!user.hasServerPermission(server, 'start') || isRunning">Start</button>
     <button @click="stopServer()" :disabled="!user.hasServerPermission(server, 'stop') || !isRunning || thisServerStatus == 'stopping'">Stop</button>
     <button @click="killServer()" :disabled="!user.hasServerPermission(server, 'kill') || !isRunning">Kill</button>
@@ -115,7 +116,7 @@ function onScrolled() {
     <span class="server-status"><ServerStatus :server="server._id" /></span>
     <br />
     <textarea readonly ref="serverTextArea" @scroll="onScrolled">{{ logs.join("") }}</textarea>
-    <div class="console-input" v-if="hasServerPermission(user.user, server, 'console.write')"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Write here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
+    <div class="console-input" v-if="hasServerPermission(user.user, server, 'console.write')"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Enter a command here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
     <br/>
   </div>
   <div v-else>
@@ -123,10 +124,20 @@ function onScrolled() {
   </div>
 </template>
 <style scoped>
+h2 {
+  margin: 5px 10px;
+  margin-left: 40px;
+  padding-top: 10px;
+}
+h4 {
+  margin: 5px 10px;
+  margin-left: 40px;
+}
+
 textarea {
   resize: none;
   width: 95%;
-  height: calc(100vh - 170px);
+  height: calc(100vh - 275px);
   overflow-y: scroll;
   border-radius: 7px;
   border-bottom-left-radius: 0px;
@@ -138,12 +149,17 @@ textarea {
   margin-top: 5px;
   display: block;
   /* Color */
-  background-color: #000000;
-  color: white;
+  background-color: #0e0e0e;
+  border: 1px solid #302e2c;
+  border-bottom: none;
+  color: #e8dc8d;
+  padding: 10px;
+  outline: none;
 }
 .console-input {
   height: 30px;
-  width: 95%;
+  width: calc(95% + 30px + 1px);
+  margin-left: 8px;
   border: none;
   /* Center */
   margin-left: auto;
@@ -151,7 +167,7 @@ textarea {
   display: flex;
   /* Color */
   color: white;
-  background-color: black;
+  /* background-color: black; */
 }
 .console-input-input {
   height: 30px;
@@ -163,20 +179,32 @@ textarea {
   /* Center */
   display: block;
   /* Color */
-  background-color: rgb(3, 3, 3);
+  background-color: #0e0e0e;
   color: white;
+  padding: 5px 10px;
+  margin-left: 4px;
+  border: 1px solid #302e2c;
+  border-right: none;
+}
+.console-input-input:focus {
+  background-color: #1e1e1e;
+  outline: none;
 }
 .console-input-button {
-  padding: 19px;
+  padding: 20px 25px;
   padding-left: 25px;
   text-align: center;
   display: block;
-  border: none;
+  border: 1px solid #302e2c;
+  border-left: none;
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
   border-top-right-radius: 0px;
-  background-color: rgb(15, 15, 15);
+  background-color: #0e0e0e;
   color: white;
+}
+.console-input-button:hover {
+  background-color: #1e1e1e;
 }
 .console-input-button-span {
   /* Center the text in the button */
@@ -186,10 +214,19 @@ textarea {
 }
 .server-status {
   display: inline-flex;
-  margin-top: -50px;
+  margin-top: 5px;
+  margin-bottom: 20px;
   position: relative;
   top: 5px;
-  margin-left: 3px;
+  margin-left: 10px;
+}
+
+button:nth-child(3) {
+  margin-left: 40px;
+}
+
+button {
+  margin-right: 5px;
 }
 h2 {
   margin-top: 5px;

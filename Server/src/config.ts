@@ -44,7 +44,7 @@ let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | s
     serverPath: async (value) => {
         if (!value) throw new Error("Server path cannot be empty");
         let newPath = path.normalize(value);
-        if (!value.match(/^[a-zA-Z0-9_\-\/\\:]+$/)) throw new Error("Server path is invalid.");
+        // if (!value.match(/^[a-zA-Z0-9_\-\/\\:]+$/)) throw new Error("Server path is invalid.");
         newPath = path.normalize(value);
         if (!path.isAbsolute(newPath)) throw new Error("Server path is not absolute.");
         // Ensure the folder exists, but is empty

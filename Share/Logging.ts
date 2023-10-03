@@ -15,6 +15,7 @@ export let IDs = [
     "server.autostart.change",
     "server.console.write",
     "server.mem",
+    "server.jvmArgs",
     "server.kill",
     "login.success",
     "login.fail",

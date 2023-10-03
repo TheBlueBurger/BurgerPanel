@@ -116,6 +116,10 @@ export type RequestResponses = {
         versions: Version[]
     } | {
         type: "downloadSuccess"
+    },
+    serverAmount: {
+        type: "serverAmount",
+        amount?: number
     }
 }
 

@@ -139,28 +139,30 @@ async function renameUser(id: string) {
 }
 </script>
 <template>
-    <div v-if="user.hasPermission('settings.read')">
+    <div v-if="user.hasPermission('settings.read')" class="settingsblock">
         <h2>Settings</h2>
         <div v-for="option of settingsAllowedToShow">
             <span class="setting-span" :title="descriptions[option as keyof typeof defaultConfig]">{{ option }}</span>
             <TextInput :default="(settings.settings[option as keyof Config] as ConfigValue).toString()" @set="v => changeOption(option as keyof Config, v)" v-if="typeof settings.settings[option as keyof Config] != 'undefined'" />
         </div>
     </div>
-    <div v-if="user.hasPermission('settings.logging.set')">
+    <div v-if="user.hasPermission('settings.logging.set')" class="loggingsettings">
         <RouterLink :to="{
             name: 'logging'
         }"><button>Logging Settings</button></RouterLink>
     </div>
-    <hr v-if="user.hasPermission('users.view')" />
-    <h3>Users</h3>
-    <div>
-        <button @click="creatingUser = !creatingUser">{{ !creatingUser ? "Add user" : "Close" }}</button>
-    </div>
-    <div v-if="creatingUser">
-        <form @submit.prevent="createUser()">
-            Username: <input type="text" placeholder="Username" v-model="newUsername" /><br />
-            <button type="submit">Create user</button>
-        </form>
+    <div class="usersthing">
+        <hr v-if="user.hasPermission('users.view')" />
+        <h3>Users</h3>
+        <div>
+            <button @click="creatingUser = !creatingUser">{{ !creatingUser ? "Add user" : "Close" }}</button>
+        </div>
+        <div v-if="creatingUser">
+            <form @submit.prevent="createUser()">
+                Username: <input type="text" placeholder="Username" v-model="newUsername" /><br />
+                <button type="submit">Create user</button>
+            </form>
+        </div>
     </div>
     <!-- <table>
         <tr>
@@ -223,6 +225,13 @@ async function renameUser(id: string) {
     </div>
 </template>
 <style scoped>
+    .settingsblock {
+        margin-left: 10px;
+        margin-top: 10px;
+    }
+    .settingsblock * {
+        margin: 5px;
+    }
     #dropdown-inner button {
         width: 100%;
         border-radius: 0;
@@ -239,10 +248,32 @@ async function renameUser(id: string) {
         margin-bottom: 5px;
         text-align: center;
     }
+
+    .loggingsettings {
+        margin-left: 20px;
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
+    .usersthing {
+        margin-top: 10px;
+    }
+
+    .usersthing button {
+        margin: 2px 5px;
+    }
+
+    .usersthing h3 {
+        margin: 5px 10px;
+    }
+
     #users {
         display: flex;
         flex-wrap:wrap;
         justify-content: center;
+    }
+    #users .user, #users .user-content p, #users .user-content {
+        margin: 5px;
     }
     .user-content {
         padding-bottom: 75px;
@@ -251,5 +282,8 @@ async function renameUser(id: string) {
     .setting-span {
         cursor: help;
         margin-right: 10px;
+    }
+    h2 {
+        margin-top: 10px;
     }
 </style>

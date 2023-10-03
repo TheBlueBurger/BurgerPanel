@@ -112,6 +112,11 @@ export let servers = databaseManager.collection<Server>("Server", {
         max: 99999,
         required: true
     },
+    jvmArgs: {
+        type: "String",
+        maxlength: 99999,
+        required: false
+    },
     allowedUsers: [{
         user: {type: "String"},
         permissions: [{type: "String"}],
@@ -138,6 +143,10 @@ export let servers = databaseManager.collection<Server>("Server", {
         default: false
     },
     autoRestart: {
+        type: "boolean",
+        default: false
+    },
+    useCustomJVMArgs: {
         type: "boolean",
         default: false
     },

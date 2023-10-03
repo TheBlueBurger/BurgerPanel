@@ -314,7 +314,7 @@
                 }">
             </div>
             <div v-if="toUpload.length != 0">
-                <div v-for="file of toUpload">
+                <div v-for="file of toUpload" class="file-item">
                     {{ file.name }} ({{ (file?.size ?? 0) / 1_000_000 }}MB) <span style="color: red;">{{ file.size > 100_000_000 ? "Too big! " : " " }}</span><button @click="removeFromUploads(file)">Delete</button>
                 </div>
                 <button @click="uploadFiles">Upload {{ toUpload.length }} file{{ toUpload.length == 1 ? '' : 's' }}</button>
@@ -350,7 +350,7 @@
         
     </div>
     <div v-else-if="!readingFile">
-        <h1>Files in {{ server.name }}{{ path }} <RouterLink :to="{
+        <h1 class="filesin">Files in {{ server.name }}{{ path }} <RouterLink :to="{
         name: 'editServer',
         params: {
             server: props.server
@@ -434,6 +434,16 @@ textarea {
     border: none;
     border-radius: 10px;
 }
+.filesin {
+    margin-top: 20px;
+    margin-left: 20px;
+}
+.file-item {
+    margin-left: 10px;
+}
+button {
+    margin: 2px;
+}
 .link {
     color: white;
     text-decoration: none;
@@ -476,12 +486,18 @@ textarea {
 #upload-modal-drop-div {
     width: 500px;
     height: 200px;
-    border: white 1px solid;
+    border: #494949 1px solid;
+    background-color: #3b3a3a60;
+    border-radius: 5px;
     margin: 10px;
     text-align: center;
     align-items: center;
     display: flex;
     cursor: pointer;
+    transition: .1s ease-in-out;
+}
+#upload-modal-drop-div:hover {
+    background-color: #4b4a4a70;
 }
 #upload-modal-drop-div > p {
     margin: 0 auto;
