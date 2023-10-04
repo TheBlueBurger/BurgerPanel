@@ -1,5 +1,5 @@
 import os from 'node:os';
-import type { MemoryUsage } from '../../../Share/Perf.js';
+import type { MemoryUsage } from '../../../Share/SystemInformation.js';
 
 export function getMemoryUsage(): MemoryUsage {
   const mem = os.totalmem() - os.freemem()

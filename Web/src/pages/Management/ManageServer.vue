@@ -107,16 +107,15 @@ function onScrolled() {
 
 <template>
   <div v-if="server">
-    <h2>Server: {{ server.name }}</h2>
-    <h4>Server ID: {{ server._id }}</h4>
-    <button @click="startServer()" :disabled="!user.hasServerPermission(server, 'start') || isRunning">Start</button>
+    <h2>{{ server.name }}'s console</h2>
+    <button style="margin-left:40px" @click="startServer()" :disabled="!user.hasServerPermission(server, 'start') || isRunning" id="startbtn">Start</button>
     <button @click="stopServer()" :disabled="!user.hasServerPermission(server, 'stop') || !isRunning || thisServerStatus == 'stopping'">Stop</button>
     <button @click="killServer()" :disabled="!user.hasServerPermission(server, 'kill') || !isRunning">Kill</button>
     <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
     <span class="server-status"><ServerStatus :server="server._id" /></span>
     <br />
     <textarea readonly ref="serverTextArea" @scroll="onScrolled">{{ logs.join("") }}</textarea>
-    <div class="console-input" v-if="hasServerPermission(user.user, server, 'console.write')"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Enter a command here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
+    <div class="console-input" v-if="hasServerPermission(user.user, server, 'console.write')"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Write here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
     <br/>
   </div>
   <div v-else>
@@ -137,7 +136,7 @@ h4 {
 textarea {
   resize: none;
   width: 95%;
-  height: calc(100vh - 275px);
+  height: calc(100vh - 235px);
   overflow-y: scroll;
   border-radius: 7px;
   border-bottom-left-radius: 0px;
@@ -219,10 +218,6 @@ textarea {
   position: relative;
   top: 5px;
   margin-left: 10px;
-}
-
-button:nth-child(3) {
-  margin-left: 40px;
 }
 
 button {

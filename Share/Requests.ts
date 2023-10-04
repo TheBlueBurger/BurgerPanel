@@ -1,5 +1,5 @@
 import { Config, ConfigValue } from "./Config";
-import { ServerPerformancePacketS2C } from "./Perf";
+import { GeneralInformation, ServerPerformance } from "./SystemInformation";
 import { Server, ServerStatus, ServerStatuses } from "./Server";
 import { ModrinthPluginResult, Plugin, Version } from "./Plugin";
 import { User } from "./User";
@@ -94,7 +94,10 @@ export type RequestResponses = {
         log: string,
         type: "log"
     },
-    serverPerformance: ServerPerformancePacketS2C,
+    systemInformation: {
+        performance: Partial<ServerPerformance>,
+        general: Partial<GeneralInformation>
+    },
     setServerOption: {
         server: Server
     }
@@ -117,10 +120,7 @@ export type RequestResponses = {
     } | {
         type: "downloadSuccess"
     },
-    serverAmount: {
-        type: "serverAmount",
-        amount?: number
-    }
+    listSessions: {username?: string, _id?: string}[]
 }
 
 

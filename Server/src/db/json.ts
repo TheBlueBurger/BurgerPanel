@@ -218,6 +218,7 @@ export class JSONCollection<T extends DatabaseType> extends Collection<T> {
         }
     }
     async countDocuments(filter: Partial<T>): Promise<number> {
+        if(Object.keys(filter).length == 0) return (await this.getAll()).length;
         return (await this.find(filter)).length;
     }
     async findByIdAndUpdate(id: string, newData: Partial<Omit<T, "_id">>): Promise<void> {

@@ -201,6 +201,15 @@ export let servers = databaseManager.collection<Server>("Server", {
     autoRestart: {
         type: Boolean,
         default: false
+    },
+    jvmArgs: {
+        type: String,
+        default: "",
+        maxlength: 2000
+    },
+    useCustomJVMArgs: {
+        type: Boolean,
+        default: false
     }
 }));
 

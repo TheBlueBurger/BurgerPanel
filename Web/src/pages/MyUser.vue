@@ -4,7 +4,6 @@ import event from '@util/event';
 import sendRequest from '@util/request';
 import { confirmModal } from '@util/modal';
 import { useUser } from '@stores/user';
-import { RouterLink } from 'vue-router';
 
 const user = useUser();
 
@@ -46,7 +45,7 @@ async function changePassword(password: string) {
         <br/>
         <TextInput :default="''" :password="true" @set="changePassword" placeholder="Password"></TextInput>
         <br/>
-        <button @click="resetToken">Reset token</button><button @click="user.logout">Logout</button>
+        <div class="btns"><button @click="resetToken">Reset token</button><button @click="user.logout">Logout</button></div>
     </div>
 </template>
 
@@ -61,8 +60,15 @@ h2 {
     margin-bottom: 10px;
 }
 
+h2, h3, .btns {
+    text-align: center;
+    justify-content: center;
+    align-self: center;
+    align-items: center;
+}
+
 .container {
-    width: 100%;
+    width: max-content;
     max-width: 600px;
     margin: auto;
     padding: 20px;

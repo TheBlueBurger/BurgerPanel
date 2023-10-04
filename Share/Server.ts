@@ -6,7 +6,6 @@ export interface Server {
     name: string;
     path: string;
     mem: number;
-    jvmArgs: string;
     allowedUsers: {
         user: string;
         permissions: ServerPermissions[];
@@ -16,6 +15,7 @@ export interface Server {
     port: number;
     autoStart: boolean;
     autoRestart: boolean;
+    jvmArgs: string;
     useCustomJVMArgs: boolean;
 }
 

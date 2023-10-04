@@ -221,7 +221,7 @@ async function changeUseJVMArgs() {
     <br />
     Auto restart: {{ server.autoRestart ? "Yes" : "No" }} <button @click="changeAutoRestart" :disabled="!user.hasServerPermission(server, 'set.autorestart')">Change</button>
     <br />
-    Use Custom JVM args?: {{ server.useCustomJVMArgs ? "Yes" : "No" }} <button @click="changeUseJVMArgs" :disabled="!user.hasServerPermission(server, 'set.usejvmargs')">Change</button></div></div>
+    Use Custom JVM args: {{ server.useCustomJVMArgs ? "Yes" : "No" }} <button @click="changeUseJVMArgs" :disabled="!user.hasServerPermission(server, 'set.usejvmargs')">Change</button></div></div>
     <div v-if="user.hasPermission('users.view')">
         <hr />
         <h3>Allowed users</h3>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, Ref, ref, watch } from "vue";
+import { computed, inject, onMounted, Ref, ref, watch } from "vue";
 import { Config, ConfigValue, defaultConfig, descriptions, disabledEditingFrontend } from "@share/Config";
 import { User } from "@share/User";
 import EventEmitter from "@util/event";
@@ -137,6 +137,13 @@ async function renameUser(id: string) {
     users.updateUser(resp.user);
     await showInfoBox("Name change successful", `Successfully changed the name to '${newName}'`);
 }
+let clients = ref([] as {
+    username?: string | undefined;
+    _id?: string | undefined;
+}[]);
+onMounted(async () => {
+    if(user.hasPermission({all: ["users.view", "serverinfo.clients.count"]})) clients.value = await sendRequest("listSessions");
+})
 </script>
 <template>
     <div v-if="user.hasPermission('settings.read')" class="settingsblock">
@@ -164,34 +171,6 @@ async function renameUser(id: string) {
             </form>
         </div>
     </div>
-    <!-- <table>
-        <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Created At</th>
-            <th>Token</th>
-            <th>Permissions</th>
-            <th v-if="user.hasPermission('users.delete')">Delete</th>
-        </tr>
-        <tr v-for="_user in sortedUsers" :key="_user._id">
-            <td>{{ _user._id }}</td>
-                <td>{{ _user.username }}</td>
-                <td>{{ new Date(_user.createdAt).toLocaleString() }}</td>
-                <td>
-                    {{ viewingToken == _user._id ? knownTokens[_user._id] : "<Hidden>" }} <button @click="viewToken(_user._id)">{{viewingToken == _user._id ? "Hide" : "View" }}
-                token</button> <button @click="viewToken(_user._id, true)">Copy to clipboard</button> <button @click="copyLoginURL(_user._id)">Generate login url</button> <button @click="resetToken(_user._id)" v-if="user.hasPermission('users.token.reset')">Reset Token</button>
-                </td>
-                <td><RouterLink :to="{
-                name: 'editUserPermissions',
-                params: {
-                    user: _user._id
-                }
-            }"><button>Edit permissions</button></RouterLink></td>
-            <td>
-                <button @click="deleteUser(_user)" v-if="user">Delete</button>
-            </td>
-        </tr>
-    </table> -->
     <div id="users">
         <div v-for="_user in sortedUsers" class="user" @contextmenu.prevent="e => dropdownRefs[_user._id].value[0].show(e)">
             <div class="user-content">
@@ -199,6 +178,7 @@ async function renameUser(id: string) {
                 <p>ID: {{ _user._id }}</p>
                 <p>Created at: {{new Date(_user.createdAt).toLocaleString()}}</p>
                 <p v-if="_user.setupPending"><i>(Setup pending)</i></p>
+                <p v-if="clients.some(c => c._id == _user._id)">Currently logged in!</p>
                 <Dropdown :ref="getDropdownRefs(_user._id)" :create-on-cursor="true">
                     <div id="dropdown-inner">
                         <button @click="() => {renameUser(_user._id);dropdownRefs[_user._id].value[0].hide()}">Rename</button>
@@ -248,7 +228,6 @@ async function renameUser(id: string) {
         margin-bottom: 5px;
         text-align: center;
     }
-
     .loggingsettings {
         margin-left: 20px;
         margin-top: 5px;
@@ -266,7 +245,6 @@ async function renameUser(id: string) {
     .usersthing h3 {
         margin: 5px 10px;
     }
-
     #users {
         display: flex;
         flex-wrap:wrap;

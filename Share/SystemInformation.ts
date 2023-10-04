@@ -5,10 +5,13 @@ export interface MemoryUsage {
   percentage: number;
 }
 
-export interface ServerPerformancePacketS2C {
-  type: "serverPerformance";
+export interface ServerPerformance {
   load?: number[];
   mem?: MemoryUsage;
   platform?: string;
 }
-// yup
+
+export interface GeneralInformation {
+  serverAmount: number;
+  clients: {username?: string; _id?: string}[];
+}

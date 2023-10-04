@@ -1,27 +1,25 @@
 import { Server } from "./Server.js";
 import { User } from "./User.js";
 export const _ServerPermissions = ["set.autostart", "set.autorestart", "set.port", "set.jvmArgs", "set.usejvmargs", "set.software", "set.version", "set.mem", "set.name", "set.allowedUsers.add", "set.allowedUsers.remove", "set.allowedUsers.permissions.write", "console.read", "console.write", "status", "stop", "start", "kill", "delete", "oldlogs.read", "serverfiles.read", "serverfiles.write", "serverfiles.delete", "serverfiles.upload", "serverfiles.download", "plugins.download", "full"] as const;
-export const _ServersPermissions = [
-    "create",
-    "import",
-    "amount",
-    "all.view"
-] as const;
+export const _ServersPermissions = ["create", "import", "all.view"] as const;
 export const _UserPermissions = ["create", "view", "token.read", "token.reset", "delete", "permissions.read", "permissions.write", "password.change", "username.change.self", "username.change.all"] as const;
 export const _SettingPermissions = [`set`, "read", "logging.set"] as const;
 export const _ServerPerformance = ["view", "mem", "load", "platform"] as const;
+export const _ServerInfo = ["servers.count", "clients.count"] as const;
 export type ServerPermissions = typeof _ServerPermissions[number];
 export type ServersPermissions = typeof _ServersPermissions[number];
 export type UserPermissions = typeof _UserPermissions[number];
 export type SettingPermissions = typeof _SettingPermissions[number];
 export type ServerPerformance = typeof _ServerPerformance[number];
-export type PermissionString = `server.all.${ServerPermissions}` | `servers.${ServersPermissions}` | `users.${UserPermissions}` | `settings.${SettingPermissions}` | `performance.${ServerPerformance}` | "full";
+export type ServerInfo = typeof _ServerInfo[number];
+export type PermissionString = `server.all.${ServerPermissions}` | `servers.${ServersPermissions}` | `users.${UserPermissions}` | `settings.${SettingPermissions}` | `performance.${ServerPerformance}` | `serverinfo.${ServerInfo}` | "full";
 export const validPermissions: PermissionString[] = [
     ..._ServerPermissions.map(l => "server.all." + l),
     ..._UserPermissions.map(l => "users." + l),
     ..._SettingPermissions.map(l => "settings." + l),
     ..._ServerPerformance.map(l => "performance." + l),
     ..._ServersPermissions.map(l => "servers." + l),
+    ..._ServerInfo.map(l => "serverinfo." + l),
     "full"
 ] as PermissionString[];
 // this is a mess.
