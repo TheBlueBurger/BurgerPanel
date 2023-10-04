@@ -111,7 +111,12 @@ enforce-secure-profile=false
         await this.setupServer(server);
         let serverEntry = this.servers[server._id];
         if (serverEntry.childProcess) throw new Error("Server is already running: " + server._id);
-        let childProcess = spawn("java", ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", "-jar", "server.jar", "--nogui"], {
+        let args = ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", "-jar", "server.jar", "--nogui"];
+        if(server.useCustomJVMArgs && server.jvmArgs) {
+            let jvmArgs = server.jvmArgs.split(" ");
+            args = ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", ...jvmArgs, "-jar", "server.jar", "--nogui"];
+        }
+        let childProcess = spawn("java", args, {
             cwd: server.path,
             stdio: "pipe",
         });

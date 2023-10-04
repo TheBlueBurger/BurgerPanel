@@ -56,26 +56,26 @@
 </script>
 
 <template>
-    <div v-if="finishedLoading">
+    <div v-if="finishedLoading" class="container">
         <h1>Logging</h1>
-        <div v-if="webhookURL != 'disabled'">
+        <div v-if="webhookURL != 'disabled'" class="webhook">
             Webhook url: <TextInput @set="setWebhookURL" :default="webhookURL" placeholder="The URL" /> <button @click="setWebhookURL('disabled')">Disable</button>
         </div>
-        <div v-else>
+        <div v-else class="webhook">
             Webhooks are disabled. <button @click="initialEditing = true; webhookURL = ''">Enable</button>
         </div>
-        <div v-if="logPath != 'disabled'">
+        <div v-if="logPath != 'disabled'" class="logpath">
             Log path:
             <TextInput @set="setLogPath" :default="logPath" placeholder="The Path" /> <button @click="setLogPath('disabled')">Disable</button>
         </div>
-        <div v-else>
+        <div v-else class="logpath">
             Logging to file is disabled. <button @click="initialEditing = true; logPath = ''">Enable</button>
         </div>
         <p><b>For security reasons, changing or disabling the log path will require a server restart.</b></p>
         <br/>
         <h3>Log Events</h3>
         <p><b>Note:</b> This will only apply for webhooks. For security reasons everything will be logged to the terminal and log file.</p>
-        <div v-for="id in IDs">
+        <div v-for="id in IDs" class="logevents-id">
             {{ id }} - <span :class="{
                 red: isDisabled(id),
                 green: !isDisabled(id)
@@ -87,10 +87,42 @@
     </div>
 </template>
 <style scoped>
+.container 
 .red {
     color: red;
 }
 .green {
     color: green;
+}
+
+.logevents-id {
+    margin-bottom: 5px;
+    margin-left: 30px;
+}
+
+.logevents-id:last-of-type {
+    margin-bottom: 20px;
+}
+
+p {
+    margin-left: 20px;
+    margin-bottom: 10px;
+}
+
+h3 {
+    margin-bottom: 10px;
+    color: #b7b7b7;
+    margin-left: 20px;
+}
+
+h1 {
+    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-left: 20px;
+}
+
+.webhook, .logpath {
+    margin-left: 20px;
+    margin-bottom: 10px;
 }
 </style>

@@ -30,6 +30,10 @@ export default class SetServerOption extends Packet {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the memory of ${server.name} (${server._id}) to ${data.mem}`, "server.mem");
             server.mem = data.mem;
         }
+        if (data.jvmArgs && hasServerPermission(client.data.auth.user, server.toJSON(), "set.jvmArgs") && typeof data.jvmArgs == "string") {
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the jvmArgs of ${server.name} (${server._id}) to ${data.jvmArgs}`, "server.jvmArgs");
+            server.jvmArgs = data.jvmArgs;
+        }
         if (data.allowedUsers) {
             switch (data?.allowedUsers?.action) {
                 case "add":
@@ -116,6 +120,10 @@ export default class SetServerOption extends Packet {
         if (typeof data.autoRestart == "boolean" && hasServerPermission(client.data.auth.user, server.toJSON(), "set.autorestart")) {
             logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the auto restart of ${server.name} (${server._id}) to ${data.autoRestart}`, "server.autostart.change");
             server.autoRestart = data.autoRestart;
+        }
+        if (typeof data.useCustomJVMArgs == "boolean" && hasServerPermission(client.data.auth.user, server.toJSON(), "set.jvmArgs")) {
+            logger.log(`${client.data.auth.user?.username} (${client.data.auth.user?._id}) is changing the useCustomJVMArgs of ${server.name} (${server._id}) to ${data.useCustomJVMArgs}`, "server.jvmArgs");
+            server.useCustomJVMArgs = data.useCustomJVMArgs;
         }
         await server.save(); // DO NOT MOVE THIS LINE DOWN. FUNCTIONS BELOW WILL AUTOMATICALLY SAVE THE SERVER AND WILL CAUSE CHAOS
         if (data.port && hasServerPermission(client.data.auth.user, server.toJSON(), "set.port")) {

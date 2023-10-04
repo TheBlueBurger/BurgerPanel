@@ -15,6 +15,8 @@ export interface Server {
     port: number;
     autoStart: boolean;
     autoRestart: boolean;
+    jvmArgs: string;
+    useCustomJVMArgs: boolean;
 }
 
 export type ServerStatus = "running" | "stopping" | "stopped" | "unknown";

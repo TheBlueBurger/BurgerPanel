@@ -38,9 +38,56 @@ async function changePassword(password: string) {
 // it does that already
 </script>
 <template>
-    <TextInput @set="setUsername" :default="user.user?.username || ''" placeholder="Username"></TextInput>
-    <br/>
-    <TextInput :default="''" :password="true" @set="changePassword" placeholder="Password"></TextInput>
-    <br/>
-    <button @click="resetToken">Reset token</button>
+    <div class="container">
+        <h2>Welcome, {{ user.user?.username || "[unknown username]" }}!</h2>
+        <h3>User settings</h3>
+        <TextInput @set="setUsername" :default="user.user?.username || ''" placeholder="Username"></TextInput>
+        <br/>
+        <TextInput :default="''" :password="true" @set="changePassword" placeholder="Password"></TextInput>
+        <br/>
+        <div class="btns"><button @click="resetToken">Reset token</button><button @click="user.logout">Logout</button></div>
+    </div>
 </template>
+
+<style scoped>
+
+h3 {
+    margin-bottom: 10px;
+    color: #b7b7b7;
+}
+
+h2 {
+    margin-bottom: 10px;
+}
+
+h2, h3, .btns {
+    text-align: center;
+    justify-content: center;
+    align-self: center;
+    align-items: center;
+}
+
+.container {
+    width: max-content;
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #333030;
+    border-radius: 10px;
+    background-color: #201f1f;
+    /* vertical center */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+br {
+    margin: 10px;
+}
+
+button {
+    margin-top: 5px;
+    margin-right: 5px;
+}
+</style>

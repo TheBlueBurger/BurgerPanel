@@ -6,6 +6,7 @@ import { Server } from '@share/Server';
 import { User } from '@share/User';
 import events from '@util/event';
 import TextInput from '@components/TextInput.vue';
+import TextField from '@components/TextField.vue';
 import sendRequest from '@util/request';
 import titleManager from '@util/titleManager';
 import { confirmModal, requestModal, showInfoBox } from '@util/modal';
@@ -58,6 +59,13 @@ async function changeMemory(newMem: string) {
         server.value = (await sendRequest("setServerOption", {id: props.server, mem: parseInt(newMem)})).server;
         servers.updateServer(server.value);
         events.emit("createNotification", `Server memory changed to '${newMem}'`)
+    }
+}
+async function changeJVMArgs(newJVMArgs: string) {
+    if(newJVMArgs) {
+        server.value = (await sendRequest("setServerOption", {id: props.server, jvmArgs: newJVMArgs})).server;
+        servers.updateServer(server.value);
+        events.emit("createNotification", `Server JVM arguments changed!`)
     }
 }
 async function changeVersion(newVersion: string) {
@@ -149,6 +157,14 @@ async function changeAutoRestart() {
     events.emit("createNotification", `Server auto restart ${server.value.autoRestart ? "enabled" : "disabled"}`);
     servers.updateServer(server.value);
 }
+async function changeUseJVMArgs() {
+    server.value = (await sendRequest("setServerOption", {
+        id: props.server,
+        useCustomJVMArgs: !server.value?.useCustomJVMArgs
+    })).server;
+    events.emit("createNotification", `Server custom JVM args ${server.value.useCustomJVMArgs ? "enabled" : "disabled"}`);
+    servers.updateServer(server.value);
+}
 </script>
 
 <template>
@@ -185,21 +201,27 @@ async function changeAutoRestart() {
     </RouterLink>
     <button @click="servers.togglePin(server)">{{ servers.isPinned(server) ? "Unpin" : "Pin" }}</button>
     <br/><hr/>
+    <div class="main-server-settings">
     Server name: <TextInput :default="server.name" @set="renameServer" :force-disabled="!user.hasServerPermission(server, 'set.name')" />
     <br />
     Server path: {{ server.path }} (Read only)
     <br />
     Memory (MB): <TextInput :default="server.mem.toString()" @set="changeMemory" :force-disabled="!user.hasServerPermission(server, 'set.mem')" />
     <br />
-    Version: <TextInput :default="server.version" @set="changeVersion" :force-disabled="!user.hasServerPermission(server, 'set.version') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
+    <div class="mempadder"></div>
+    JVM Arguments: <TextField :default="server.jvmArgs" @set="changeJVMArgs" :force-disabled="!user.hasServerPermission(server, 'set.jvmArgs')" />
+    Version: <TextInput :default="server.version" @set="changeVersion" :force-disabled="!user.hasServerPermission(server, 'set.version') || isRunning" /><span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
-    Software: <TextInput :default="server.software" @set="changeSoftware" :force-disabled="!user.hasServerPermission(server, 'set.software') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
+    Software: <TextInput :default="server.software" @set="changeSoftware" :force-disabled="!user.hasServerPermission(server, 'set.software') || isRunning" /><span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
-    Port: <TextInput :default="server.port.toString()" @set="changePort" :force-disabled="!user.hasServerPermission(server, 'set.port') || isRunning" /> <span class="red-text" v-if="isRunning">Server is running!</span>
+    Port: <TextInput :default="server.port.toString()" @set="changePort" :force-disabled="!user.hasServerPermission(server, 'set.port') || isRunning" /><span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
+    <div class="auto">
     Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart" :disabled="!user.hasServerPermission(server, 'set.autostart')">Change</button>
     <br />
     Auto restart: {{ server.autoRestart ? "Yes" : "No" }} <button @click="changeAutoRestart" :disabled="!user.hasServerPermission(server, 'set.autorestart')">Change</button>
+    <br />
+    Use Custom JVM args: {{ server.useCustomJVMArgs ? "Yes" : "No" }} <button @click="changeUseJVMArgs" :disabled="!user.hasServerPermission(server, 'set.usejvmargs')">Change</button></div></div>
     <div v-if="user.hasPermission('users.view')">
         <hr />
         <h3>Allowed users</h3>
@@ -236,6 +258,39 @@ async function changeAutoRestart() {
 </div>
 </template>
 <style scoped>
+.main-server-settings {
+    margin: 10px;
+}
+
+/* this is a huge hack, I will likely be making this better later */
+.main-server-settings > * {
+    margin: 8px!important;
+}
+
+.main-server-settings > .auto {
+    margin: 0!important;
+}
+
+.auto > * {
+    margin: 0!important;
+}
+
+.auto > *:nth-child(2) {
+    margin-top: 7px!important;
+}
+
+.auto > *:nth-child(3) {
+    margin-top: 5px!important;
+}
+
+.auto > *:nth-child(5) {
+    margin-top: 3px!important;
+}
+
+.mempadder {
+    margin-top: 10px;
+}
+
 .button-red {
     background-color: #b1373780;
     border: 1px solid #c05858;
@@ -248,6 +303,7 @@ async function changeAutoRestart() {
 }
 .red-text {
     color: #b13737;
+    margin: 0!important;
 }
 
 .editing {
@@ -264,5 +320,11 @@ button {
 
 hr {
     margin: 10px;
+    color: #272729;
+}
+
+h2 {
+    margin-bottom: 10px;
+    margin-top: 5px;
 }
 </style>

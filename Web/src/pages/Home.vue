@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Perf from '@components/Perf.vue';
+import SystemInfo from '@components/SystemInfo.vue';
 import titleManager from '@util/titleManager';
 import Server from '@components/Server.vue';
 import { useServers } from '@stores/servers';
@@ -10,7 +10,7 @@ let pinnedServers = await servers.getPinnedServers();
 
 <template>
     <div class="home-container">
-        <div id="performance"><Perf /></div>
+        <SystemInfo />
         <div id="servers-container">
             <Server v-for="pinnedServer of pinnedServers" :server="pinnedServer" />
         </div>
@@ -31,12 +31,5 @@ let pinnedServers = await servers.getPinnedServers();
         justify-content: center;
         position: relative;
         box-sizing: border-box;
-    }
-    #performance {
-        display: block;
-        margin: 0 auto;
-        position: relative;
-        box-sizing: border-box;
-        width: fit-content;
     }
 </style>
