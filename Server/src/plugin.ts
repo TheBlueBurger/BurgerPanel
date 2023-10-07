@@ -24,17 +24,30 @@ export const mixinHandler = new class {
         return cancelled;
     }
 }
-class PluginEssentials {
+type exports = {
+    serverManager: typeof import("./serverManager.js"),
+    logger: typeof import("./logger.js"),
+    index: typeof import("./index.js"),
+    db: typeof import("./db.js"),
+    config: typeof import("./config.js")
+}
+export class PluginEssentials {
     name: string;
     constructor(name: string) {
         this.name = name;
     }
-    getExports(name: string) {
+    // TODO: is there a better way to do this?
+    getExports<T extends keyof exports>(name: T): Promise<exports[T]> {
         switch(name) {
+            // @ts-ignore
             case "serverManager": return import("./serverManager.js")
+            // @ts-ignore
             case "logger": return import("./logger.js")
+            // @ts-ignore
             case "index": return import("./index.js")
+            // @ts-ignore
             case "db": return import("./db.js")
+            // @ts-ignore
             case "config": return import("./config.js")
             default: throw new Error("invalid export")
         }

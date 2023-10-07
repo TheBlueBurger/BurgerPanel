@@ -149,7 +149,12 @@ export class JSONCollection<T extends DatabaseType> extends Collection<T> {
                     if(foundItemsWithoutSameID.length) throw new Error(`.${key} isnt unique!`);
                 }
                 if(obj.type == "number") {
-                    if(typeof databaseObj != "number") throw new Error(`.${key} isnt a number when type is`);
+                    if(typeof databaseObj != "number") {
+                        // try making it a number
+                        let newNum = Number(databaseObj);
+                        if(isNaN(newNum)) throw new Error(`.${key} isnt a number when type is`);
+                        databaseObj = newNum;
+                    }
                     if(isNaN(databaseObj)) throw new Error(`.${key} is nan`);
                     if(typeof obj.max == "number" && databaseObj > obj.max) throw new Error(`.${key} is too big (${databaseObj}) when ${obj.max} is max`);
                     if(typeof obj.min == "number" && databaseObj < obj.min) throw new Error(`.${key} is too small (${databaseObj}) when ${obj.min} is min`);

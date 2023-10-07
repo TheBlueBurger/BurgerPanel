@@ -30,12 +30,12 @@ export default new class Logger {
         this.writeStream = fs.createWriteStream(location);
         this.log("Logging to " + location, "info", LogLevel.DEBUG, false, false)
     }
-    private makeNiceDate(replaceColon: boolean = false) {
+    makeNiceDate(replaceColon: boolean = false) {
         let dateString = `${Intl.DateTimeFormat("sv").format()} ${Intl.DateTimeFormat("sv", {hour: "2-digit", hourCycle: "h24", minute: "2-digit", second: "2-digit"}).format()}`
         if(replaceColon) dateString = dateString.replaceAll(":", "-"); // windows moment
         return dateString;
     }
-    private async getLogLocation(): Promise<string | null> {
+    async getLogLocation(): Promise<string | null> {
         let logLocationInConfig = await getSetting("logging_logDir");
         if(typeof logLocationInConfig != "string") return null;
         if(logLocationInConfig == "") {
@@ -63,7 +63,7 @@ export default new class Logger {
         if(!logNoMatterWhat && await this.isDisabled(id)) return;
         if(emitWebhook) await this.sendDiscordWebhook(this.formatLog(message, id, level, false), id, level).catch(err => this.log(err, "error", LogLevel.ERROR, false));
     }
-    private formatLog(message: string, id?: IDs, level?: LogLevel, useColors?: boolean) {
+    formatLog(message: string, id?: IDs, level?: LogLevel, useColors?: boolean) {
         let str = `[${LogLevel[level ?? LogLevel.INFO]}] ${id ? id + ": " : ''}${message.replaceAll("\n", "\\n")}`;
         return useColors ? colors[level ?? LogLevel.INFO](str) : str;
     }

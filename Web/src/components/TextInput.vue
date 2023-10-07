@@ -52,7 +52,7 @@
 <template>
     <span id="textinput-root">
         <input @keydown.enter="set" :placeholder="props.placeholder" :disabled="disabled" v-model="text" :style="{
-            width: Math.max((text || '').length * 1.05 + 1, 25) + 'ch'
+            width: Math.min(Math.max((text || '').length * 1.05 + 1, 25), 100) + 'ch'
         }" :type="props.password ? 'password' : 'text'" @input="e => {if(modalMode) $emit('set', text)}" :class="{
             'modal-mode': modalMode
         }" :maxlength="props.maxLength">

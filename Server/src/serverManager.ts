@@ -92,7 +92,7 @@ enforce-secure-profile=false
             lastLogs: this.servers[server._id].lastLogs,
         }
     }
-    private handleServerLog(server: Server, data: string) {
+    handleServerLog(server: Server, data: string) {
         this.servers[server._id].clientsAttached.forEach(c => {
             c.json({
                 type: "serverOutput",
@@ -254,7 +254,7 @@ enforce-secure-profile=false
             this.startServer(s.toJSON())
         }));
     }
-    private updateStatus(server: Server) {
+    updateStatus(server: Server) {
         let status = this.getStatus(server);
         clients.filter(c => hasServerPermission(c.data.auth?.user, server, "status")).forEach(c => c.json({
             n: "serverStatusUpdate",
