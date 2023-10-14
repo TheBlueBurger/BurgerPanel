@@ -42,7 +42,8 @@ export default new class TestUtil {
             cwd: path.join(__dirname, "..", "_build"),
             env: {
                 PORT: this.port.toString(),
-                DB: `json:${this.getDataPath()}`
+                DB: `json:${this.getDataPath()}`,
+                SKIP_BURGERPANEL_LOGFILE: "1"
             }
         });
         fs.writeFileSync(path.join(__dirname, "..", "test-context", this.port.toString(), "pid.txt"), (newProcess.pid ?? -1).toString());

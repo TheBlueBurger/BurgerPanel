@@ -25,6 +25,7 @@ export default new class Logger {
         this.setupWriteStream();
     }
     async setupWriteStream() {
+        if(process.env.SKIP_BURGERPANEL_LOGFILE) return;
         let location = await this.getLogLocation();
         if(!location) return;
         this.writeStream = fs.createWriteStream(location);
