@@ -2,7 +2,6 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    setupFiles: ["test/setup.ts"],
-    minThreads: 4
+    setupFiles: ["test/setup.ts"]
   },
 })
