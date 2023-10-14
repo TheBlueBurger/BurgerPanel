@@ -114,7 +114,7 @@ enforce-secure-profile=false
         let args = ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", "-jar", "server.jar", "--nogui"];
         if(server.useCustomJVMArgs && server.jvmArgs) {
             let jvmArgs = server.jvmArgs.split(" ");
-            args = ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", ...jvmArgs, "-jar", "server.jar", "--nogui"];
+            args = ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", ...jvmArgs];
         }
         let childProcess = spawn("java", args, {
             cwd: server.path,
