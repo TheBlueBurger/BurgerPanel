@@ -53,6 +53,7 @@ export default new class TestUtil {
         console.log(`starting ${this.testName} at port ${this.port}`)
         await new Promise((r) => {
             newProcess.stdout.on("data", m => {
+                console.log(`${this.testName} | ${m.toString()}`);
                 if(m.toString().includes(`port ${this.port}`)) {
                     clearTimeout(timeout);
                     r(1);
