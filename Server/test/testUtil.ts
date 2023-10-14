@@ -50,7 +50,10 @@ export default new class TestUtil {
             console.error(`Didn't listen fast enough`);
             process.exit(1);
         }, 10_000);
-        console.log(`starting ${this.testName} at port ${this.port}`)
+        console.log(`starting ${this.testName} at port ${this.port}`);
+        newProcess.on("error", err => {
+            console.log(`Cannot spawn burgerpanel in test ${this.testName} due to: ${err}`);
+        })
         await new Promise((r) => {
             newProcess.stdout.on("data", m => {
                 console.log(`${this.testName} | ${m.toString()}`);
