@@ -59,6 +59,9 @@ export default new class TestUtil {
                     r(1);
                 }
             });
+            newProcess.stderr.on("data", m => {
+                console.log(`${this.testName} STDERR | ${m.toString()}`);
+            });
         });
     }
     getDataPath() {
