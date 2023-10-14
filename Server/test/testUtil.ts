@@ -37,7 +37,8 @@ export default new class TestUtil {
             fs.mkdirSync(path.join(__dirname, "..", "test-context"));
         } catch {}
         fs.mkdirSync(path.join(__dirname, "..", "test-context", this.port.toString()));
-        let newProcess = spawn("node", ["burgerpanel.mjs"], {
+        let nodePath = fs.readlinkSync("/proc/self/exe");
+        let newProcess = spawn(nodePath, ["burgerpanel.mjs"], {
             cwd: path.join(__dirname, "..", "_build"),
             env: {
                 PORT: this.port.toString(),
