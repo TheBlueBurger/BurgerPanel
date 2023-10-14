@@ -45,7 +45,7 @@ export default class ServerFiles extends Packet {
                 }
             case "read":
                 let statData = await fs.stat(pathToCheck);
-                if(!statData.isFile()) return; // spooky
+                if(!statData.isFile()) return "how about you give me a actual file before opening"; // spooky
                 if(statData.size > 320_000) {
                     return "File is over size limit (320kb)"
                 }
@@ -109,6 +109,7 @@ export default class ServerFiles extends Packet {
                 }
             case "new":
                 if(found) return "Already exists!";
+                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.new")) return "no permission to create new files";
                 logger.log(`${client.data.auth.user?.username} is creating ${data.path} in ${server.name}`, "server.file.write");
                 switch(data.type) {
                     case "folder":
@@ -120,6 +121,18 @@ export default class ServerFiles extends Packet {
                     default:
                         return "invalid type";
                 }
+                break;
+            case "move":
+                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.rename")) return "no permission to rename";
+                let moveToPath = path.join(server.path, data.to);
+                if(!moveToPath.startsWith(server.path)) return "Very bad!";
+                logger.log(`${client.data.auth.user?.username} is moving ${data.path} to ${moveToPath}`, "server.file.move");
+                try {
+                    await fs.rename(pathToCheck, moveToPath)
+                } catch(err) {
+                    return `Failed to move: ${err}`
+                }
+                return {type: "moveSuccess"}
         }
     }
 }

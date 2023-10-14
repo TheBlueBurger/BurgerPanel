@@ -1,6 +1,6 @@
 on:
     push:
-
+run-name: Build and test
 permissions:
     contents: read
 
@@ -28,6 +28,9 @@ jobs:
               working-directory: ./Server
               env:
                 SKIP_ZIP: 1
+            - name: Test
+              run: pnpm test -- --run
+              working-directory: ./Server
             - name: Artifact
               uses: actions/upload-artifact@v3
               with:

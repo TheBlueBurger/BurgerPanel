@@ -39,7 +39,7 @@ function createNotification(text: string) {
 const user = useUser();
 let triggerUnmountPromise: (value: unknown) => void;
 let unmountPromise = new Promise(r => triggerUnmountPromise = r);
-event.once("gotoURLRouter", (data) => {
+event.on("gotoURLRouter", (data) => {
   router.push(data.to);
 });
 event.on("getClientState", (_data) => {

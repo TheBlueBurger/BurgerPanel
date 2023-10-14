@@ -5,3 +5,4 @@ dist
 _build
 packets.mjs
 *.log
+test-context/

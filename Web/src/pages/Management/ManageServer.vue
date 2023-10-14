@@ -52,6 +52,7 @@ events.on("serverOutput-" + props.server, data => {
   ignoreNextScroll.value = true;
   logs.value.push(data.data);
   if(!autoScrollInterrupted.value) serverTextArea.value?.scrollTo(0, serverTextArea.value?.scrollHeight);
+  while(logs.value.length > 100) logs.value.shift();
   setTimeout(() => {
     if (thisID == n) ignoreNextScroll.value = false;
   }, 250);

@@ -9,6 +9,10 @@ export async function getManifest() {
     return manifest;
 }
 export default async function isValidMCVersion(version: string): Promise<boolean> {
-    let manifest = await getManifest();
-    return manifest?.versions.some((v: any) => v.id == version);
+    try {
+        let manifest = await getManifest();
+        return manifest?.versions.some((v: any) => v.id == version);
+    } catch(err) {
+        throw new Error(`Can't get manifest from mojang and none is cached! ${(err as Error)?.stack}`);
+    }
 }

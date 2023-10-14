@@ -119,8 +119,19 @@ async function copyFiles() {
     fs.rmSync("_build/input.js");
     fs.copyFileSync("../LICENSE", "_build/LICENSE.txt");
     fs.copyFileSync("../README.md", "_build/README.txt");
-    fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
+    if(!process.env.SKIP_WEB) fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
     fs.writeFileSync("_build/mongodb_url.txt", "json:data.json");
+}
+
+async function serverSeries() {
+    await buildServer();
+    await runRollup();
+    await runESBuild();
+}
+
+export async function serverOnly() {
+    process.env.SKIP_WEB = 1;
+    return await series(prepare, serverSeries, copyFiles)();
 }
 
 function buildAndBundle() {
@@ -128,14 +139,14 @@ function buildAndBundle() {
         clean,
         installWebIfForgotten,
         prepareBuildInfo,
-        parallel(buildWeb, series(buildServer, runRollup, runESBuild)),
+        parallel(buildWeb, serverSeries),
         copyFiles,
         zip
     )
 }
 
 export async function prepare() {
-    return series(
+    return await series(
         clean,
         prepareBuildInfo
     )()
