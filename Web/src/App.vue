@@ -1,26 +1,34 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, provide, Ref, ref } from "vue";
+import { getActivePinia, Pinia, Store } from "pinia";
+import { RouteLocationNormalized, useRouter } from "vue-router";
+
 import type { AuthS2C } from "@share/Auth";
+import type { RequestResponses } from "@share/Requests";
 import { User } from "@share/User";
-import { useUser } from "./stores/user";
-import EventEmitter from "@util/event";
-import sendRequest, {sendRequestIgnoredType} from "@util/request";
+
 import "./style.css";
 import Navbar from "@components/Navbar.vue";
-import { RouteLocationNormalized, useRouter } from "vue-router";
-import event from "@util/event";
-import type { RequestResponses } from "@share/Requests";
-import titleManager from "@util/titleManager";
 import Modal from "@components/Modal.vue";
-import { showInfoBox } from "@util/modal";
-import { useServers } from "./stores/servers";
 
+import titleManager from "@util/titleManager";
+import { apiUrl } from "@util/api";
+import { showInfoBox } from "@util/modal";
+import event from "@util/event";
+
+import { useServers } from "@stores/servers";
+import { useUser } from "@stores/user";
+import { useWS } from "@stores/ws";
+
+const ws = useWS();
 let router = useRouter();
-let events = ref(EventEmitter);
+let events = ref(event);
 event.once("reload", () => {
   location.reload();
 });
+let unmountAborter = new AbortController();
 event.once("gotoURL", (data) => {
+  if(data.to.startsWith("javascript:")) return;
   location.href = data.to;
 });
 let notifications = ref([] as string[]);
@@ -42,8 +50,40 @@ let unmountPromise = new Promise(r => triggerUnmountPromise = r);
 event.on("gotoURLRouter", (data) => {
   router.push(data.to);
 });
+let loadingPlugins = ref(false);
+let afterEachList = [] as (() => void)[];
+interface ExtendedPinia extends Pinia {
+  _s: Map<string, Store>;
+}
+let pluginEssentials = {
+  addAfterEach(cb: () => void) {
+    afterEachList.push(cb)
+  },
+  currentRoute() {
+    return router.currentRoute.value
+  },
+  getStores() {
+    let p = getActivePinia() as ExtendedPinia
+    return p._s;
+  },
+  getRouter() {
+    return router;
+  },
+  ws() {
+    return ws;
+  }
+};
+event.once("loadPlugins", async (d) => {
+  loadingPlugins.value = true;
+  console.time("load plugins");
+  await Promise.allSettled([...new Array(d.l)].map(async (_, i) => {
+    let imported = await import(/* @vite-ignore */apiUrl + "/api/plugin/" + (i).toString() + ".js");
+    new imported.default(pluginEssentials);
+  }));
+  console.timeEnd("load plugins");
+})
 event.on("getClientState", (_data) => {
-  sendRequestIgnoredType("currentClientState", {
+  ws.sendRequestIgnoredType("currentClientState", {
     shouldHideMainContent: shouldHideMainContent.value,
     showLoginScreen: showLoginScreen.value,
     user: user.user,
@@ -63,38 +103,18 @@ event.on("tokenUpdated", (data) => {
 events.value.on("createNotification", createNotification, unmountPromise);
 provide("events", events);
 let servers = useServers();
-events.value.on("serverStatusUpdate", (d) => {
+ws.listenForEvent("serverStatusUpdate", (d) => {
   servers.statuses[d.server] = {status: d.status}
-}, unmountPromise);
+}, unmountAborter.signal);
 let queuedPackets: any[] = [];
-events.value.on("sendPacket", (data: any) => {
-  if (!connected.value) {
-    console.log("Not connected, putting request in queue...")
-    queuedPackets.push(data);
-    return;
-  }
-  ws.value.send(JSON.stringify(data));
-}, unmountPromise);
-let API_URL: string;
-if (import.meta.env.PROD) {
-  API_URL = location.origin
-} else {
-  API_URL = "http://localhost:3001"
-}
-provide("API_URL", API_URL)
-let connected = ref(false);
+
+provide("API_URL", apiUrl)
 // Connect with WS
-let ws: Ref<WebSocket> = ref() as Ref<WebSocket>;
 provide("ws", ws);
 let lastID = ref(null) as Ref<string | null>;
-let pingInterval: number;
+
 onMounted(() => {
-  initWS();
-  pingInterval = setInterval(() => { // if we're using cloudflare, we need to ping in order to make cloudflare not explode
-    if (connected.value) {
-      sendRequest("ping")
-    }
-  }, 30_000);
+  ws.create();
   if (location.protocol == "http:" && !localStorage.getItem("ignore-unsecure-connection") && import.meta.env.PROD) {
     showInfoBox("HTTP Warning", "You are connecting over HTTP. Traffic will not be encrypted! You are recommended to use HTTPS for the best security.\n\nYou will not be shown this warning again.");
     localStorage.setItem("ignore-unsecure-connection", "1");
@@ -102,49 +122,15 @@ onMounted(() => {
 });
 onUnmounted(() => {
   triggerUnmountPromise(null); // this is so stupid
-  clearInterval(pingInterval);
-  ws.value.close();
+  unmountAborter.abort();
 });
-function initWS() {
-  if(([WebSocket.OPEN, WebSocket.CONNECTING] as number[]).includes(ws.value?.readyState)) return;
-  ws.value = new WebSocket(API_URL.replace("http", "ws"));
-  ws.value.addEventListener("open", () => {
-    connected.value = true;
-    console.log("open event: connected with readystate " + ws.value.readyState)
-    events.value.emit("connected");
-    queuedPackets = [];
-    if (localStorage.getItem("token")) {
-      token.value = localStorage.getItem("token") || "";
-      login(true);
-    } else {
-      showLoginScreen.value = true;
-    }
-  });
-  ws.value.addEventListener("close", () => {
-    connected.value = false;
-    user.user = undefined;
-    setTimeout(() => {
-      initWS();
-    }, 1000);
-  });
-  ws.value.addEventListener("message", (e) => {
-    let data = JSON.parse(e.data);
-    events.value.emit("packetRecieved", data);
-    events.value.emit(data.r, data);
-    events.value.emit(data.n, data);
-    if (data.emits) {
-      for (let emit of data.emits) {
-        events.value.emit(emit, data);
-      }
-    }
-  });
-}
+
 
 
 async function login(usingTokenOverride: boolean = false) {
   let authResp: void | RequestResponses["auth"];
   if (usingTokenLogin.value || usingTokenOverride) {
-    authResp = await sendRequest("auth", {
+    authResp = await ws.sendRequest("auth", {
       token: token.value
     }, false).catch((err) => {
       loginMsg.value = err;
@@ -153,7 +139,7 @@ async function login(usingTokenOverride: boolean = false) {
       showLoginScreen.value = true;
     });
   } else {
-    authResp = await sendRequest("auth", {
+    authResp = await ws.sendRequest("auth", {
       username: loginUsername.value,
       password: loginPassword.value
     }, false).catch((err) => {
@@ -179,27 +165,27 @@ async function login(usingTokenOverride: boolean = false) {
   if (authResp.statuses) servers.addStatuses(authResp.statuses);
   queuedPackets.forEach(queuedPacket => {
     console.log("Sending queued request", queuedPacket)
-    ws.value.send(JSON.stringify(queuedPacket));
+    ws.send(JSON.stringify(queuedPacket));
   });
   queuedPackets = [];
 }
 let token = ref("");
 
-events.value.on("logout", () => {
+ws.listenForEvent("logout", () => {
   showLoginScreen.value = true;
-}, unmountPromise);
+}, unmountAborter.signal);
 let users = ref(new Map<string, User>());
 provide("users", users);
 
 let loginMsg = ref("");
-events.value.on("loginFailed", (data: AuthS2C) => {
+ws.listenForEvent("loginFailed", (data: AuthS2C) => {
   console.log("Login failed: " + data.message)
   loginMsg.value = data.message as string;
   showLoginScreen.value = true;
-}, unmountPromise);
-events.value.on("yourUserEdited", newUser => {
+}, unmountAborter.signal);
+ws.listenForEvent("yourUserEdited", newUser => {
   user.user = newUser.user;
-}, unmountPromise);
+}, unmountAborter.signal);
 let showLoginScreen = ref(false);
 function gotoSetup(_currentRoute?: RouteLocationNormalized) {
   let currentRoute = _currentRoute ?? router.currentRoute.value;
@@ -213,6 +199,7 @@ function gotoSetup(_currentRoute?: RouteLocationNormalized) {
   })
 }
 router.afterEach((guardTo, guardFrom) => {
+  afterEachList.forEach(cb => cb());
   if (guardTo.path != guardFrom.path) {
     if (typeof guardTo.meta.title == "string" && guardTo.meta?.setTitle !== false) titleManager.setTitle(guardTo.meta.title);
     else titleManager.resetTitle();
@@ -232,9 +219,9 @@ router.beforeEach(async (guard, fromGuard) => {
     }
     console.log("Checking if connected...")
     console.time();
-    if (!connected.value) await events.value.awaitEvent("connected");
+    if (!ws.connected) await ws.awaitEvent("__connected");
     console.timeEnd();
-    console.log("Readystate is", ws.value.readyState)
+    console.log("Readystate is", ws.ws?.readyState)
     console.log("Connected, logging in...");
     token.value = guard.query.useToken as string;
     showLoginScreen.value = false;
@@ -257,10 +244,19 @@ user.$subscribe((_, newUser) => {
 let usingTokenLogin = ref(false);
 let loginUsername = ref("");
 let loginPassword = ref("");
+ws.listenForEvent("__connected", async () => {
+  console.log("le connected")
+  try {
+    if(await user.autoLogin()) return;
+  } catch {}
+  showLoginScreen.value = true;
+}, unmountAborter.signal);
 let hideMainContentMsg = computed(() => {
+  if(!ws.connected) return `Connecting to server...${ws.connectAttempt != 1 ? ` (attempt ${ws.connectAttempt})` : ""}`;
   if(user.user?.setupPending && router.currentRoute.value.name != "userSetup") return "Redirecting to user setup";
 });
 let shouldHideMainContent = computed(() => typeof hideMainContentMsg.value == "string");
+
 </script>
 
 <template>
@@ -290,8 +286,7 @@ let shouldHideMainContent = computed(() => typeof hideMainContentMsg.value == "s
     </div>
   </div>
   <div v-else id="login-div">
-    <span v-if="!connected">Connecting to server...</span>
-    <form @submit.prevent="login(false)" v-else-if="!user.user && showLoginScreen">
+    <form @submit.prevent="login(false)" v-if="!user.user && showLoginScreen">
       <h1>Login</h1>
       <br />
       <div v-if="usingTokenLogin">

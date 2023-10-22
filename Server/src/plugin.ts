@@ -24,30 +24,18 @@ export const mixinHandler = new class {
         return cancelled;
     }
 }
-type exports = {
-    serverManager: typeof import("./serverManager.js"),
-    logger: typeof import("./logger.js"),
-    index: typeof import("./index.js"),
-    db: typeof import("./db.js"),
-    config: typeof import("./config.js")
-}
+
 export class PluginEssentials {
     name: string;
     constructor(name: string) {
         this.name = name;
     }
-    // TODO: is there a better way to do this?
-    getExports<T extends keyof exports>(name: T): Promise<exports[T]> {
+    getExports(name: string) {
         switch(name) {
-            // @ts-ignore
             case "serverManager": return import("./serverManager.js")
-            // @ts-ignore
             case "logger": return import("./logger.js")
-            // @ts-ignore
             case "index": return import("./index.js")
-            // @ts-ignore
             case "db": return import("./db.js")
-            // @ts-ignore
             case "config": return import("./config.js")
             default: throw new Error("invalid export")
         }
@@ -55,10 +43,17 @@ export class PluginEssentials {
     get mixinHandler() {
         return mixinHandler;
     }
+    // path is relative from /plugins
+    // can only include one file, if you need more use esbuild/rollup/whatever
+    async addFrontendPlugin(path: string) {
+        let fileData = await fs.readFile(__dirname + "/plugins/" + path);
+        pluginManager.frontendPlugins.push(fileData.toString());
+    }
 }
 
-export default new class PluginManager {
+const pluginManager = new class {
     plugins: any[] = [];
+    frontendPlugins = [] as string[];
     constructor() {
     }
     async init() {
@@ -66,7 +61,8 @@ export default new class PluginManager {
         let files = await fs.readdir(__dirname + "/plugins");
         for await(let file of files) {
             let fullPath = path.join(__dirname, "plugins", file);
-            if(!file.endsWith(".js")) return;
+            if(!file.endsWith(".js") && !file.endsWith(".mjs")) return;
+            if(file.includes(".web.")) return;
             let stat = await fs.stat(fullPath);
             if(!stat.isFile()) return;
             let imported = await import(fullPath);
@@ -77,3 +73,5 @@ export default new class PluginManager {
         }
     }
 }
+
+export default pluginManager

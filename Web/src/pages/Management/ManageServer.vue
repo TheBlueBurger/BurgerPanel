@@ -10,6 +10,7 @@ import { confirmModal } from '@util/modal';
 import { useUser } from '@stores/user';
 import { useServers } from '@stores/servers';
 import { hasServerPermission } from '@share/Permission';
+import { useWS } from '@stores/ws';
 let router = useRouter();
 let props = defineProps<{
   server: string;
@@ -24,10 +25,9 @@ let loadingServerFromAPI = ref(false);
 let logs: Ref<String[]> = ref([]);
 let attached = ref(false);
 let user = useUser();
-
+let ws = useWS();
 loadingServerFromAPI.value = true;
-let triggerUnmountPromise: (value: unknown) => void;
-let unmountPromise = new Promise(r => triggerUnmountPromise = r);
+let unmountAborter = new AbortController();
 // Attach to server
 if (!attached.value) {
   let resp = await sendRequest("attachToServer", {_id: props.server}).catch(err => {
@@ -46,7 +46,7 @@ if (!attached.value) {
     servers.statuses[props.server] = {status: resp.status}
   loadingServerFromAPI.value = false;
 }
-events.on("serverOutput-" + props.server, data => {
+ws.listenForEvent("serverOutput-" + props.server, data => {
   n++;
   let thisID = n;
   ignoreNextScroll.value = true;
@@ -56,7 +56,7 @@ events.on("serverOutput-" + props.server, data => {
   setTimeout(() => {
     if (thisID == n) ignoreNextScroll.value = false;
   }, 250);
-}, unmountPromise);
+}, unmountAborter.signal);
 let n = 0;
 let autoScrollInterrupted = ref(false);
 let ignoreNextScroll = ref(false);
@@ -64,12 +64,12 @@ function startServer() {
   sendRequest("startServer", {id: props.server})
   logs.value = [];
 }
-events.on("serverExited-" + props.server, data => {
+ws.listenForEvent("serverExited-" + props.server, data => {
   logs.value.push("Server exited with code " + data.code + "\n");
-}, unmountPromise);
-events.on("serverErrored-" + props.server, data => {
+}, unmountAborter.signal);
+ws.listenForEvent("serverErrored-" + props.server, data => {
   logs.value.push("Server errored: " + data.error + "\n");
-}, unmountPromise);
+}, unmountAborter.signal);
 async function stopServer() {
   if(await confirmModal("Stop server", "Are you sure you want to stop the server? Unsaved data will be saved.", true, true, true)) await sendRequest("stopServer", {id: props.server})
 }
@@ -78,7 +78,7 @@ async function killServer() {
 }
 onUnmounted(() => {
   sendRequest("detachFromServer", {id: props.server});
-  triggerUnmountPromise(null);
+  unmountAborter.abort();
 });
 let consoleInput = ref("");
 function sendCommand() {

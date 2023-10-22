@@ -110,7 +110,17 @@ app.get("/api/downloadfile/:id", (req, res) => {
     if(typeof path != "string") return res.sendStatus(401);
     httpDownloadRequests.delete(req.params.id);
     res.download(path);
-})
+});
+app.get("/api/plugin/:id", (req, res) => {
+    let id = req.params.id;
+    id = id.replace(".js", "");
+    let idInt = parseInt(id);
+    if(isNaN(idInt)) {
+        return res.status(400).send("Invalid number");
+    }
+    if(idInt < 0 || idInt >= pluginHandler.frontendPlugins.length) return res.status(400).send("out of range");
+    res.header("Content-Type", "application/javascript; charset=UTF-8").send(pluginHandler.frontendPlugins[idInt]);
+});
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 if(isProd) {
     app.use(express.static(path.join(__dirname, "Web")));
@@ -270,6 +280,12 @@ wss.on('connection', (_client) => {
     mixinHandler.handle("clientConnection", {
         client
     });
+    if(pluginHandler.frontendPlugins.length != 0) {
+        client.json({
+            n: "loadPlugins",
+            l: pluginHandler.frontendPlugins.length
+        })
+    }
     client.on('message', async (message) => {
         try {
             let data = JSON.parse(message.toString());

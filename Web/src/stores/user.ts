@@ -5,6 +5,7 @@ import sendRequest from "@util/request";
 import event from "@util/event";
 import { Permission, hasServerPermission as _hasServerPermission, hasPermission as _hasPermission, ServerPermissions } from "@share/Permission";
 import { Server } from "@share/Server";
+import { useServers } from "./servers";
 
 export const useUser = defineStore("user", () => {
     const user: Ref<User | undefined> = ref();
@@ -21,5 +22,22 @@ export const useUser = defineStore("user", () => {
     function hasServerPermission(server: Server, permission: ServerPermissions) {
         return _hasServerPermission(user.value, server, permission);
     }
-    return { user, logout, hasPermission, hasServerPermission }
+    async function autoLogin() {
+        if (localStorage.getItem("token")) {
+            let resp = await sendRequest("auth", {
+                token: localStorage.getItem("token")
+            }, false);
+            if(resp.servers) {
+                let servers = useServers();
+                servers.addServers(resp.servers);
+            }
+            if(resp.statuses) {
+                let servers = useServers();
+                servers.addStatuses(resp.statuses);
+            }
+            user.value = resp.user;
+            return true;
+        } return false;
+    }
+    return { user, logout, hasPermission, hasServerPermission, autoLogin }
 })
