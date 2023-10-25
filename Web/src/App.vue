@@ -23,11 +23,11 @@ import { useWS } from "@stores/ws";
 const ws = useWS();
 let router = useRouter();
 let events = ref(event);
-event.once("reload", () => {
+ws.listenOnce("reload", () => {
   location.reload();
 });
 let unmountAborter = new AbortController();
-event.once("gotoURL", (data) => {
+ws.listenOnce("gotoURL", (data) => {
   if(data.to.startsWith("javascript:")) return;
   location.href = data.to;
 });
@@ -47,7 +47,7 @@ function createNotification(text: string) {
 const user = useUser();
 let triggerUnmountPromise: (value: unknown) => void;
 let unmountPromise = new Promise(r => triggerUnmountPromise = r);
-event.on("gotoURLRouter", (data) => {
+ws.listenForEvent("gotoURLRouter", (data) => {
   router.push(data.to);
 });
 let loadingPlugins = ref(false);
@@ -73,7 +73,7 @@ let pluginEssentials = {
     return ws;
   }
 };
-event.once("loadPlugins", async (d) => {
+ws.listenOnce("loadPlugins", async (d) => {
   loadingPlugins.value = true;
   console.time("load plugins");
   await Promise.allSettled([...new Array(d.l)].map(async (_, i) => {
@@ -82,7 +82,7 @@ event.once("loadPlugins", async (d) => {
   }));
   console.timeEnd("load plugins");
 })
-event.on("getClientState", (_data) => {
+ws.listenForEvent("getClientState", (_data) => {
   ws.sendRequestIgnoredType("currentClientState", {
     shouldHideMainContent: shouldHideMainContent.value,
     showLoginScreen: showLoginScreen.value,
@@ -96,9 +96,10 @@ event.on("getClientState", (_data) => {
     }
   });
 });
-event.on("tokenUpdated", (data) => {
+ws.listenForEvent("tokenUpdated", (data) => {
   console.log(`Token updated`);
-  localStorage.setItem("token", data.newToken);
+  if(data.resetToken) localStorage.removeItem("token");
+  else localStorage.setItem("token", data.newToken);
 });
 events.value.on("createNotification", createNotification, unmountPromise);
 provide("events", events);
@@ -245,7 +246,7 @@ let usingTokenLogin = ref(false);
 let loginUsername = ref("");
 let loginPassword = ref("");
 ws.listenForEvent("__connected", async () => {
-  console.log("le connected")
+  user.resetUser();
   try {
     if(await user.autoLogin()) return;
   } catch {}
@@ -256,7 +257,6 @@ let hideMainContentMsg = computed(() => {
   if(user.user?.setupPending && router.currentRoute.value.name != "userSetup") return "Redirecting to user setup";
 });
 let shouldHideMainContent = computed(() => typeof hideMainContentMsg.value == "string");
-
 </script>
 
 <template>

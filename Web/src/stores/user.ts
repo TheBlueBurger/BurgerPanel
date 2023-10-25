@@ -39,5 +39,8 @@ export const useUser = defineStore("user", () => {
             return true;
         } return false;
     }
-    return { user, logout, hasPermission, hasServerPermission, autoLogin }
+    function resetUser() {
+        user.value = undefined;
+    }
+    return { user, logout, hasPermission, hasServerPermission, autoLogin, resetUser }
 })

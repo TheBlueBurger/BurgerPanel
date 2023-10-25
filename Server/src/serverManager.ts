@@ -270,6 +270,9 @@ enforce-secure-profile=false
         return !!this.servers[server._id.toString()]?.childProcess
     }
     handleDisconnect(client: OurClient) {
+        this.detachFromAll(client);
+    }
+    detachFromAll(client: OurClient) {
         Object.values(this.servers).filter(s => this.isAttachedToServer(client, s.server)).forEach(s => this.detachFromServer(client, s.server._id.toString()));
     }
 }

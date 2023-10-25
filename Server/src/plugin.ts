@@ -61,10 +61,10 @@ const pluginManager = new class {
         let files = await fs.readdir(__dirname + "/plugins");
         for await(let file of files) {
             let fullPath = path.join(__dirname, "plugins", file);
-            if(!file.endsWith(".js") && !file.endsWith(".mjs")) return;
-            if(file.includes(".web.")) return;
+            if(!file.endsWith(".js") && !file.endsWith(".mjs")) continue;
+            if(file.includes(".web.")) continue;
             let stat = await fs.stat(fullPath);
-            if(!stat.isFile()) return;
+            if(!stat.isFile()) continue;
             let imported = await import(fullPath);
             if(!imported?.default) throw new Error(`Invalid plugin ${file} doesnt provide default export`);
             let instance = new imported.default(new PluginEssentials(file));
