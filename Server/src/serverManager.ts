@@ -117,6 +117,7 @@ enforce-secure-profile=false
             let jvmArgs = server.jvmArgs.split(" ");
             args = ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", ...jvmArgs];
         }
+        serverIntegrator.prepareServer(server);
         let childProcess = spawn("java", args, {
             cwd: server.path,
             stdio: "pipe",

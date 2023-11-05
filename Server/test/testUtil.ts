@@ -42,7 +42,8 @@ export default new class TestUtil {
             env: {
                 PORT: this.port.toString(),
                 DB: `json:${this.getDataPath()}`,
-                SKIP_BURGERPANEL_LOGFILE: "1"
+                SKIP_BURGERPANEL_LOGFILE: "1",
+                BURGERPANEL_INTEGRATOR_SOCKET_PATH: path.join(this.getContextPath(), "integrator.sock")
             }
         });
         fs.writeFileSync(path.join(__dirname, "..", "test-context", this.port.toString(), "pid.txt"), (newProcess.pid ?? -1).toString());
@@ -68,8 +69,11 @@ export default new class TestUtil {
             });
         });
     }
+    getContextPath() {
+        return path.join(__dirname, "..", "test-context", this.port.toString());
+    }
     getDataPath() {
-        return path.join(__dirname, "..", "test-context", this.port.toString(), "data.json");
+        return path.join(this.getContextPath(), "data.json");
     }
     getData() {
         return JSON.parse(fs.readFileSync(this.getDataPath()).toString());

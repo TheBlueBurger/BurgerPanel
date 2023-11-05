@@ -360,25 +360,25 @@ process.on("SIGINT", () => exit("INT"));
 process.on("SIGTERM", () => exit("TERM"));
 async function findLogPath() {
     let logLocationInConfig = await getSetting("logging_logDir");
-        if(typeof logLocationInConfig != "string") return null;
-        if(logLocationInConfig == "") {
-            let logDir = path.join(__dirname, "logs");
-            logLocationInConfig = logDir;
-            if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
-            await setSetting("logging_logDir", logDir);
-        } else if(logLocationInConfig == "disabled") {
-            return null;
-        }
+    if(typeof logLocationInConfig != "string") return null;
+    if(logLocationInConfig == "") {
+        let logDir = path.join(__dirname, "logs");
+        logLocationInConfig = logDir;
         if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
-        let filePath = path.join(logLocationInConfig, `BurgerPanel ${logger.makeNiceDate(process.platform == "win32")}`);
-        if(await exists(filePath + ".log")) { // how would this even trigger it changes every second
-            let i = 0;
-            while(await exists(filePath + i + ".log")) {
-                i++;
-            }
-            filePath = filePath + i;
+        await setSetting("logging_logDir", logDir);
+    } else if(logLocationInConfig == "disabled") {
+        return null;
+    }
+    if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
+    let filePath = path.join(logLocationInConfig, `BurgerPanel ${logger.makeNiceDate(process.platform == "win32")}`);
+    if(await exists(filePath + ".log")) { // how would this even trigger it changes every second
+        let i = 0;
+        while(await exists(filePath + i + ".log")) {
+            i++;
         }
-        return filePath + ".log";
+        filePath = filePath + i;
+    }
+    return filePath + ".log";
 }
 packetHandler.init().then(async () => {
     logger.setupWriteStream(await findLogPath());

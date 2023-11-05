@@ -1,8 +1,7 @@
 const isProd = process.env.NODE_ENV == "production";
 import fsSync from "node:fs";
 import net from "node:net";
-import url from "node:url";
-import fs from "node:fs/promises";
+import path from "node:path";
 import logger, { LogLevel } from "./logger.js";
 import type { Server } from "../../Share/Server.js";
 interface OurIntegratorClient extends net.Socket {
@@ -10,9 +9,9 @@ interface OurIntegratorClient extends net.Socket {
         server?: string
     }
 }
-let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 export default new class ServerIntegrator {
-    path = (isProd ? __dirname : process.cwd()) + "/connector.burgerpanelsock";
+    path: string | undefined;
+    filename = "connector.burgerpanelsock";
     requestCallbacks: {
         [id: string]: (resp: any) => void
     } = {};
@@ -20,12 +19,22 @@ export default new class ServerIntegrator {
     servers: {
         [id: string]: {
             server: Server,
-            client?: net.Socket
+            client?: OurIntegratorClient
         }
     } = {};
     constructor() {
+        this.path = this.getPath();
+        if(!this.path) return;
         if(fsSync.existsSync(this.path)) fsSync.rmSync(this.path);
         this.listen();
+    }
+    getPath() {
+        if(process.platform == "win32") {
+            logger.log("Integrator cannot be used because microsoft", "debug", LogLevel.DEBUG);
+            return;
+        }
+        if(process.env.BURGERPANEL_INTEGRATOR_SOCKET_PATH) return process.env.BURGERPANEL_INTEGRATOR_SOCKET_PATH;
+        return path.join(process.cwd(), this.filename);
     }
     private listen() {
         let server = net.createServer(_c => {
@@ -36,12 +45,13 @@ export default new class ServerIntegrator {
                 try {
                     json = JSON.parse(d.toString());
                 } catch(err) {
-                    logger.log(`Client sent invalid JSON, server id is ${c.burgerpanelData.server}`, "server.integrator", LogLevel.ERROR);
+                    logger.log(`Client sent invalid JSON, server id is ${c.burgerpanelData.server}: ${d.toString()}`, "server.integrator", LogLevel.ERROR);
                     return;
                 }
                 if(Array.isArray(json)) return;
                 if(!["request", "response"].includes(json.dataType)) return;
                 if(json.dataType == "response") {
+                    console.log(json);
                     if(!this.requestCallbacks[json.id]) return;
                     this.requestCallbacks[json.id](json.data);
                     return;
@@ -51,7 +61,15 @@ export default new class ServerIntegrator {
                     case "setID":
                         if(!this.servers[json.id]) return;
                         c.burgerpanelData.server = json.id;
+                        this.servers[json.id].client = c;
                         logger.log(`Server ${json.id} connected`, "server.integrator");
+                        c.write(JSON.stringify({
+                            id: "among",
+                            packet: "status",
+                            data: {
+
+                            }
+                        }));
                         break;
                 }
             });
