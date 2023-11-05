@@ -126,50 +126,6 @@ onUnmounted(() => {
   unmountAborter.abort();
 });
 
-
-
-async function login(usingTokenOverride: boolean = false) {
-  let authResp: void | RequestResponses["auth"];
-  if (usingTokenLogin.value || usingTokenOverride) {
-    authResp = await ws.sendRequest("auth", {
-      token: token.value
-    }, false).catch((err) => {
-      loginMsg.value = err;
-      token.value = "";
-      localStorage.removeItem("token");
-      showLoginScreen.value = true;
-    });
-  } else {
-    authResp = await ws.sendRequest("auth", {
-      username: loginUsername.value,
-      password: loginPassword.value
-    }, false).catch((err) => {
-      loginMsg.value = err;
-      showLoginScreen.value = true;
-    })
-  }
-  if (!authResp) {
-    showLoginScreen.value = true;
-    return;
-  }
-  if (!authResp.user) {
-    console.log("User doesn't exist, but login was successful. Probably already authenticated.");
-    return;
-  }
-  user.user = authResp.user;
-  console.log("Logged in as " + authResp.user.username);
-  localStorage.setItem("token", authResp.user.token);
-  let servers = useServers();
-  if (authResp.servers) servers.addServers(authResp.servers);
-  if (lastID.value != authResp.user._id) createNotification("Welcome, " + authResp.user.username + "!");
-  lastID.value = authResp.user._id;
-  if (authResp.statuses) servers.addStatuses(authResp.statuses);
-  queuedPackets.forEach(queuedPacket => {
-    console.log("Sending queued request", queuedPacket)
-    ws.send(JSON.stringify(queuedPacket));
-  });
-  queuedPackets = [];
-}
 let token = ref("");
 
 ws.listenForEvent("logout", () => {
@@ -224,9 +180,12 @@ router.beforeEach(async (guard, fromGuard) => {
     console.timeEnd();
     console.log("Readystate is", ws.ws?.readyState)
     console.log("Connected, logging in...");
-    token.value = guard.query.useToken as string;
     showLoginScreen.value = false;
-    login(true);
+    try {
+      user.loginToken(guard.query.useToken as string);
+    } catch {
+      showLoginScreen.value = true;
+    }
     console.log("Token used, removing from query.");
     router.push({
       path: guard.path,
@@ -257,6 +216,14 @@ let hideMainContentMsg = computed(() => {
   if(user.user?.setupPending && router.currentRoute.value.name != "userSetup") return "Redirecting to user setup";
 });
 let shouldHideMainContent = computed(() => typeof hideMainContentMsg.value == "string");
+async function login() {
+  try {
+    if(usingTokenLogin.value) await user.loginToken(token.value);
+    else await user.loginUsernamePass(loginUsername.value, loginPassword.value);
+  } catch(err) {
+    loginMsg.value = err+"";
+  }
+}
 </script>
 
 <template>
@@ -286,7 +253,7 @@ let shouldHideMainContent = computed(() => typeof hideMainContentMsg.value == "s
     </div>
   </div>
   <div v-else id="login-div">
-    <form @submit.prevent="login(false)" v-if="!user.user && showLoginScreen">
+    <form @submit.prevent="login()" v-if="!user.user && showLoginScreen">
       <h1>Login</h1>
       <br />
       <div v-if="usingTokenLogin">

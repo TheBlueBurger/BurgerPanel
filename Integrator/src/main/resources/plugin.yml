@@ -1,0 +1,4 @@
+name: BurgerPanelIntegrator
+version: '${version}'
+main: io.github.theblueburger.burgerpanelintegrator.BurgerPanelIntegrator
+api-version: '1.20'

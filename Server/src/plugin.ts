@@ -30,9 +30,10 @@ export class PluginEssentials {
     constructor(name: string) {
         this.name = name;
     }
-    getExports(name: string) {
+    getExport(name: string) {
         switch(name) {
             case "serverManager": return import("./serverManager.js")
+            case "serverIntegrator": return import("./serverIntegrator.js")
             case "logger": return import("./logger.js")
             case "index": return import("./index.js")
             case "db": return import("./db.js")
@@ -40,6 +41,7 @@ export class PluginEssentials {
             default: throw new Error("invalid export")
         }
     }
+    getExports(name: string) {return this.getExport(name)}
     get mixinHandler() {
         return mixinHandler;
     }

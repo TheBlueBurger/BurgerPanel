@@ -11,6 +11,7 @@ import { userHasAccessToServer as _userHasAccessToServer } from "../../Share/Per
 import logger, { LogLevel } from "./logger.js";
 import isValidMCVersion from "./util/isValidMCVersion.js";
 import { promiseSleep } from "blueutilities";
+import serverIntegrator from "./serverIntegrator.js";
 
 export default new class ServerManager {
     servers: {
@@ -119,6 +120,10 @@ enforce-secure-profile=false
         let childProcess = spawn("java", args, {
             cwd: server.path,
             stdio: "pipe",
+            env: {
+                BURGERPANEL_INTEGRATOR_PATH: serverIntegrator.path,
+                BURGERPANEL_INTEGRATOR_SERVER_ID: server._id
+            }
         });
         serverEntry.childProcess = childProcess;
         childProcess.stdout.on("data", d => this.handleServerLog(server, d.toString()));

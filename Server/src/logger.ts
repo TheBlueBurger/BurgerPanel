@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import {IDs} from "../../Share/Logging.js";
-import { getSetting, setSetting } from "./config.js";
+//import { getSetting, setSetting } from "./config.js";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import url from "node:url";
@@ -21,13 +21,13 @@ let colors: {[level: string]: Function} = {
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 export default new class Logger {
     writeStream: fs.WriteStream | null = null;
+    webhookURL: string | undefined;
+    ignoredLogs: string | undefined;
     constructor() {
-        this.setupWriteStream();
     }
-    async setupWriteStream() {
-        if(process.env.SKIP_BURGERPANEL_LOGFILE) return;
-        let location = await this.getLogLocation();
+    async setupWriteStream(location: string | null) {
         if(!location) return;
+        if(process.env.SKIP_BURGERPANEL_LOGFILE) return;
         this.writeStream = fs.createWriteStream(location);
         this.log("Logging to " + location, "info", LogLevel.DEBUG, false, false)
     }
@@ -37,16 +37,17 @@ export default new class Logger {
         return dateString;
     }
     async getLogLocation(): Promise<string | null> {
-        let logLocationInConfig = await getSetting("logging_logDir");
+        /*let logLocationInConfig = await getSetting("logging_logDir");
         if(typeof logLocationInConfig != "string") return null;
         if(logLocationInConfig == "") {
-            let logDir = path.join(__dirname, "logs")
-            if(!await exists(logDir)) await fsp.mkdir(logDir);
+            let logDir = path.join(__dirname, "logs");
+            if(!await exists(logLocationInConfig)) await fsp.mkdir(logLocationInConfig);
             await setSetting("logging_logDir", logDir);
             logLocationInConfig = logDir;
         } else if(logLocationInConfig == "disabled") {
             return null;
         }
+        if(!await exists(logLocationInConfig)) await fsp.mkdir(logLocationInConfig);
         let filePath = path.join(logLocationInConfig, `BurgerPanel ${this.makeNiceDate(process.platform == "win32")}`);
         if(await exists(filePath + ".log")) { // how would this even trigger it changes every second
             let i = 0;
@@ -55,7 +56,8 @@ export default new class Logger {
             }
             filePath = filePath + i;
         }
-        return filePath + ".log";
+        return filePath + ".log";*/
+        return null;
     }
     async log(message: string, id: IDs, level: LogLevel = LogLevel.INFO, emitWebhook: boolean = true, logToFile: boolean = true, logNoMatterWhat: boolean = false) {
         if(!id) return;
@@ -69,17 +71,15 @@ export default new class Logger {
         return useColors ? colors[level ?? LogLevel.INFO](str) : str;
     }
     async isDisabled(id: IDs): Promise<boolean> {
-        return (await getSetting("logging_DisabledIDs"))?.toString().split(",").includes(id as string) || false;
+        return this.ignoredLogs?.toString().split(",").includes(id as string) || false;
     }
     async sendDiscordWebhook(message: string, id: IDs, level: LogLevel) {
-        let discordWebHookURL = await getSetting("logging_DiscordWebHookURL");
-        if(!discordWebHookURL) return;
-        if(typeof discordWebHookURL != "string" || discordWebHookURL == "disabled") return;
+        if(typeof this.webhookURL != "string" || this.webhookURL == "disabled") return;
         let headers = new Headers();
         headers.append("Content-Type", "application/json");
         headers.append("X-BurgerPanel-ID", id);
         headers.append("X-BurgerPanel-LogLevel", LogLevel[level ?? LogLevel.INFO]);
-        await fetch(discordWebHookURL, {
+        await fetch(this.webhookURL, {
             method: "post",
             headers,
             body: JSON.stringify({
@@ -94,5 +94,6 @@ export default new class Logger {
         }).catch((err) => {
             this.log("Error while sending to webhook: " + err, "error", LogLevel.ERROR, false);
         });
+       return;
     }
 }

@@ -37,8 +37,7 @@ export default new class TestUtil {
             fs.mkdirSync(path.join(__dirname, "..", "test-context"));
         } catch {}
         fs.mkdirSync(path.join(__dirname, "..", "test-context", this.port.toString()));
-        let nodePath = fs.readlinkSync("/proc/self/exe");
-        let newProcess = spawn(nodePath, ["burgerpanel.mjs"], {
+        let newProcess = spawn(process.execPath, ["burgerpanel.mjs"], {
             cwd: path.join(__dirname, "..", "_build"),
             env: {
                 PORT: this.port.toString(),
@@ -118,6 +117,7 @@ export default new class TestUtil {
         let adminClient = await this.getClient(true);
         let user = await adminClient.req("createUser", {username});
         let token = (await adminClient.req("getUserToken", {id: user.user._id}));
+        adminClient.close();
         let newClient = await this.getClient();
         await newClient.req("auth", {
             token: token.token

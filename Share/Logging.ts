@@ -44,6 +44,7 @@ export let IDs = [
     "server.file.move",
     "api",
     "debug",
-    "plugin.download"
+    "plugin.download",
+    "server.integrator"
 ] as const;
 export type IDs = typeof IDs[number];

@@ -121,8 +121,17 @@ export async function setSetting<K extends keyof Config>(key: K, value: Config[K
     // Set it in the database with upsert
     await settings.upsert({key}, {value: value.toString()});
     cachedSettings[key] = value;
+    if(afterSetList[key]) afterSetList[key].forEach(cb => cb(value));
     return value;
 }
+let afterSetList: {
+    [a: string]: ((a: any) => void)[]
+} = {};
+export function afterSet<K extends keyof Config>(key: K, cb: (newVal: any) => void) {
+    if(!afterSetList[key]) afterSetList[key] = [cb];
+    else afterSetList[key].push(cb);
+}
+
 export async function getAllSettings(): Promise<{[key in keyof Config]: ConfigValue}> {
     let result: { [key in keyof Config]?: ConfigValue } = {};
     for (let key in defaultConfig) {

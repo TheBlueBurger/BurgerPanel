@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { User } from '../../Share/User.js';
 import url from "node:url";
-import { getSetting, isValidKey, setSetting } from './config.js';
+import { afterSet, getSetting, isValidKey, setSetting } from './config.js';
 import { once } from "node:events";
 import serverManager from './serverManager.js';
 import { makeToken, servers, users } from './db.js';
@@ -16,6 +16,7 @@ import hasPermission from './util/permission.js';
 import logger, { LogLevel } from './logger.js';
 import {buildInfo} from "../../Share/BuildInfo.js";
 import pluginHandler, {mixinHandler} from "./plugin.js";
+import { exists } from "./util/exists.js";
 // a
 export const isProd = process.env.NODE_ENV == "production";
 
@@ -357,7 +358,36 @@ export async function exit(signal?: string) {
 }
 process.on("SIGINT", () => exit("INT"));
 process.on("SIGTERM", () => exit("TERM"));
+async function findLogPath() {
+    let logLocationInConfig = await getSetting("logging_logDir");
+        if(typeof logLocationInConfig != "string") return null;
+        if(logLocationInConfig == "") {
+            let logDir = path.join(__dirname, "logs");
+            logLocationInConfig = logDir;
+            if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
+            await setSetting("logging_logDir", logDir);
+        } else if(logLocationInConfig == "disabled") {
+            return null;
+        }
+        if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
+        let filePath = path.join(logLocationInConfig, `BurgerPanel ${logger.makeNiceDate(process.platform == "win32")}`);
+        if(await exists(filePath + ".log")) { // how would this even trigger it changes every second
+            let i = 0;
+            while(await exists(filePath + i + ".log")) {
+                i++;
+            }
+            filePath = filePath + i;
+        }
+        return filePath + ".log";
+}
 packetHandler.init().then(async () => {
+    logger.setupWriteStream(await findLogPath());
+    afterSet("logging_DisabledIDs", newVal => {
+        logger.ignoredLogs = newVal;
+    });
+    afterSet("logging_DiscordWebHookURL", newVal => {
+        logger.webhookURL = newVal;
+    });
     logger.log(`BurgerPanel v${buildInfo.version} (${buildInfo.gitHash} on ${buildInfo.branch})`, "start", LogLevel.INFO);
     let port: number | undefined;
     portTry: try {
@@ -524,8 +554,10 @@ packetHandler.init().then(async () => {
         await logger.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token, "start", LogLevel.INFO, false);
     }
 });
-process.on("uncaughtException", errHandler);
-process.on("unhandledRejection", errHandler);
+if(isProd) {
+    process.on("uncaughtException", errHandler);
+    process.on("unhandledRejection", errHandler);
+}
 function errHandler(err: any) {
     logger.log("Uncaught error: " + err, "error", LogLevel.ERROR, false, true, true).catch((err2) => {
         console.log("Error while logging error?!?!?: " + err2 + ". Original error: " + err);
