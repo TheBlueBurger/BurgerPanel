@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, Ref, ref } from "vue";
-import { getActivePinia, Pinia, Store } from "pinia";
+import { computed, onMounted, onUnmounted, provide, Ref, ref, watch } from "vue";
+import { getActivePinia, Pinia, Store, storeToRefs } from "pinia";
 import { RouteLocationNormalized, useRouter } from "vue-router";
 
 import type { AuthS2C } from "@share/Auth";
@@ -135,6 +135,12 @@ let users = ref(new Map<string, User>());
 provide("users", users);
 
 let loginMsg = ref("");
+const userRefs = storeToRefs(user);
+watch(userRefs.failedLogin, (newVal) => {
+  if(newVal) {
+    showLoginScreen.value = true;
+  }
+});
 ws.listenForEvent("loginFailed", (data: AuthS2C) => {
   console.log("Login failed: " + data.message)
   loginMsg.value = data.message as string;

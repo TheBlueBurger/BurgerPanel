@@ -7,9 +7,11 @@ import { Permission, hasServerPermission as _hasServerPermission, hasPermission 
 import { Server } from "@share/Server";
 import { useServers } from "./servers";
 import { RequestResponses } from "@share/Requests";
+import { useWS } from "./ws";
 
 export const useUser = defineStore("user", () => {
     const user: Ref<User | undefined> = ref();
+    const failedLogin: Ref<boolean> = ref(false);
     function logout() {
         if(user.value == undefined) throw new Error("already logged out");
         localStorage.removeItem("token");
@@ -26,7 +28,13 @@ export const useUser = defineStore("user", () => {
     async function autoLogin() {
         let testToken = localStorage.getItem("token")
         if (testToken) {
-            loginToken(testToken);
+            try {
+                await loginToken(testToken);
+                failedLogin.value = true;
+            } catch {
+                localStorage.removeItem("token");
+                return true;
+            }
             return true;
         } return false;
     }
@@ -43,6 +51,8 @@ export const useUser = defineStore("user", () => {
     }
     
     function handleLoginPacket(packet: RequestResponses["auth"]) {
+        failedLogin.value = true;
+        localStorage.setItem("token", packet.user.token);
         if(packet.servers) {
             let servers = useServers();
             servers.addServers(packet.servers);
@@ -53,5 +63,5 @@ export const useUser = defineStore("user", () => {
         }
         user.value = packet.user;
     }
-    return { user, logout, hasPermission, hasServerPermission, autoLogin, resetUser, loginToken, loginUsernamePass }
-})
+    return { user, logout, hasPermission, hasServerPermission, autoLogin, resetUser, loginToken, loginUsernamePass, failedLogin }
+});
