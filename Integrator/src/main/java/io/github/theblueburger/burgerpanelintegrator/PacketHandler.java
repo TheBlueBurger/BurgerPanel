@@ -3,12 +3,26 @@ package io.github.theblueburger.burgerpanelintegrator;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class PacketHandler {
     HashMap<String, Packet> packets = new HashMap<>();
+    ArrayList<String> allowedAsyncPackets = new ArrayList<>();
     void addPacket(String name, Packet packet) {
         packets.put(name, packet);
+    }
+    void addPacket(String name, Packet packet, boolean allowAsync) {
+        addPacket(name, packet);
+        if(allowAsync) allowedAsyncPackets.add(name);
+    }
+    boolean canRunAsync(JSONObject data) {
+        Object packetNameProbablyString = data.get("packet");
+        if(!(packetNameProbablyString instanceof String packetName)) {
+            BurgerPanelIntegrator.logger.error("BurgerPanel backend sent a invalid packet, .packet isn't a string!");
+            return false;
+        }
+        return allowedAsyncPackets.contains(packetName);
     }
     void execute(JSONObject data) throws IOException {
         Object packetNameProbablyString = data.get("packet");

@@ -51,7 +51,7 @@ export default new class ServerIntegrator {
                 if(Array.isArray(json)) return;
                 if(!["request", "response"].includes(json.dataType)) return;
                 if(json.dataType == "response") {
-                    console.log(json);
+                    console.log(JSON.stringify(json, null, 2));
                     if(!this.requestCallbacks[json.id]) return;
                     this.requestCallbacks[json.id](json.data);
                     return;

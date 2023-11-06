@@ -28,7 +28,7 @@ public final class BurgerPanelIntegrator extends JavaPlugin {
     @Override
     public void onEnable() {
         packetHandler = new PacketHandler();
-        packetHandler.addPacket("status", new StatusPacket());
+        packetHandler.addPacket("status", new StatusPacket(), true);
         logger = this.getSLF4JLogger();
         burgerpanelSocketPath = System.getenv("BURGERPANEL_INTEGRATOR_PATH");
         burgerpanelID = System.getenv("BURGERPANEL_INTEGRATOR_SERVER_ID");
@@ -53,6 +53,7 @@ public final class BurgerPanelIntegrator extends JavaPlugin {
         authObj.put("dataType", "request");
         authObj.put("type", "setID");
         authObj.put("id", burgerpanelID);
+        Plugin plugin = this;
         try {
             write(authObj);
         } catch (IOException e) {
@@ -77,7 +78,20 @@ public final class BurgerPanelIntegrator extends JavaPlugin {
                         String bbString = new String(bb.array(), Charset.defaultCharset()).substring(0, byteCount);
                         logger.info(bbString);
                         JSONObject obj = (JSONObject) parser.parse(bbString);
-                        pendingPackets.add(obj);
+                        if(packetHandler.canRunAsync(obj)) {
+                            new BukkitRunnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        packetHandler.execute(obj);
+                                    } catch (IOException e) {
+                                        // TODO Auto-generated catch block
+                                        e.printStackTrace();
+                                    }
+                                }
+                                
+                            }.runTaskAsynchronously(plugin);
+                        } else pendingPackets.add(obj);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
