@@ -63,9 +63,9 @@ public final class BurgerPanelIntegrator extends JavaPlugin {
             @Override
             public void run() {
                 JSONParser parser = new JSONParser();
-                ByteBuffer bb = ByteBuffer.allocate(10_000);
-                int byteCount;
                 while(true) {
+                    int byteCount;
+                    ByteBuffer bb = ByteBuffer.allocate(10_000);
                     try {
                         byteCount = client.read(bb);
                     } catch (IOException e) {

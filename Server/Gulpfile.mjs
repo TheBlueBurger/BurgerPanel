@@ -32,6 +32,10 @@ async function buildWeb() {
 export async function packetsToFile() {
     let fileData = "";
     let files = fs.readdirSync("src/packets");
+    files = files.filter(f => {
+        if(fs.statSync("src/packets/" + f).isDirectory()) return false;
+        return true;
+    });
     if(process.env.BURGERPANEL_SKIP_SERVER != "1") {
         files.forEach((f) => {
             fileData += `import ${f.replace(".ts", "")} from "./dist/Server/src/packets/${f.replace(".ts", ".js")}";\n`;

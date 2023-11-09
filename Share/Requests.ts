@@ -1,5 +1,6 @@
 import { Config, ConfigValue } from "./Config";
 import { GeneralInformation, ServerPerformance } from "./SystemInformation";
+import { IntegratorServerInformation } from "./Integrator";
 import { Server, ServerStatus, ServerStatuses } from "./Server";
 import { ModrinthPluginResult, Plugin, Version } from "./Plugin";
 import { User } from "./User";
@@ -122,7 +123,13 @@ export type RequestResponses = {
     } | {
         type: "downloadSuccess"
     },
-    listSessions: {username?: string, _id?: string}[]
+    listSessions: {username?: string, _id?: string}[],
+    integrator: {
+        type: "install-success"
+    } | {
+        type: "status",
+        status: IntegratorServerInformation
+    }
 }
 
 
