@@ -35,6 +35,7 @@ public class StatusPacket extends Packet {
             playerArray.add(playerObject);
         }
         responseObj.put("players", playerArray);
+        responseObj.put("playerCount", players.size());
         BurgerPanelIntegrator.respond(id, responseObj);
     }
 }

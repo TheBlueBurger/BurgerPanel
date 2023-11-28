@@ -10,5 +10,6 @@ export type IntegratorPlayerInformation = {
 };
 export type IntegratorServerInformation = {
     tps: number,
-    players: IntegratorPlayerInformation[]
+    players: IntegratorPlayerInformation[],
+    playerCount: number
 };

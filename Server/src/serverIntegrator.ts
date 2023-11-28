@@ -29,7 +29,13 @@ export default new class ServerIntegrator {
     servers: {
         [id: string]: {
             server: Server,
-            client?: OurIntegratorClient
+            client?: OurIntegratorClient,
+            cachedResponses: {
+                [name: string]: {
+                    data: any,
+                    expiresAt: number
+                }
+            }
         }
     } = {};
     constructor() {
@@ -107,7 +113,8 @@ export default new class ServerIntegrator {
     }
     prepareServer(server: Server) {
         this.servers[server._id] = {
-            server
+            server,
+            cachedResponses: {}
         };
         this.requestCallbacks[server._id] = {};
     }
@@ -119,10 +126,14 @@ export default new class ServerIntegrator {
         }
         throw new Error("somehow didnt find a id in 100 tries");
     }
-    request(server: Server, packet: string, data: any = {}): Promise<any> {
+    request(server: Server, packet: string, data: any = {}, useCache: boolean = false): Promise<any> {
         if(!this.isReadyForRequests(server)) throw new Error("Server isn't ready for requests!");
         const client = this.servers[server._id].client;
         if(!client) throw new Error("bad");
+        if(useCache) {
+            const cachedResponses = this.servers[server._id]?.cachedResponses;
+            if(cachedResponses && cachedResponses[packet] && Date.now() < cachedResponses[packet].expiresAt) return Promise.resolve(cachedResponses[packet].data);
+        }
         let id = this.findUnusedID(server);
         let toSend = JSON.stringify({
             id,
@@ -137,7 +148,12 @@ export default new class ServerIntegrator {
                 rej("Request timed out");
             }, 10_000);
             this.requestCallbacks[server._id][id] = (d) => {
+                delete this.requestCallbacks[server._id][id];
                 clearTimeout(timeout);
+                if(useCache) this.servers[server._id].cachedResponses[packet] = {
+                    expiresAt: Date.now() + 5000,
+                    data: d
+                }
                 res(d);
             }
         });

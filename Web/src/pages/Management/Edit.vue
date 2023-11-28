@@ -199,6 +199,12 @@ async function changeUseJVMArgs() {
     }" v-if="hasServerPermission(user.user, server, 'plugins.download')">
         <button>Download Plugins</button>
     </RouterLink>
+    <RouterLink :to="{
+        name: 'integrator',
+        params: {
+            server: props.server
+        }
+    }"><button>Integrator</button></RouterLink>
     <button @click="servers.togglePin(server)">{{ servers.isPinned(server) ? "Unpin" : "Pin" }}</button>
     <br/><hr/>
     <div class="main-server-settings">

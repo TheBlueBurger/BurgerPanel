@@ -129,6 +129,9 @@ export type RequestResponses = {
     } | {
         type: "status",
         status: IntegratorServerInformation
+    } | {
+        type: "isInstalled",
+        installed: boolean
     }
 }
 

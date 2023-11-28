@@ -149,13 +149,23 @@ const router = createRouter({
             }
         },
         {
+            name: "integrator",
+            path: "/manage/server/:server/edit/integrator",
+            props: true,
+            component: () => import("./pages/Management/Integrator.vue"),
+            meta: {
+                setTitle: false,
+                title: "Integrator Options"
+            }
+        },
+        {
             name: "404",
             path: '/:pathMatch(.*)*',
             component: () => import("./pages/404.vue"),
             meta: {
                 title: "404 Not Found"
             }
-        },
+        }
     ],
 })
 let app = createApp(App).use(router).use(pinia);
