@@ -25,9 +25,11 @@ async function getStatus() {
 </script>
 
 <template>
-    Test<br/>
-    {{ server.name }}
-    {{ isInstalledResp.installed }}
+    {{server.name}} Integrator<br/>
+    Installed: {{ isInstalledResp.installed }} <button v-if="!isInstalledResp.installed" @click="ws.sendRequest('integrator', {
+        id: props.server,
+        action: 'install'
+    })">Install</button>
     <button @click="getStatus">get status</button>
     <pre>{{ JSON.stringify(status, null, 2) }}</pre>
 </template>

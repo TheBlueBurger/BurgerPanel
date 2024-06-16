@@ -1,4 +1,5 @@
-import { clients, OurClient, OurWebsocketClient, Packet, ServerPacketResponse } from "../index.js";
+import { clients, OurClient, Packet, ServerPacketResponse } from "../index.js";
+import type { OurWebsocketClient } from "../clients.js";
 import { users } from "../db.js";
 import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";

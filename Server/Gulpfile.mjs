@@ -3,12 +3,7 @@ const { series, parallel } = gulp;
 import { spawnSync, execSync } from "node:child_process";
 import fs, { existsSync, readdirSync, rmSync } from "node:fs";
 import esbuild from "esbuild";
-import { rollup } from "rollup";
-import commonjs from '@rollup/plugin-commonjs';
-import json from "@rollup/plugin-json"
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import replace from '@rollup/plugin-replace';
-import packageJSON from "./package.json" assert {type: "json"}
+import packageJSON from "./package.json" with {type: "json"}
 import path from "path";
 
 async function installWebIfForgotten() {
@@ -50,34 +45,21 @@ export async function buildServer() {
     execSync("pnpm build");
 }
 
-async function runRollup() {
-    let build = await rollup({
-        input: {
-            input: "./dist/Server/src/index.js",
-        },
-        plugins: [commonjs(), nodeResolve({browser: false, exportConditions: ["node"]}), json(), replace({
-            "process.env.NODE_ENV": JSON.stringify('production'),
-            preventAssignment: true
-        })],
-        onwarn(msg) {
-            if(/Circular dependency\: dist\/(.+) -> dist\/(.+)/.test(msg.message)) {
-                console.warn("Warning: " + msg.message);
-            }
-        }
-    });
-    await build.write({
-        format: "esm",
-        dir: "_build",
-        inlineDynamicImports: true,
-        minifyInternalExports: true,
-    });
-}
 
 async function runESBuild() {
     await esbuild.build({
-        entryPoints: ["_build/input.js"],
+        entryPoints: ["dist/Server/src/index.js"],
         minify: true,
+        bundle: true,
+        platform: "node",
+        format: "esm",
         target: "es2022",
+        banner: {
+            js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" // read comments in /src/clients.ts to see explanation for this
+        },
+        define: {
+            "process.env.NODE_ENV": "\"production\""
+        },
         outfile: "_build/burgerpanel.mjs",
     });
 }
@@ -92,7 +74,7 @@ function tryRMSync(...args) {
     try {
         rmSync(...args);
     } catch (err) {
-        console.log(`Could not delete ${args[0]}: ${err}`)
+        console.log(`Could not delete ${args[0]}: ${err}. This is fine.`)
     }
 }
 
@@ -120,7 +102,6 @@ async function clean() {
 }
 
 async function copyFiles() {
-    fs.rmSync("_build/input.js");
     fs.copyFileSync("../LICENSE", "_build/LICENSE.txt");
     fs.copyFileSync("../README.md", "_build/README.txt");
     if(!process.env.SKIP_WEB) fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
@@ -129,7 +110,6 @@ async function copyFiles() {
 
 async function serverSeries() {
     await buildServer();
-    await runRollup();
     await runESBuild();
 }
 

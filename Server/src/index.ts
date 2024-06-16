@@ -17,7 +17,8 @@ import logger, { LogLevel } from './logger.js';
 import {buildInfo} from "../../Share/BuildInfo.js";
 import pluginHandler, {mixinHandler} from "./plugin.js";
 import { exists } from "./util/exists.js";
-// a
+import { OurClient, OurWebsocketClient, clients } from "./clients.js";
+
 export const isProd = process.env.NODE_ENV == "production";
 
 let app = express();
@@ -226,22 +227,6 @@ export class Packet {
     }
 }
 
-export interface OurClient {
-    data: {
-        auth: {
-            token?: string,
-            user?: User,
-            authenticated: boolean,
-        },
-        clientID: number
-    },
-    json: (data: any) => void,
-    type: "APIRequest" | string
-};
-
-export interface OurWebsocketClient extends OurClient,WebSocket {
-    type: "Websocket"
-}
 
 export let packetHandler = new PacketHandler();
 let logging = false;
@@ -252,9 +237,9 @@ let clientID = 0;
 function genClientID() {
     return clientID++;
 }
-export const clients: OurWebsocketClient[] = [];
+
 wss.on('connection', (_client) => {
-    let client: OurWebsocketClient = _client as OurWebsocketClient;
+    let client: OurWebsocketClient = _client as any as OurWebsocketClient;
     client.data = {
         auth: {
             authenticated: false,
@@ -563,3 +548,4 @@ function errHandler(err: any) {
         console.log("Error while logging error?!?!?: " + err2 + ". Original error: " + err);
     });
 }
+export {clients, OurClient}

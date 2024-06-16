@@ -8,7 +8,7 @@ try {
     gitHash = execSync("git rev-parse HEAD").toString().trim();
     branch = execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
 } catch {}
-import packageJSON from "../package.json" assert {type: "json"}
+import packageJSON from "../package.json" with {type: "json"}
 fs.writeFileSync("../Share/BuildInfo.ts", "export let buildInfo = " + JSON.stringify({
     date: Date.now(),
     version: packageJSON.version,

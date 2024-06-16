@@ -1,3 +1,4 @@
+
 // if vscode is screaming here, it's fine. its just vscode being stupid
 import { createApp } from 'vue'
 import './style.css'
@@ -104,7 +105,7 @@ const router = createRouter({
         },
         {
             path: '/settings',
-            component: () => import('./pages/Settings.vue'),
+            component: () => import('./pages/Settings/Settings.vue'),
             meta: {
                 title: "Settings"
             }
@@ -112,7 +113,7 @@ const router = createRouter({
         {
             path: '/settings/logging',
             name: 'logging',
-            component: () => import('./pages/Logging.vue'),
+            component: () => import('./pages/Settings/Logging.vue'),
             meta: {
                 title: "Logging Settings"
             }
@@ -143,7 +144,7 @@ const router = createRouter({
         {
             name: "Debug",
             path: '/debug',
-            component: () => import("./pages/Debug.vue"),
+            component: () => import("./pages/Settings/Debug.vue"),
             meta: {
                 title: "Debug"
             }

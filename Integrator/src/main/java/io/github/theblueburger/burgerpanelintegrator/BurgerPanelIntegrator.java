@@ -89,7 +89,7 @@ public final class BurgerPanelIntegrator extends JavaPlugin {
                                         e.printStackTrace();
                                     }
                                 }
-                                
+
                             }.runTaskAsynchronously(plugin);
                         } else pendingPackets.add(obj);
                     } catch (Exception e) {

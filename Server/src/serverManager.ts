@@ -1,5 +1,5 @@
 import { AllowedSoftware, allowedSoftwares, Server, ServerStatus } from "../../Share/Server.js"
-import { clients, OurClient } from "./index.js"
+import { clients, OurClient } from "./clients.js"
 import { ChildProcess, spawn } from "node:child_process"
 import { User } from "../../Share/User.js";
 import fs from "node:fs/promises";
@@ -12,7 +12,7 @@ import logger, { LogLevel } from "./logger.js";
 import isValidMCVersion from "./util/isValidMCVersion.js";
 import { promiseSleep } from "blueutilities";
 import serverIntegrator from "./serverIntegrator.js";
-
+const bwrapArgs = ["--ro-bind",]
 export default new class ServerManager {
     servers: {
         [key: string]: { // Server ID. _id from the database
