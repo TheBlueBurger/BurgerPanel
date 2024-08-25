@@ -6,3 +6,4 @@ _build
 packets.mjs
 *.log
 test-context/
+servers/

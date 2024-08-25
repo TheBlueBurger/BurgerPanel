@@ -28,7 +28,12 @@ export default new class Logger {
     async setupWriteStream(location: string | null) {
         if(!location) return;
         if(process.env.SKIP_BURGERPANEL_LOGFILE) return;
-        this.writeStream = fs.createWriteStream(location);
+        try {
+            this.writeStream = fs.createWriteStream(location);
+        } catch(err) {
+            this.log("Cannot setup write stream to " + location, "error", LogLevel.ERROR, false, true);
+            return;
+        }
         this.log("Logging to " + location, "info", LogLevel.DEBUG, false, false)
     }
     makeNiceDate(replaceColon: boolean = false) {

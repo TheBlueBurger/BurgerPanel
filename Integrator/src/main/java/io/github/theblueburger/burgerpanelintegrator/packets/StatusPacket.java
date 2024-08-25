@@ -6,7 +6,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -14,6 +13,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 public class StatusPacket extends Packet {
+    @SuppressWarnings("unchecked")
     @Override
     protected void execute(JSONObject data, String id) throws IOException {
         JSONObject responseObj = new JSONObject();

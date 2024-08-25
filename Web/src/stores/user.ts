@@ -30,13 +30,14 @@ export const useUser = defineStore("user", () => {
         if (testToken) {
             try {
                 await loginToken(testToken);
-                failedLogin.value = true;
             } catch {
+                failedLogin.value = true;
                 localStorage.removeItem("token");
-                return true;
+                return false;
             }
             return true;
-        } return false;
+        }
+        return false;
     }
     function resetUser() {
         user.value = undefined;

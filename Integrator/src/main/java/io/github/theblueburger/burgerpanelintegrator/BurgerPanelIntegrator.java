@@ -18,6 +18,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
+@SuppressWarnings("unchecked")
 public final class BurgerPanelIntegrator extends JavaPlugin {
     static String burgerpanelID;
     static String burgerpanelSocketPath;

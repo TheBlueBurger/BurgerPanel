@@ -7,6 +7,7 @@ import fs from "node:fs/promises";
 
 import IntegratorInstall from "./integrator/IntegratorInstall.js"
 import serverIntegrator from "../serverIntegrator.js";
+import { exists } from "../util/exists.js";
 
 export default class IntegratorPacket extends Packet {
     name: Request = "integrator";
@@ -29,7 +30,7 @@ export default class IntegratorPacket extends Packet {
             case "isInstalled":
                 return {
                     type: "isInstalled",
-                    installed: (await fs.readdir(server.path + "/plugins/")).some(a => a.endsWith(".jar") && a.startsWith("BurgerPanelIntegrator-"))
+                    installed: (await exists(server.path + "/plugins/")) && (await fs.readdir(server.path + "/plugins/")).some(a => a.endsWith(".jar") && a.startsWith("BurgerPanelIntegrator-"))
                 }
         }
         return;

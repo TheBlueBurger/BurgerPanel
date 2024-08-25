@@ -84,7 +84,6 @@ export default new class ServerIntegrator {
                 if(Array.isArray(json)) return;
                 if(!["request", "response"].includes(json.dataType)) return;
                 if(json.dataType == "response") {
-                    console.log(JSON.stringify(json, null, 2));
                     if(!c.burgerpanelData.server) return;
                     if(!this.requestCallbacks[c.burgerpanelData.server] || !this.requestCallbacks[c.burgerpanelData.server][json.id]) return;
                     this.requestCallbacks[c.burgerpanelData.server][json.id](json.data);
@@ -124,7 +123,7 @@ export default new class ServerIntegrator {
             if(this.requestCallbacks[server._id][str]) continue;
             return str;
         }
-        throw new Error("somehow didnt find a id in 100 tries");
+        throw new Error("somehow didnt find a id in 100 tries... MILLIONS TO ONE");
     }
     request(server: Server, packet: string, data: any = {}, useCache: boolean = false): Promise<any> {
         if(!this.isReadyForRequests(server)) throw new Error("Server isn't ready for requests!");
@@ -140,13 +139,12 @@ export default new class ServerIntegrator {
             packet,
             data
         });
-        console.log("Sending", toSend);
         client.write(toSend);
         return new Promise((res, rej) => {
             let timeout = setTimeout(() => {
                 delete this.requestCallbacks[server._id][id];
                 rej("Request timed out");
-            }, 10_000);
+            }, 30_000);
             this.requestCallbacks[server._id][id] = (d) => {
                 delete this.requestCallbacks[server._id][id];
                 clearTimeout(timeout);
