@@ -349,7 +349,12 @@ async function findLogPath() {
     if(logLocationInConfig == "") {
         let logDir = path.join(__dirname, "logs");
         logLocationInConfig = logDir;
-        if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
+        try {
+            if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
+        } catch(err) {
+            console.error("Cannot make logdir... This is bad", err);
+            return null;
+        }
         await setSetting("logging_logDir", logDir);
     } else if(logLocationInConfig == "disabled") {
         return null;
