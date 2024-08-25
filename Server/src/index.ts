@@ -359,7 +359,13 @@ async function findLogPath() {
     } else if(logLocationInConfig == "disabled") {
         return null;
     }
-    if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
+    try {
+            if(!await exists(logLocationInConfig)) fs.mkdirSync(logLocationInConfig);
+
+    } catch(err) {
+        console.error("Cannot make logdir that should already exist... This is bad", err);
+        return null;
+    }
     let filePath = path.join(logLocationInConfig, `BurgerPanel ${logger.makeNiceDate(process.platform == "win32")}`);
     if(await exists(filePath + ".log")) { // how would this even trigger it changes every second
         let i = 0;
