@@ -375,7 +375,7 @@
         </div>
     </Modal>
     <div v-if="!finishedLoading">
-        
+
     </div>
     <div v-else-if="!readingFile">
         <h1 class="filesin">Files in {{ server.name }}{{ path }} <RouterLink :to="{
@@ -389,7 +389,7 @@
             server: props.server
         }
     }" v-if="path && path.toString().startsWith('/plugins') && hasServerPermission(user.user, server, 'plugins.download')">
-        <button class="back-server-page-btn">Download Plugins</button>
+        <button class="back-server-page-btn">Download {{server.software == "fabric" ? "mods" : "plugins"}}</button>
     </RouterLink><button class="back-server-page-btn" @click="newName = '';showNewDialog = true">New</button></h1>
     <Dropdown :create-on-cursor="true" ref="dropdown">
         <div id="dropdown-inner">

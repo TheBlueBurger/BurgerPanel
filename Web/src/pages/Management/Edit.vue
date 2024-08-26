@@ -198,7 +198,7 @@ async function changeUseJVMArgs() {
             server: props.server
         }
     }" v-if="hasServerPermission(user.user, server, 'plugins.download')">
-        <button>Download Plugins</button>
+        <button>Download {{server.software == "fabric" ? "mods" : "plugins"}}</button>
     </RouterLink>
     <RouterLink :to="{
         name: 'integrator',

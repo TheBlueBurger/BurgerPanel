@@ -19,7 +19,7 @@ export default class Plugins extends Packet {
             case "search":
                 if(typeof data.query != "string") return "No query";
                 logger.log(`${client.data.auth.user?.username} is searching for plugin '${data.query}' in ${server.name}`, "debug", LogLevel.DEBUG, false);
-                let searchResults = await search(data.query, server.version);
+                let searchResults = await search(data.query, server.version, server.software);
                 return {
                     type: "searchResults",
                     results: searchResults?.hits as ModrinthPluginResult[]
@@ -35,7 +35,7 @@ export default class Plugins extends Packet {
             case "versions":
                 if(typeof data.slug != "string") return "No slug";
                 logger.log(`${client.data.auth.user?.username} is viewing versions for plugin ${data.slug} in ${server.name}`, "debug", LogLevel.DEBUG, false);
-                let pluginVersions = await getVersions(data.slug, server.version);
+                let pluginVersions = await getVersions(data.slug, server.version, server.software);
                 return {
                     type: "pluginVersions",
                     versions: pluginVersions
@@ -45,15 +45,16 @@ export default class Plugins extends Packet {
                 if(typeof data.hash != "string") return "No sha512";
                 let file = await getFile(data.version, data.hash);
                 if(!file) return "File isnt found";
-                if(!await exists(server.path + "/plugins")) await fs.mkdir(server.path + "/plugins");
-                if(await exists(server.path + "/plugins/" + file.filename)) return "Already installed!";
+                let pluginFolderName = server.software == "fabric" ? "/mods/" : "/plugins/";
+                if(!await exists(server.path + pluginFolderName)) await fs.mkdir(server.path + pluginFolderName);
+                if(await exists(server.path + pluginFolderName + file.filename)) return "Already installed!";
                 logger.log(`${client.data.auth.user?.username} is downloading plugin ${file.filename} in ${server.name}`, "plugin.download", LogLevel.INFO);
                 let jar = await fetch(file.url, {
                     headers: mrHeaders
                 });
                 if (!jar.ok || !jar.body) return "Request isn't OK";
                 let jarBuffer = await jar.arrayBuffer();
-                await fs.writeFile(server.path + "/plugins/" + file.filename, Buffer.from(jarBuffer));
+                await fs.writeFile(server.path + pluginFolderName + file.filename, Buffer.from(jarBuffer));
                 return {
                     type: "downloadSuccess"
                 }

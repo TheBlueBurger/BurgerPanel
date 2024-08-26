@@ -1,4 +1,4 @@
-import { allowedSoftwares } from "./Server.js";
+import { AllowedSoftware, allowedSoftwares } from "./Server.js";
 
 export let defaultConfig: Config = {
     defaultMemory: 1024,
@@ -18,7 +18,7 @@ export interface Config {
     webServerPort: number;
     serverPath: string;
     defaultMCVersion: string;
-    defaultMCSoftware: "purpur" | "paper" | "vanilla";
+    defaultMCSoftware: AllowedSoftware;
     stopServerTimeout: number;
     defaultPermissions: string;
     logging_DisabledIDs: string; // comma-separated IDs

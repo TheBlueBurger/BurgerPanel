@@ -1,3 +1,5 @@
+// I am really sorry for writing this absolute mess
+// It works, so please do not touch it.
 // unrecommended for large servers
 import DatabaseProvider, { Collection, DatabaseLookupFilter, DatabaseObject, DatabaseSchema, DatabaseSchemaInnerType, DatabaseType } from "./databaseProvider.js"
 import path from "node:path";

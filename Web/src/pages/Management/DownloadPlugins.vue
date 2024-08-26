@@ -78,13 +78,13 @@ async function downloadPlugin(version: MRVersion, hash: string, pluginName: stri
         server: props.server,
         hash
     });
-    showInfoBox("Install success!", `The plugin ${pluginName} with version ${version.name} (${filename}) has been successfully installed to ${server.value.name}\nYou may need a server restart for the plugin to be loaded.`)
+    showInfoBox("Install success!", `The ${server.value.software == "fabric" ? "mod" : "plugin"} ${pluginName} with version ${version.name} (${filename}) has been successfully installed to ${server.value.name}\nYou may need a server restart for the ${server.value.software == "fabric" ? "mod" : "plugin"} to be loaded.`)
 }
 </script>
 
 <template>
     <div id="head">
-        <h1>Plugins downloader for {{ server.name }}</h1>
+        <h1>{{server.software == "fabric" ? "Mod" : "Plugin"}} downloader for {{ server.name }}</h1>
         <form @submit.prevent="search">
             <TextInput default="" :modal-mode="true" :initial-editing="true" @set="q => query = q" placeholder="Search for plugins..." />
         </form>

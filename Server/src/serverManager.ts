@@ -57,7 +57,12 @@ export default new class ServerManager {
                 downloadURL = versionManifest?.downloads?.server?.url;
                 if (!downloadURL) throw new Error("Invalid response from mojang. Could not find server download URL.");
                 break;
-            default:
+          case "fabric":
+                let fabricLoaderVersions = await (await fetch("https://meta.fabricmc.net/v2/versions/loader")).json();
+                let fabricInstallerVersions = await (await fetch("https://meta.fabricmc.net/v2/versions/installer")).json();
+                downloadURL = `https://meta.fabricmc.net/v2/versions/loader/${server.version}/${fabricLoaderVersions[0].version}/${fabricInstallerVersions[0].version}/server/jar`;
+                break;
+          default:
                 throw new Error("Invalid server software.");
         }
         let jar = await fetch(downloadURL);

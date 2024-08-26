@@ -1,5 +1,5 @@
 import { ServerPermissions } from "./Permission";
-export const allowedSoftwares = ["purpur", "paper", "vanilla"] as const;
+export const allowedSoftwares = ["purpur", "paper", "vanilla", "fabric"] as const;
 export type AllowedSoftware = typeof allowedSoftwares[number];
 export interface Server {
     _id: string;
