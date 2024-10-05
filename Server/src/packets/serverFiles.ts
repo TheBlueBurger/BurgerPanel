@@ -88,13 +88,8 @@ export default class ServerFiles extends Packet {
                 }
             case "upload":
                 if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.upload")) return "no permission to upload";
-                let [id, promise] = await requestUpload();
+                let id = requestUpload(pathToCheck);
                 logger.log(`${client.data.auth.user?.username} is uploading ${data.path} to ${server.name} with upload ID '${id}'`, "server.file.upload");
-                if(!(promise instanceof Promise)) return;
-                if(typeof id != "string") return;
-                promise.then(async buf => {
-                    await fs.writeFile(pathToCheck, buf);
-                });
                 return {
                     type: "uploadConfirm",
                     id

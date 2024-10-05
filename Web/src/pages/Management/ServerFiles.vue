@@ -122,23 +122,18 @@
     let user = useUser();
     let dropdown: any = ref();
     let dropdownFile = ref();
-    let toUpload: Ref<File[]> = ref([]);
+    interface FileEntry {
+        path: string;
+        file: File;
+    }
+    let toUpload: Ref<FileEntry[]> = ref([]);
     let showUploadModal = ref(false);
     async function openUploadModal() {
         showUploadModal.value = true;
     }
-    async function onDrop(e: DragEvent) {
-        slightlyWhiteDivBg.value = false;
-        let droppedFiles = e.dataTransfer?.files;
-        if(!droppedFiles) return;
-        for(let file of Object.values(droppedFiles)) {
-            toUpload.value.push(file);
-        }
-    }
-    let slightlyWhiteDivBg = ref(false);
     function removeFromUploads(file: File) {
         if(uploading.value) return;
-        toUpload.value = toUpload.value.filter(f => f != file);
+        toUpload.value = toUpload.value.filter(f => f.file != file);
     }
     let apiUrl: string = inject("API_URL") as string;
     // [[file, error]]
@@ -151,17 +146,17 @@
     let uploadTotal = computed(() => {
         return (uploadedSize.value+(NaNprevent(uploadProgress.value?.loaded)));
     })
-    async function uploadFile(file: File) {
+    async function uploadFile(file: FileEntry) {
         try {
             uploadProgress.value = undefined;
-            if(file.size > 100_000_000) throw new Error("Too big!");
+            if(file.file.size > 250_000_000) throw new Error("Too big!");
             let resp = await sendRequest("serverFiles", {
                 action: "upload",
                 id: props.server,
-                path: path.value + "/" + file.name
+                path: path.value + "/" + file.path + "/" + file.file.name
             });
             if(resp.type != "uploadConfirm") return;
-            let arrayBuffer = await file.arrayBuffer();
+            let arrayBuffer = await file.file.arrayBuffer();
             /*let fetchRes = await fetch(apiUrl + "/api/uploadfile/" + resp.id, {
                 method: "POST",
                 headers: {
@@ -182,23 +177,35 @@
                 }
             })
         } catch(err) {
-            failedFiles.value.push([file, err as Error])
+            failedFiles.value.push([file.file, err as Error])
         }
     }
-    let currentUploading: Ref<File | undefined> = ref();
+    let currentUploading: Ref<FileEntry | undefined> = ref();
     let totalUploadCount = ref(0);
+    let foldersCreated = ref(0);
+    const directoriesToCreate = ref([] as string[]);
     async function uploadFiles() {
         failedFiles.value = [];
         uploaded.value = [];
-        totalSize.value = toUpload.value.map(a => a.size).reduce((a,b) => a+b);
+        totalSize.value = toUpload.value.map(a => a.file.size).reduce((a,b) => a+b);
         uploading.value = true;
         totalUploadCount.value = toUpload.value.length;
+        foldersCreated.value = 0;
+        for await(let folderToCreate of directoriesToCreate.value) {
+            await sendRequest("serverFiles", {
+                action: "new",
+                type: "folder",
+                path: path.value + "/" + folderToCreate,
+                id: server.value?._id
+            });
+            foldersCreated.value++;
+        }
         while(true) {
             let fileUploading = toUpload.value.shift();
             if(!fileUploading) break;
             currentUploading.value = fileUploading;
             await uploadFile(fileUploading);
-            uploaded.value.push(fileUploading.size)
+            uploaded.value.push(fileUploading.file.size)
         }
         uploading.value = false;
         currentUploading.value = undefined;
@@ -216,19 +223,42 @@
         uploaded.value.forEach(a => totalUploadFinished += a);
         return totalUploadFinished ?? 0
     })
-    let modalFileChooser: Ref<HTMLInputElement | undefined> = ref();
-    function addFiles(f: FileList | null | undefined) {
+    function handleFileUpload(fsEntry: FileSystemEntry, filePath: string) {
+        (fsEntry as FileSystemFileEntry).file((f) => {
+            toUpload.value.push({
+                path: filePath,
+                file: f
+            });
+        })
+    }
+    function handleFolderUpload(fsEntry: FileSystemEntry) {
+        directoriesToCreate.value.push(fsEntry.fullPath);
+        const reader = (fsEntry as FileSystemDirectoryEntry).createReader();
+        reader.readEntries((entries) => {
+            entries.forEach(entry => {
+                if(entry.isDirectory) handleFolderUpload(entry);
+                else handleFileUpload(entry, fsEntry.fullPath);
+            });
+        });
+        console.log("to create", directoriesToCreate.value);
+    }
+    function addFiles(f: DataTransfer) {
         if(!f) return;
-        Array.from(f).forEach(f => toUpload.value.push(f))
+        Array.from(f.items).forEach(item => {
+            let fileSystemEntry = item.webkitGetAsEntry();
+            if(!fileSystemEntry) return console.log("cant get as webkit entry for some reason");
+            if(fileSystemEntry.isDirectory) handleFolderUpload(fileSystemEntry);
+            else handleFileUpload(fileSystemEntry, "/");
+        })
     }
     let totalSize: Ref<number | undefined> = ref();
     function onDropAnywhere(e: DragEvent) {
         e.preventDefault();
         if(readingFile.value) return;
-        if(showUploadModal.value) return;
-        if(e.dataTransfer?.files?.length == 0) return;
+        if(uploading.value) return;
+        if(!e.dataTransfer) return;
         showUploadModal.value = true;
-        addFiles(e.dataTransfer?.files);
+        addFiles(e.dataTransfer);
     }
     function prevent(e: Event) {
         e.preventDefault();
@@ -245,6 +275,7 @@
         if(uploading.value) return;
         showUploadModal.value = false;
         toUpload.value = [];
+        directoriesToCreate.value = [];
     }
     async function downloadFile(path: string) {
         if(dropdown.value) {
@@ -301,7 +332,7 @@
     }
 </script>
 <template>
-    <a style="position: absolute;visibility: hidden;" ref="downloadAnchor" />
+    <a style="position: absolute;visibility: hidden;" ref="downloadAnchor"></a>
     <Modal button-type="" @close-btn-clicked="showNewDialog = false" v-if="showNewDialog">
         <h1 style="margin-bottom:10px">New</h1>
         <TextInput :modal-mode="true" default="" @set="a => newName = a" :initial-editing="true" placeholder="Name" />
@@ -333,23 +364,19 @@
     </Modal>
     <Modal v-if="showUploadModal" :button-type="''" @close-btn-clicked="closeModal">
         <div v-if="!uploading">
-            <div id="upload-modal-drop-div" @dragover.prevent="slightlyWhiteDivBg = true" @drop.prevent="onDrop" @dragenter.prevent="console.log('drag');slightlyWhiteDivBg = true" @dragleave.prevent="console.log('undrag');slightlyWhiteDivBg = false" :class="{
-                slightlyWhite: slightlyWhiteDivBg
-            }" @click="modalFileChooser?.click()">
-                <p>Drop files here or click to open file chooser</p>
-                <input type="file" style="visibility:hidden;position:absolute;" ref="modalFileChooser" multiple @change.prevent="e => {
-                    addFiles((e.target as HTMLInputElement).files);
-                }">
-            </div>
-            <div v-if="toUpload.length != 0">
+            <p style="margin: 10px">Drag and drop files/folders to upload them</p>
+            <div v-if="toUpload.length != 0 || directoriesToCreate.length != 0">
+                <div v-for="directory of directoriesToCreate" class="file-item">
+                    {{ directory }} (Folder) <button @click="directoriesToCreate = directoriesToCreate.filter(a => a != directory)">Delete</button>
+                </div>
                 <div v-for="file of toUpload" class="file-item">
-                    {{ file.name }} ({{ (file?.size ?? 0) / 1_000_000 }}MB) <span style="color: red;">{{ file.size > 100_000_000 ? "Too big! " : " " }}</span><button @click="removeFromUploads(file)">Delete</button>
+                    {{ file.path }}/{{ file.file.name }} ({{ (file?.file.size ?? 0) / 1_000_000 }}MB) <span style="color: red;">{{ file.file.size > 250_000_000 ? "Too big! " : " " }}</span><button @click="removeFromUploads(file.file)">Delete</button>
                 </div>
                 <button @click="uploadFiles">Upload {{ toUpload.length }} file{{ toUpload.length == 1 ? '' : 's' }}</button>
             </div>
         </div>
         <div v-else style="width:350px">
-            {{ currentUploading?.name }}
+            {{ currentUploading?.file?.name }}
             <br/>
             <div :style="{
                 width: '290px',
@@ -364,9 +391,10 @@
                     backgroundColor: 'white',
                     height: '5px',
                     width: ((parseInt(totalPercentage.toString()) * 2.9) + 'px')
-                }" />
+                }"> </div>
             </div>
             <div style="text-align: center;">
+                <span v-if="directoriesToCreate.length != 0">Created directories: {{ foldersCreated }} / {{ directoriesToCreate.length }}</span>
                 {{ (uploadTotal / 1_000_000).toFixed(3) }}/{{ ((totalSize ?? 0) / 1_000_000).toFixed(3) }}MB @ {{ ((uploadProgress?.rate??0)/1000).toFixed(2) }} KB/s<br/>
                 <span style="float:left">ETA: {{ Math.floor(eta / 60) }}m {{ Math.floor(eta % 60) }}s</span>
                 {{ totalPercentage.toFixed(2) }}%
@@ -511,25 +539,7 @@ textarea {
     top: -5px;
     margin: 2px;
 }
-#upload-modal-drop-div {
-    width: 500px;
-    height: 200px;
-    border: #494949 1px solid;
-    background-color: #3b3a3a60;
-    border-radius: 5px;
-    margin: 10px;
-    text-align: center;
-    align-items: center;
-    display: flex;
-    cursor: pointer;
-    transition: .1s ease-in-out;
-}
-#upload-modal-drop-div:hover {
-    background-color: #4b4a4a70;
-}
-#upload-modal-drop-div > p {
-    margin: 0 auto;
-}
+
 .slightlyWhite {
     background-color: #6b6b6b;
 }

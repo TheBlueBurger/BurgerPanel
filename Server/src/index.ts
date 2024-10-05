@@ -84,26 +84,27 @@ app.post("/api/request/:name", async (req, res, next) => {
         d: req.body
     });
 });
-let maxUploadSize = 100_000_000;
+let maxUploadSize = 250_000_000;
 app.post("/api/uploadfile/:id", (req, res) => {
-    let cb = httpUploadCallbacks.get(req.params.id);
-    if(!cb) return res.sendStatus(401);
-    if(typeof cb != "function") return res.sendStatus(500); // in case
+    let uploadPath = httpUploadMap.get(req.params.id);
+    if(!uploadPath) return res.sendStatus(401);
+    if(typeof uploadPath != "string") return res.sendStatus(500); // in case
     if(isNaN(parseInt(req.headers["content-length"] ?? "a")) || parseInt(req.headers["content-length"] ?? "a") > maxUploadSize) {
         return res.status(400).send("Too big file!");
     }
-    let data = Buffer.from([]);
-    req.on("data", chunk => {
-        data = Buffer.concat([data, chunk]);
-        if(data.byteLength > maxUploadSize) {
+    let writeStream = fs.createWriteStream(uploadPath);
+    let uploadedBytes = 0;
+    req.on("data", (chunk: Buffer) => {
+        if(uploadedBytes > maxUploadSize) {
             logger.log(`Client lied about size. ID: ${req.params.id}, destroying connection.`, "error", LogLevel.ERROR);
             req.socket.destroy();
         }
+        uploadedBytes += chunk.byteLength;
+        writeStream.write(chunk);
     });
     req.on("end", () => {
-        if(data.byteLength > maxUploadSize) return;
+        writeStream.end();
         res.sendStatus(200);
-        if(cb) cb(data);
     });
 });
 app.options("/api/uploadfile/:id", (_,r) => r.sendStatus(200));
@@ -299,7 +300,7 @@ wss.on('connection', (_client) => {
         clients.splice(clients.indexOf(client), 1);
     });
 });
-let httpUploadCallbacks: Map<string, (b: Buffer) => void> = new Map();
+let httpUploadMap: Map<string, string> = new Map();
 let httpDownloadRequests: Map<string, string> = new Map();
 export function requestDownload(fullPath: string, timeout: number = 60_000) {
     let id = makeToken();
@@ -312,25 +313,16 @@ export function requestDownload(fullPath: string, timeout: number = 60_000) {
     }, timeout);
     return id;
 }
-export function requestUpload(timeout: number = 600_000): (string | Promise<Buffer>)[] {
+export function requestUpload(filePath: string, timeout: number = 600_000): string {
     let id = makeToken();
-    while(typeof httpUploadCallbacks.get(id) != "undefined") {
+    while(typeof httpUploadMap.get(id) != "undefined") {
         id = makeToken();
     }
-    return [id, new Promise((res, rej) => {
-        let cancelled = false;
-        httpUploadCallbacks.set(id,(buf: Buffer) => {
-            if(cancelled) return;
-            httpUploadCallbacks.delete(id);
-            clearTimeout(timeoutID);
-            res(buf);
-        });
-        let timeoutID = setTimeout(() => {
-            httpUploadCallbacks.delete(id);
-            cancelled = true;
-            rej("Timed out while waiting for upload id " + id);
-        }, timeout);
-    })];
+    httpUploadMap.set(id, filePath);
+    setTimeout(() => {
+        httpUploadMap.delete(id);
+    }, timeout);
+    return id;
 }
 let exiting = false;
 export async function exit(signal?: string) {
