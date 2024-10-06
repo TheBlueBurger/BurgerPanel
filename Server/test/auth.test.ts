@@ -26,7 +26,7 @@ describe("Security", () => {
         let client = await TestUtil.getClient();
         let fullUserInfo = TestUtil.getFullUser();
         let adminClient = await TestUtil.getClient(true);
-        await adminClient.req("editUser", {action: "changePassword", password: "helloworld", id: fullUserInfo._id});
+        await adminClient.req("editUser", {action: "changePassword", password: "helloworld123", id: fullUserInfo._id});
         adminClient.close();
         let resp = client.req("auth", {
             username: fullUserInfo.username
