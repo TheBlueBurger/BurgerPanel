@@ -8,13 +8,13 @@ jobs:
     build:
         runs-on: ubuntu-22.04
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: pnpm
-              uses: pnpm/action-setup@v2
+              uses: pnpm/action-setup@v4
               with:
                 version: 8
             - name: node
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                 node-version: latest
             - name: Server dependencies
@@ -32,7 +32,7 @@ jobs:
               run: pnpm test -- --run
               working-directory: ./Server
             - name: Artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                 name: BurgerPanel
                 path: Server/_build/
