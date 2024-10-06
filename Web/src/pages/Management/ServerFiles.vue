@@ -14,7 +14,7 @@
     import axios, { AxiosProgressEvent } from "axios";
     import TextInput from '@components/TextInput.vue';
     let finishedLoading = ref(false);
-    let server = ref() as Ref<undefined | Server>;
+    let server = ref() as Ref<Server>;
     let props = defineProps({
         server: {required: true, type: String},
     });
@@ -240,7 +240,6 @@
                 else handleFileUpload(entry, fsEntry.fullPath);
             });
         });
-        console.log("to create", directoriesToCreate.value);
     }
     function addFiles(f: DataTransfer) {
         if(!f) return;

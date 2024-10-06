@@ -25,10 +25,23 @@ describe("Security", () => {
     test("it should fail on valid username and and invalid pass", async () => {
         let client = await TestUtil.getClient();
         let fullUserInfo = TestUtil.getFullUser();
+        let adminClient = await TestUtil.getClient(true);
+        await adminClient.req("editUser", {action: "changePassword", password: "helloworld", id: fullUserInfo._id});
+        adminClient.close();
         let resp = client.req("auth", {
             username: fullUserInfo.username
         });
+        let resp2 = client.req("auth", {
+            username: fullUserInfo.username,
+            password: ""
+        });
+        let resp3 = client.req("auth", {
+            username: fullUserInfo.username,
+            password: "some-password"
+        });
         expect(resp).rejects.toThrow();
+        expect(resp2).rejects.toThrow();
+        expect(resp3).rejects.toThrow();
     });
     test("it should fail on invalid token", async () => {
         let client = await TestUtil.getClient();
