@@ -2,21 +2,16 @@ import { ServerPermissions } from "./Permission";
 export const allowedSoftwares = ["purpur", "paper", "vanilla", "fabric"] as const;
 export type AllowedSoftware = typeof allowedSoftwares[number];
 export interface Server {
-    _id: string;
+    id: number;
     name: string;
     path: string;
-    mem: number;
-    allowedUsers: {
-        user: string;
-        permissions: ServerPermissions[];
-    }[];
+    memory: number;
     version: string;
     software: AllowedSoftware;
     port: number;
-    autoStart: boolean;
-    autoRestart: boolean;
+    autostart: boolean;
+    autorestart: boolean;
     jvmArgs: string;
-    useCustomJVMArgs: boolean;
 }
 
 export type ServerStatus = "running" | "stopping" | "stopped" | "unknown";
@@ -26,6 +21,6 @@ export type ServerStatuses = {
     }
 }
 // allowed mime types from file editor
-export const allowedMimeTypes = ["text/plain", "application/json", "text/yaml"];
+export const allowedExtensions = ["txt", "json", "yml", "yaml", "toml"];
 // bypassed mime type blocks, direct paths
 export const allowedFileNames = ["/server.properties"];

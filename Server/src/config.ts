@@ -4,20 +4,22 @@ import { defaultConfig, Config, ConfigValue } from "../../Share/Config.js";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { isValidPermissionString } from '../../Share/Permission.js';
-import { settings } from './db.js';
+import db from './db.js';
 import { IDs } from '../../Share/Logging.js';
 import { exists } from "./util/exists.js";
 import { type AllowedSoftware, allowedSoftwares } from "../../Share/Server.js";
 import isValidMCVersion from "./util/isValidMCVersion.js";
+const getFromDBQuery = db.prepare(`SELECT value FROM settings WHERE key=?`);
+const updateSetting = db.prepare(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`);
 export async function getSetting(key: keyof typeof defaultConfig, ignoreForcedChangeConfig?: boolean, errorIfNotSet?: boolean): Promise<ConfigValue> {
     let cachedSetting = cachedSettings[key];
     if (typeof cachedSetting != "undefined" && !errorIfNotSet) {
         return cachedSetting;
     }
-    let databaseOption = await settings.findOne({ key });
+    let databaseOption = getFromDBQuery.get(key) as {value: string, key: string};
     if (!databaseOption?.value) {
         if (errorIfNotSet) throw new Error(key + " must be set in the settings!");
-        if (forcedChangeConfig.includes(key) && !ignoreForcedChangeConfig) throw new Error(key + " must be set in the settings!");
+        if (forcedChangeConfig.includes(key) && !ignoreForcedChangeConfig && process.env.IS_DOCKER != "1") throw new Error(key + " must be set in the settings!");
         if (!(key in defaultConfig)) throw new Error("Invalid config key");
         cachedSettings[key] = defaultConfig[key as keyof typeof defaultConfig];
         return defaultConfig[key as keyof typeof defaultConfig];
@@ -42,15 +44,16 @@ If it returns an error, it will fail.
 */
 let validators: { [key in keyof Config]?: (value: string) => Promise<boolean | string> } = {
     serverPath: async (value) => {
+        if(process.env.IS_DOCKER == "1" && value != "/servers/") throw new Error("Changing server path isn't allowed in docker!");
         if (!value) throw new Error("Server path cannot be empty");
         let newPath = path.normalize(value);
         newPath = path.normalize(value);
         if (!path.isAbsolute(newPath)) throw new Error("Server path is not absolute.");
         // Ensure the folder exists, but is empty
-        if (!(await (await fs.stat(newPath)).isDirectory())) {
+        if (!(await fs.stat(newPath)).isDirectory()) {
             throw new Error("Server path is not a directory: " + newPath);
         }
-        if (await (await fs.readdir(newPath)).length != 0) {
+        if ((await fs.readdir(newPath)).length != 0) {
             throw new Error("Server path is not empty: " + newPath);
         }
         return path.normalize(newPath);
@@ -119,7 +122,8 @@ export async function setSetting<K extends keyof Config>(key: K, value: Config[K
     }
     if (typeof value !== typeof defaultConfig[key as keyof typeof defaultConfig]) throw new Error("Invalid config value. Expected " + typeof defaultConfig[key as keyof typeof defaultConfig] + " but got " + typeof value);
     // Set it in the database with upsert
-    await settings.upsert({key}, {value: value.toString()});
+    // await settings.upsert({key}, {value: value.toString()});
+    updateSetting.run(key, value.toString());
     cachedSettings[key] = value;
     if(afterSetList[key]) afterSetList[key].forEach(cb => cb(value));
     return value;

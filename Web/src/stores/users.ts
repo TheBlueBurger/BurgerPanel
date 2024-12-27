@@ -13,23 +13,24 @@ export const useUsers = defineStore("users", () => {
         allUsersFetched = true;
         return allUsers.userList;
     }
-    async function getUserByID(id: string) {
-        let user = users.value.find(u => u._id == id);
+    async function getUserByID(id: number | string) {
+        const usedID = typeof id == "string" ? parseInt(id) : id;
+        let user = users.value.find(u => u.id == usedID);
         if(user) return user;
-        if(allUsersFetched) throw new Error("all users already cached and cannot find " + id);
+        if(allUsersFetched) throw new Error("all users already cached and cannot find " + usedID);
         user = (await sendRequest("getUserData", {
-            id
+            id: usedID
         })).user;
         users.value.push(user);
         return user;
     }
     function updateUser(user: User) {
-        if(!user._id) throw new Error("Invalid user when updating!");
+        if(!user.id) throw new Error("Invalid user when updating!");
         removeUserFromCache(user);
         users.value.push(user);
     }
     function removeUserFromCache(user: User) {
-        users.value = users.value.filter(u => u._id != user._id);
+        users.value = users.value.filter(u => u.id != user.id);
     }
     return {users, getAllUsers, getUserByID, updateUser, removeUserFromCache}
 })

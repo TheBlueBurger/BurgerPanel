@@ -9,7 +9,6 @@ import titleManager from '@util/titleManager';
 import { confirmModal } from '@util/modal';
 import { useUser } from '@stores/user';
 import { useServers } from '@stores/servers';
-import { hasServerPermission } from '@share/Permission';
 import { useWS } from '@stores/ws';
 let router = useRouter();
 let props = defineProps<{
@@ -30,7 +29,7 @@ loadingServerFromAPI.value = true;
 let unmountAborter = new AbortController();
 // Attach to server
 if (!attached.value) {
-  let resp = await sendRequest("attachToServer", {_id: props.server}).catch(err => {
+  let resp = await sendRequest("attachToServer", {id: props.server}).catch(err => {
     router.push("/manage")
     return err;
   })
@@ -112,11 +111,11 @@ function onScrolled() {
     <button style="margin-left:40px" @click="startServer()" :disabled="!user.hasServerPermission(server, 'start') || isRunning" id="startbtn">Start</button>
     <button @click="stopServer()" :disabled="!user.hasServerPermission(server, 'stop') || !isRunning || thisServerStatus == 'stopping'">Stop</button>
     <button @click="killServer()" :disabled="!user.hasServerPermission(server, 'kill') || !isRunning">Kill</button>
-    <RouterLink :to="{name: 'editServer', params: {server: server._id}}"><button>Edit</button></RouterLink>
-    <span class="server-status"><ServerStatus :server="server._id" /></span>
+    <RouterLink :to="{name: 'editServer', params: {server: server.id}}"><button>Edit</button></RouterLink>
+    <span class="server-status"><ServerStatus :server="server.id" /></span>
     <br />
     <textarea readonly ref="serverTextArea" @scroll="onScrolled">{{ logs.join("") }}</textarea>
-    <div class="console-input" v-if="hasServerPermission(user.user, server, 'console.write')"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Write here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
+    <div class="console-input" v-if="user.hasServerPermission(server, 'console.write')"><input type="text" class="console-input-input" v-model="consoleInput" placeholder="Write here..." @keyup.enter="sendCommand" /><button class="console-input-button" @click="sendCommand"><span class="console-input-button-span">Send</span></button></div>
     <br/>
   </div>
   <div v-else>

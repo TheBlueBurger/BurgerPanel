@@ -21,7 +21,7 @@ if(!user.user?.setupPending) {
 }
 async function changePassword(password: string) {
     await sendRequest("editUser", {
-        id: user.user?._id,
+        id: user.user?.id,
         action: "changePassword",
         password
     });
@@ -45,7 +45,7 @@ let usedFormat: Ref<['day' | 'hour' | 'minute' | 'second', number]> = computed((
 });
 async function finish() {
     await sendRequest("editUser", {
-        id: user.user?._id,
+        id: user.user?.id,
         action: "finishSetup"
     });
     console.log("here")

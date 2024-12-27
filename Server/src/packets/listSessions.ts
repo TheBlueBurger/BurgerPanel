@@ -7,6 +7,6 @@ export default class ListSessions extends Packet {
     requiresAuth: boolean = true;
     permission: Permission = {all: ["serverinfo.clients.count", "users.view"]};
     async handle(client: OurClient, data: any): ServerPacketResponse<"listSessions"> {
-        return clients.map(c => ({username: c.data.auth?.user?.username,_id: c.data.auth?.user?._id}));
+        return clients.map(c => ({username: c.data.auth?.user?.username,id: c.data.auth?.user?.id}));
     }
 }

@@ -1,20 +1,19 @@
 import { OurClient, Packet, ServerPacketResponse, requestDownload, requestUpload } from "../index.js";
-import { servers, users } from "../db.js";
 import { hasServerPermission } from "../util/permission.js";
 import fs from "node:fs/promises";
 import path from "node:path";
-import mime from "mime-types";
-import { allowedFileNames, allowedMimeTypes } from "../../../Share/Server.js";
+import { allowedFileNames, allowedExtensions } from "../../../Share/Server.js";
 import { Request } from "../../../Share/Requests.js";
 import logger, { LogLevel } from "../logger.js";
 import { getSetting } from "../config.js";
+import { getServerByID } from "../db.js";
 
 export default class ServerFiles extends Packet {
     name: Request = "serverFiles";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"serverFiles"> {
-        let server = await servers.findById(data.id);
-        if(!server || !hasServerPermission(client.data.auth.user, server?.toJSON(), "serverfiles.read")) return "No perm"; //very bad!!!!
+        let server = getServerByID.get(data.id);
+        if(!server || !hasServerPermission(client.data.auth.user, server, "serverfiles.read")) return "No perm"; //very bad!!!!
         // Make sure the user doesnt do anything spooky
         if(!data.path || typeof data.path != "string") return;
         if(data.path.includes("..")) return; // just in case
@@ -49,8 +48,9 @@ export default class ServerFiles extends Packet {
                 if(statData.size > 320_000) {
                     return "File is over size limit (320kb)"
                 }
-                let mimeData = mime.lookup(pathToCheck);
-                if(!allowedMimeTypes.includes(mimeData.toString()) && !allowedFileNames.includes(data.path) && !await getSetting("bypassFileTypeLimitations")) {
+                const splitDots = pathToCheck.split(".")
+                let extension = splitDots[splitDots.length-1];
+                if(!allowedExtensions.includes(extension) && !allowedFileNames.includes(data.path) && !await getSetting("bypassFileTypeLimitations")) {
                     return "Disallowed type!"
                 }
                 logger.log(`${client.data.auth.user?.username} is reading ${data.path} in ${server.name}`, "server.file.read", LogLevel.INFO);
@@ -60,13 +60,13 @@ export default class ServerFiles extends Packet {
                     type: "data"
                 }
             case "write":
-                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.write")) return "No permission";
+                if(!hasServerPermission(client.data.auth.user, server, "serverfiles.write")) return "No permission";
                 let writeStatData = await fs.stat(pathToCheck);
                 if(writeStatData.size > 320_000) {
                     return "File is over size limit (320kb)"
                 }
-                let writeMimeData = mime.lookup(pathToCheck);
-                if(!allowedMimeTypes.includes(writeMimeData.toString()) && !allowedFileNames.includes(data.path) && !await getSetting("bypassFileTypeLimitations")) {
+                let writeMimeData = "";//mime.lookup(pathToCheck);
+                if(!allowedExtensions.includes(writeMimeData.toString()) && !allowedFileNames.includes(data.path) && !await getSetting("bypassFileTypeLimitations")) {
                     return "Disallowed type!"
                 }
                 if(typeof data.data != "string") return "Missing data";
@@ -78,7 +78,7 @@ export default class ServerFiles extends Packet {
                     type: "edit-success"
                 }
             case "delete":
-                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.delete")) return "No permission";
+                if(!hasServerPermission(client.data.auth.user, server, "serverfiles.delete")) return "No permission";
                 let deleteFileStat = await fs.stat(pathToCheck);
                 if(!deleteFileStat.isFile()) return;
                 logger.log(`${client.data.auth.user?.username} is deleting ${data.path} in ${server.name}`, 'server.file.delete');
@@ -87,7 +87,7 @@ export default class ServerFiles extends Packet {
                     type: "delete-success"
                 }
             case "upload":
-                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.upload")) return "no permission to upload";
+                if(!hasServerPermission(client.data.auth.user, server, "serverfiles.upload")) return "no permission to upload";
                 let id = requestUpload(pathToCheck);
                 logger.log(`${client.data.auth.user?.username} is uploading ${data.path} to ${server.name} with upload ID '${id}'`, "server.file.upload");
                 return {
@@ -95,7 +95,7 @@ export default class ServerFiles extends Packet {
                     id
                 }
             case "download":
-                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.download")) return "no permission to download";
+                if(!hasServerPermission(client.data.auth.user, server, "serverfiles.download")) return "no permission to download";
                 let downloadID = requestDownload(pathToCheck);
                 logger.log(`${client.data.auth.user?.username} is downloading ${data.path} in ${server.name}`, "server.file.download");
                 return {
@@ -104,7 +104,7 @@ export default class ServerFiles extends Packet {
                 }
             case "new":
                 if(found) return "Already exists!";
-                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.new")) return "no permission to create new files";
+                if(!hasServerPermission(client.data.auth.user, server, "serverfiles.new")) return "no permission to create new files";
                 logger.log(`${client.data.auth.user?.username} is creating ${data.path} in ${server.name}`, "server.file.write");
                 switch(data.type) {
                     case "folder":
@@ -118,7 +118,7 @@ export default class ServerFiles extends Packet {
                 }
                 break;
             case "move":
-                if(!hasServerPermission(client.data.auth.user, server.toJSON(), "serverfiles.rename")) return "no permission to rename";
+                if(!hasServerPermission(client.data.auth.user, server, "serverfiles.rename")) return "no permission to rename";
                 let moveToPath = path.join(server.path, data.to);
                 if(!moveToPath.startsWith(server.path)) return "Very bad!";
                 logger.log(`${client.data.auth.user?.username} is moving ${data.path} to ${moveToPath}`, "server.file.move");

@@ -1,14 +1,15 @@
 import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import fs from "node:fs/promises";
-import { servers } from "../db.js";
 import serverManager from "../serverManager.js";
 import path from "node:path";
-import { Permission, userHasAccessToServer } from "../../../Share/Permission.js";
+import { Permission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import { Request } from "../../../Share/Requests.js";
 import { getSetting } from "../config.js";
 import isValidMCVersion from "../util/isValidMCVersion.js";
 import { allowedSoftwares } from "../../../Share/Server.js";
+import { userHasAccessToServer } from "../util/permission.js";
+import db, { getServerByID } from "../db.js";
 
 export default class ImportServer extends Packet {
     name: Request = "importServer";
@@ -60,30 +61,41 @@ export default class ImportServer extends Packet {
                 return "Missing " + requiredOption
             }
         }
-        let serverUsingSamePort = await servers.findOne({port: data.port});
-        if(serverUsingSamePort) return `Port is already in use${userHasAccessToServer(client.data.auth.user, serverUsingSamePort.toJSON()) ? " by " + serverUsingSamePort.name : ''}`
+        let serverUsingSamePort = db.prepare(`SELECT name, id FROM servers WHERE port=?`).get(data.port) as {name: string, id: number};
+        if(serverUsingSamePort) return `Port is already in use${userHasAccessToServer(client.data.auth.user, serverUsingSamePort.id) ? " by " + serverUsingSamePort.name : ''}`
         if(!await isValidMCVersion(data.version)) return "Invalid MC version!";
         if(!allowedSoftwares.includes(data.software)) return "Invalid software!";
-        logger.log("User" + client.data.auth.user?._id + " is importing " + data.path, "server.import", LogLevel.INFO)
-        let server = await servers.create({
+        logger.log("User" + client.data.auth.user?.id + " is importing " + data.path, "server.import", LogLevel.INFO)
+        /*let server = await servers.create({
             name: data.name,
             version: data.version,
             mem: parseInt(data.mem),
             software: data.software,
             allowedUsers: [{
-                user: client.data.auth.user?._id || "",
+                user: client.data.auth.user?.id || "",
                 permissions: ["full"]
             }],
             port: parseInt(data.port),
             path: data.path,
-        });
+        });*/
+        const serverID = db.prepare(`INSERT INTO servers (name, memory, path, software, version, port) VALUES (?, ?, ?, ?, ?, ?)`).run(
+            data.name,
+            parseInt(data.mem) || parseInt((await getSetting("defaultMemory")).toString()),
+            data.path,
+            data.software,
+            data.version,
+            parseInt(data.port)
+        ).lastInsertRowid;
+        db.prepare("INSERT INTO user_server_access (user_id, server_id) VALUES (?,?)").run(client.data.auth.user?.id, serverID);
+        const server = getServerByID.get(serverID);
+        if(!server) throw new Error("Server doesnt exist after importing, this is bad!");
         try {
-            await serverManager.changePort(server.toJSON(), data.port); // if the user changes the port when importing the server, it will be changed in server files as well
+            await serverManager.changePort(server, data.port); // if the user changes the port when importing the server, it will be changed in server files as well
         } catch {
-            logger.log(`Could not change the port to the user specified one while importing the server ${server._id.toString()} (${server.name}), assuming the user is correct`, "server.import", LogLevel.WARNING);
+            logger.log(`Could not change the port to the user specified one while importing the server ${server.id.toString()} (${server.name}), assuming the user is correct`, "server.import", LogLevel.WARNING);
         }
         return {
-            server: server.toJSON(),
+            server: server,
             type: "success"
         }
     }

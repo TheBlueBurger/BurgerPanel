@@ -22,18 +22,23 @@ let props = defineProps({
     }
 });
 let server = ref() as Ref<Server>;
-let user = ref() as Ref<User>;
+let userAccess = ref<{username: string, id: number, permissions: ServerPermissions[]}>();
 const myUser = useUser();
 let router = useRouter();
 let servers = useServers();
-let users = useUsers();
+async function getUserAccess() {
+    userAccess.value = (await sendRequest("getServerAccess", {
+                id: props.server,
+                uid: props.user
+    })).users[0];
+}
 try {
     await Promise.all([
         (async() => {
             server.value = await servers.getServerByID(props.server);
         })(),
         (async() => {
-            user.value = await users.getUserByID(props.user);
+            await getUserAccess();
         })()
     ])
 } catch(err) {
@@ -46,24 +51,19 @@ try {
         }
     });
 }
-titleManager.setTitle(`${user.value.username} in ${server.value.name}`)
-if(!server.value.allowedUsers.some(a => a.user == user.value._id)) {
-    showInfoBox("Hm", "This user doesn't have access to this server. Nothing will work");
-}
-let userInAllowedUsers = computed(() => {
-    return server.value.allowedUsers.find(au => au.user == props.user);
-});
+titleManager.setTitle(`${userAccess.value?.username} in ${server.value.name}`)
+
 async function togglePerm(perm: ServerPermissions) {
     server.value = (await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
             action: "changePerm",
-            value: !userInAllowedUsers.value?.permissions.includes(perm),
+            value: !userAccess.value?.permissions.includes(perm),
             permission: perm,
             user: props.user
         }
     })).server;
-    servers.updateServer(server.value);
+    await getUserAccess();
 }
 async function applyProfile(profile: string) {
     if(isApplied(profile)) return;
@@ -75,19 +75,19 @@ async function applyProfile(profile: string) {
             user: props.user
         }
     })).server;
-    servers.updateServer(server.value);
+    await getUserAccess();
 }
 function isApplied(profile: string) {
     return !_ServerPermissions.some(p => {
-        if(DefaultServerProfiles[profile].includes(p)) return !userInAllowedUsers.value?.permissions.includes(p);
-        return userInAllowedUsers.value?.permissions.includes(p);
+        if(DefaultServerProfiles[profile].includes(p)) return !userAccess.value?.permissions.includes(p);
+        return userAccess.value?.permissions.includes(p);
     })
 }
 function getDisplayedInfoText(permission: ServerPermissions): string | void {
-    if(userInAllowedUsers.value?.permissions.includes(permission)) return;
-    if(userInAllowedUsers.value?.permissions.includes("full")) return " (Has full server permission)";
-    if(hasServerPermission(user.value, server.value, permission)) return " (Has global permission)";
+    if(userAccess.value?.permissions.includes(permission)) return;
+    if(userAccess.value?.permissions.includes("full")) return " (Has full server permission)";
 }
+
 </script>
 <template>
     <RouterLink :to="{
@@ -97,7 +97,7 @@ function getDisplayedInfoText(permission: ServerPermissions): string | void {
         }
     }"><button>Go back</button></RouterLink>
     <div v-if="server && user">
-        <h1>Managing {{ user.username }} in {{ server.name }}</h1> <RouterLink :to="{
+        <h1>Managing {{ userAccess?.username }} in {{ server.name }}</h1> <RouterLink :to="{
             name: 'editUserPermissions',
             params: {
                 user: props.user
@@ -114,8 +114,8 @@ function getDisplayedInfoText(permission: ServerPermissions): string | void {
         </div>
         <br/>
         <h2>Permissions</h2>
-        <div v-for="perm in _ServerPermissions" v-if="userInAllowedUsers">
-            {{ perm }} - <span :class="(userInAllowedUsers.permissions.includes(perm) ? 'green' : 'red')">{{  userInAllowedUsers.permissions.includes(perm) ? "Yes" : "No" }}<span class="perm-info-text">{{ getDisplayedInfoText(perm) }}</span></span> <button v-if="myUser.hasServerPermission(server, perm) && myUser.hasServerPermission(server, 'set.allowedUsers.permissions.write')" @click="togglePerm(perm)">Toggle</button>
+        <div v-for="perm in _ServerPermissions" v-if="userAccess">
+            {{ perm }} - <span :class="(userAccess.permissions.includes(perm) ? 'green' : 'red')">{{  userAccess.permissions.includes(perm) ? "Yes" : "No" }}<span class="perm-info-text">{{ getDisplayedInfoText(perm) }}</span></span> <button v-if="myUser.hasServerPermission(server, perm) && myUser.hasServerPermission(server, 'set.allowedUsers.permissions.write')" @click="togglePerm(perm)">Toggle</button>
         </div>
         <div v-else>
             Could not find user in allowedUsers, weird

@@ -6,7 +6,6 @@
     import titleManager from '@util/titleManager';
     import { confirmModal, showInfoBox } from '@util/modal';
     import { useServers } from '@stores/servers';
-    import { hasServerPermission } from '@share/Permission';
     import { useUser } from '@stores/user';
     import Dropdown from '@components/Dropdown.vue';
     import Modal from '@components/Modal.vue';
@@ -112,7 +111,7 @@
     async function saveFile() {
         let resp = await sendRequest("serverFiles", {
             action: "write",
-            id: server.value?._id,
+            id: server.value?.id,
             data: fileData.value,
             path: path.value
         });
@@ -196,7 +195,7 @@
                 action: "new",
                 type: "folder",
                 path: path.value + "/" + folderToCreate,
-                id: server.value?._id
+                id: server.value?.id
             });
             foldersCreated.value++;
         }
@@ -306,7 +305,7 @@
             action: "new",
             type: newType.value,
             path: path.value + "/" + newName.value,
-            id: server.value?._id
+            id: server.value?.id
         });
         showNewDialog.value = false;
         if(newType.value == "folder" && openWhenCreated.value) router.push({query: {path: path.value + "/" + newName.value}});
@@ -325,7 +324,7 @@
             action: "move",
             path: path.value + "/" + dropdownFile.value.name,
             to: path.value + "/" +selectedMoveToFolder.value + "/" + selectedMoveToName.value,
-            id: server.value?._id
+            id: server.value?.id
         });
         await getFiles();
     }
@@ -415,7 +414,7 @@
         params: {
             server: props.server
         }
-    }" v-if="path && path.toString().startsWith('/plugins') && hasServerPermission(user.user, server, 'plugins.download')">
+    }" v-if="path && path.toString().startsWith('/plugins') && user.hasServerPermission(server, 'plugins.download')">
         <button class="back-server-page-btn">Download {{server.software == "fabric" ? "mods" : "plugins"}}</button>
     </RouterLink><button class="back-server-page-btn" @click="newName = '';showNewDialog = true">New</button></h1>
     <Dropdown :create-on-cursor="true" ref="dropdown">
@@ -427,8 +426,8 @@
                         type: 'read'
                     }
                 })
-            }">Open</button><br v-if="hasServerPermission(user.user, server, 'serverfiles.delete') && !dropdownFile.folder"/>
-            <button v-if="hasServerPermission(user.user, server, 'serverfiles.delete') && !dropdownFile.folder" @click="async () => {
+            }">Open</button><br v-if="user.hasServerPermission(server, 'serverfiles.delete') && !dropdownFile.folder"/>
+            <button v-if="user.hasServerPermission(server, 'serverfiles.delete') && !dropdownFile.folder" @click="async () => {
                 dropdown.hide();
                 if(await confirmModal(`Delete ${dropdownFile.name}?`, `Sure you want to delete ${dropdownFile.name}? This can't be undone.`, true, true, true)) {
                     await sendRequest('serverFiles', {
@@ -439,10 +438,10 @@
                     getFiles();
                     event.emit('createNotification', `${dropdownFile.name} has been removed.`)
                 }
-            }">Delete</button><br v-if="hasServerPermission(user.user, server, 'serverfiles.download') && !dropdownFile.folder">
-            <button v-if="hasServerPermission(user.user, server, 'serverfiles.download') && !dropdownFile.folder" @click="downloadFile(path + '/' + dropdownFile.name)">Download</button>
-            <br v-if="hasServerPermission(user.user, server, 'serverfiles.rename')">
-            <button v-if="hasServerPermission(user.user, server, 'serverfiles.rename')" @click="dropdown.hide();selectedMoveToName = dropdownFile.name;showMoveDialog = true">Move/rename</button>
+            }">Delete</button><br v-if="user.hasServerPermission(server, 'serverfiles.download') && !dropdownFile.folder">
+            <button v-if="user.hasServerPermission(server, 'serverfiles.download') && !dropdownFile.folder" @click="downloadFile(path + '/' + dropdownFile.name)">Download</button>
+            <br v-if="user.hasServerPermission(server, 'serverfiles.rename')">
+            <button v-if="user.hasServerPermission(server, 'serverfiles.rename')" @click="dropdown.hide();selectedMoveToName = dropdownFile.name;showMoveDialog = true">Move/rename</button>
         </div>
     </Dropdown>
     <div class="serverfiles">
@@ -476,7 +475,7 @@
             query: {
                 path: path.toString().split('/').slice(0, -1).join('/')
             }
-        }"><button>Go back</button></RouterLink> <button @click="saveFile" v-if="hasServerPermission(user.user, server, 'serverfiles.write')">Save</button> <button @click="() => typeof path == 'string' ? downloadFile(path) : 0" v-if="hasServerPermission(user.user, server, 'serverfiles.download')">Download File</button> <br/>
+        }"><button>Go back</button></RouterLink> <button @click="saveFile" v-if="user.hasServerPermission(server, 'serverfiles.write')">Save</button> <button @click="() => typeof path == 'string' ? downloadFile(path) : 0" v-if="user.hasServerPermission(server, 'serverfiles.download')">Download File</button> <br/>
         <textarea v-model="fileData"></textarea>
     </div>
 </template>

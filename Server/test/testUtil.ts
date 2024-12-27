@@ -115,12 +115,12 @@ export default new class TestUtil {
         return c;
     }
     getFullUser() {
-        return this.getData().User.find(u => u.permissions.includes("full"));
+        return this.getData().User.find(u => JSON.parse(u.permissions).includes("full"));
     }
     async getNewUserClient(username: string) {
         let adminClient = await this.getClient(true);
         let user = await adminClient.req("createUser", {username});
-        let token = (await adminClient.req("getUserToken", {id: user.user._id}));
+        let token = (await adminClient.req("getUserToken", {id: user.user.id}));
         adminClient.close();
         let newClient = await this.getClient();
         await newClient.req("auth", {

@@ -76,7 +76,7 @@ async function importServer() {
     router.push({
         name: "manageServer",
         params: {
-            server: resp.server._id
+            server: resp.server.id
         }
     });
 }

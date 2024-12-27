@@ -1,22 +1,24 @@
 import { OurClient, Packet, ServerPacketResponse, isProd } from "../index.js";
-import { servers } from "../db.js";
-import serverManager, { userHasAccessToServer } from "../serverManager.js";
-import { hasServerPermission } from "../util/permission.js";
+import { getServerByID } from "../db.js";
+import serverManager from "../serverManager.js";
+import { getServerPermissions, hasServerPermission, userHasAccessToServer } from "../util/permission.js";
 import { Request } from "../../../Share/Requests.js";
 
 export default class AttachToServer extends Packet {
     name: Request = "attachToServer";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"attachToServer"> {
-        let server = await servers.findById(data._id);
-        if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
+        let server = getServerByID.get(data.id);
+        const userPermissions = getServerPermissions(client.data.auth.user, server);
+        if (!server || !userPermissions) {
             return "Server not found";
         }
-        let status = hasServerPermission(client.data.auth.user, server.toJSON(), "status") ? serverManager.getStatus(server.toJSON()) : "unknown";
-        let resp = serverManager.attachClientToServer(client, server.toJSON());
+        let status = hasServerPermission(client.data.auth.user, server, "status", userPermissions) ? serverManager.getStatus(server) : "unknown";
+        const mayRead = hasServerPermission(client.data.auth.user, server, "console.read", userPermissions);
+        let resp = mayRead ? serverManager.attachClientToServer(client, server) : {lastLogs:[]};
         return {
-            server: server.toJSON(),
-            lastLogs: hasServerPermission(client.data.auth.user, server.toJSON(), "console.read") ? resp.lastLogs : [],
+            server: server,
+            lastLogs: hasServerPermission(client.data.auth.user, server, "console.read", userPermissions) ? resp.lastLogs : [],
             status
         }
     }

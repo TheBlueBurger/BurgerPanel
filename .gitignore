@@ -3,3 +3,5 @@ Web/dist
 Share/BuildInfo.ts
 Server/data.json
 testing/
+/db/
+/servers/

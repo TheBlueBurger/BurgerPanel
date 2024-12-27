@@ -9,7 +9,7 @@ describe("SysInfo", async () => {
             let sysInfo = await client.req("systemInformation", {});
             let i = TestUtil.getFullUser();
             expect(sysInfo.general.clients[0].username).eq(i.username);
-            expect(sysInfo.general.clients[0]._id).eq(i._id);
+            expect(sysInfo.general.clients[0].id).eq(i.id);
             expect(sysInfo.general.clients[0].token).toBeUndefined();
         });
     });

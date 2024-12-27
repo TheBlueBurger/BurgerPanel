@@ -1,5 +1,4 @@
 node_modules
-public
 dist
 *.zip
 _build
@@ -8,4 +7,6 @@ packets.mjs
 test-context/
 servers/
 burgerpanel.sqlite3*
-burgerpanel-db-backup-*
+.git
+burgerpanel-db-backup*
+connector.burgerpanelsock

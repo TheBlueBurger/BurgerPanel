@@ -69,6 +69,7 @@
 input {
     overflow-x: scroll;
     scrollbar-width: unset;
+    margin: 0 !important;
 }
 input::-webkit-scrollbar {
     width: unset;
@@ -109,11 +110,13 @@ input {
     border-radius: 10px 0px 0px 10px;
     border: 0px;
     padding: 5px 10px;
-    margin-right: 2px;
     color: #ffd069;
     border: 1px solid #504f4f;
-    margin-right: 0;
+    margin: 0 !important;
     border-right: none;
+}
+button {
+    margin: 0 !important;
 }
 input[disabled] {
     border-radius: 10px 0px 0px 10px;

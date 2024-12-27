@@ -86,23 +86,23 @@ async function deleteUser(user: User) {
     )
         return;
     await sendRequest("deleteUser", {
-        id: user._id,
+        id: user.id,
     });
     users.removeUserFromCache(user);
 }
 
 let knownTokens: Ref<{ [id: string]: string }> = ref({});
-let viewingToken = ref("");
-async function getToken(userID: string) {
+let viewingToken = ref(-1);
+async function getToken(userID: number) {
     let resp = await sendRequest("getUserToken", {
         id: userID,
     });
     knownTokens.value[userID] = resp.token;
     return resp.token;
 }
-async function viewToken(userID: string, copy: boolean = false) {
+async function viewToken(userID: number, copy: boolean = false) {
     if (viewingToken.value == userID) {
-        viewingToken.value = "";
+        viewingToken.value = -1;
         return;
     }
     if (knownTokens.value[userID] && !copy)
@@ -111,7 +111,7 @@ async function viewToken(userID: string, copy: boolean = false) {
     if (!copy) viewingToken.value = userID;
     else copyToClip(token);
 }
-async function copyLoginURL(userID: string) {
+async function copyLoginURL(userID: number) {
     let token = await getToken(userID);
     copyToClip(`${location.origin}/?useToken=${token}`);
 }
@@ -131,7 +131,7 @@ let settingsAllowedToShow = computed(() => {
         return !disabledEditingFrontend.some((d) => c.startsWith(d));
     });
 });
-async function resetToken(id: string) {
+async function resetToken(id: number) {
     if (
         !(await confirmModal(
             "Reset token",
@@ -146,12 +146,12 @@ async function resetToken(id: string) {
     events.value.emit("createNotification", "Token has been reset!");
 }
 titleManager.setTitle("Settings");
-let dropdownRefs = {} as { [e: string]: any };
-function getDropdownRefs(uid: string) {
+let dropdownRefs = {} as { [e: number]: any };
+function getDropdownRefs(uid: number) {
     if (typeof dropdownRefs[uid] == "undefined") dropdownRefs[uid] = ref();
     return dropdownRefs[uid];
 }
-async function renameUser(id: string) {
+async function renameUser(id: number) {
     let modalResp = await modalInput(
         "Rename",
         [
@@ -184,7 +184,7 @@ async function renameUser(id: string) {
 let clients = ref(
     [] as {
         username?: string | undefined;
-        _id?: string | undefined;
+        id?: number | undefined;
     }[],
 );
 onMounted(async () => {
@@ -251,29 +251,29 @@ onMounted(async () => {
             v-for="_user in sortedUsers"
             class="user"
             @contextmenu.prevent="
-                (e) => dropdownRefs[_user._id].value[0].show(e)
+                (e) => dropdownRefs[_user.id].value[0].show(e)
             "
         >
             <div class="user-content">
                 <h3>{{ _user.username }}</h3>
-                <p>ID: {{ _user._id }}</p>
+                <p>ID: {{ _user.id }}</p>
                 <p>
                     Created at: {{ new Date(_user.createdAt).toLocaleString() }}
                 </p>
                 <p v-if="_user.setupPending"><i>(Setup pending)</i></p>
-                <p v-if="clients.some((c) => c._id == _user._id)">
+                <p v-if="clients.some((c) => c.id == _user.id)">
                     Currently logged in!
                 </p>
                 <Dropdown
-                    :ref="getDropdownRefs(_user._id)"
+                    :ref="getDropdownRefs(_user.id)"
                     :create-on-cursor="true"
                 >
                     <div id="dropdown-inner">
                         <button
                             @click="
                                 () => {
-                                    renameUser(_user._id);
-                                    dropdownRefs[_user._id].value[0].hide();
+                                    renameUser(_user.id);
+                                    dropdownRefs[_user.id].value[0].hide();
                                 }
                             "
                         >
@@ -284,7 +284,7 @@ onMounted(async () => {
                             :to="{
                                 name: 'editUserPermissions',
                                 params: {
-                                    user: _user._id,
+                                    user: _user.id,
                                 },
                             }"
                         >
@@ -294,8 +294,8 @@ onMounted(async () => {
                         <button
                             @click="
                                 () => {
-                                    viewToken(_user._id, true);
-                                    dropdownRefs[_user._id].value[0].hide();
+                                    viewToken(_user.id, true);
+                                    dropdownRefs[_user.id].value[0].hide();
                                 }
                             "
                         >
@@ -305,8 +305,8 @@ onMounted(async () => {
                         <button
                             @click="
                                 () => {
-                                    copyLoginURL(_user._id);
-                                    dropdownRefs[_user._id].value[0].hide();
+                                    copyLoginURL(_user.id);
+                                    dropdownRefs[_user.id].value[0].hide();
                                 }
                             "
                         >
@@ -316,8 +316,8 @@ onMounted(async () => {
                         <button
                             @click="
                                 () => {
-                                    resetToken(_user._id);
-                                    dropdownRefs[_user._id].value[0].hide();
+                                    resetToken(_user.id);
+                                    dropdownRefs[_user.id].value[0].hide();
                                 }
                             "
                         >
@@ -328,7 +328,7 @@ onMounted(async () => {
                             @click="
                                 () => {
                                     deleteUser(_user);
-                                    dropdownRefs[_user._id].value[0].hide();
+                                    dropdownRefs[_user.id].value[0].hide();
                                 }
                             "
                         >

@@ -11,7 +11,7 @@ async function resetToken() {
     if (!await confirmModal("Reset your token?", "Sure? All sessions except this one will be logged out. Auto-login will break for other sessions."))
         return;
     let resp = await sendRequest("editUser", {
-        id: user.user?._id,
+        id: user.user?.id,
         action: "resetToken",
     });
     if(resp?.token) localStorage.setItem("token", resp.token);
@@ -20,7 +20,7 @@ async function resetToken() {
 
 async function setUsername(newName: string) {
     await sendRequest("editUser", {
-        id: user.user?._id,
+        id: user.user?.id,
         action: "changeUsername",
         username: newName
     })
@@ -29,7 +29,7 @@ async function setUsername(newName: string) {
 
 async function changePassword(password: string) {
     await sendRequest("editUser", {
-        id: user.user?._id,
+        id: user.user?.id,
         action: "changePassword",
         password
     })

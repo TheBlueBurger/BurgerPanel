@@ -4,7 +4,7 @@ export let defaultConfig: Config = {
     defaultMemory: 1024,
     webServerPort: 3001,
     serverPath: "",
-    defaultMCVersion: "1.20.1",
+    defaultMCVersion: "1.21.4",
     defaultMCSoftware: "paper",
     stopServerTimeout: 120_000, // 2 mins
     defaultPermissions: "performance.view,performance.mem,performance.load,performance.platform", // thats how the database works and im too lazy to change
@@ -36,7 +36,7 @@ export let descriptions: { [key in keyof Config]?: string } = {
     defaultPermissions: "The permission to give a new user, separated by commas",
     bypassFileTypeLimitations: "If enabled will allow all file types to be edited in the editor"
 }
-export let disabledEditingFrontend: string[] = ["logging_"]; // if it starts with this, it will be ignored on the frontend settings page
+export let disabledEditingFrontend: string[] = ["logging_"]; // if it starts with this, it will be ignored on the frontend settings page and the server will deny a request to update it
 // Array of keys that are allowed to be read by all users
 export let allUsersAllowedToRead: (keyof Config)[] = [];
 export type ConfigValue = string | number;

@@ -53,7 +53,7 @@ async function showUsers() {
 }
 async function toggleDevMode() {
     user.user = (await sendRequest("editUser", {
-        id: user.user?._id,
+        id: user.user?.id,
         action: "toggleDev"
     })).user;
 }

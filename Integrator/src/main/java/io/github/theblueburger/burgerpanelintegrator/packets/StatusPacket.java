@@ -32,6 +32,7 @@ public class StatusPacket extends Packet {
             locationObj.put("z", location.getZ());
             locationObj.put("world", location.getWorld().getName());
             playerObject.put("location", locationObj);
+            playerObject.put("gamemode", player.getGameMode().getValue());
             playerArray.add(playerObject);
         }
         responseObj.put("players", playerArray);

@@ -13,7 +13,7 @@ describe("Security", () => {
     test("it should fail on empty username and and valid pass", async () => {
         let adminClient = await TestUtil.getClient(true);
         let fullUserInfo = TestUtil.getFullUser();
-        await adminClient.req("editUser", {action: "changePassword", password: "helloworld", id: fullUserInfo._id});
+        await adminClient.req("editUser", {action: "changePassword", password: "helloworld", id: fullUserInfo.id});
         adminClient.close();
         let client = await TestUtil.getClient();
         let resp = client.req("auth", {
@@ -26,7 +26,7 @@ describe("Security", () => {
         let client = await TestUtil.getClient();
         let fullUserInfo = TestUtil.getFullUser();
         let adminClient = await TestUtil.getClient(true);
-        await adminClient.req("editUser", {action: "changePassword", password: "helloworld123", id: fullUserInfo._id});
+        await adminClient.req("editUser", {action: "changePassword", password: "helloworld123", id: fullUserInfo.id});
         adminClient.close();
         let resp = client.req("auth", {
             username: fullUserInfo.username
@@ -60,7 +60,7 @@ describe("Works", () => {
     test("username/password", async() => {
         let fullUserInfo = TestUtil.getFullUser();
         let client = await TestUtil.getClient(true);
-        await client.req("editUser", {id: fullUserInfo._id, action: "changePassword", password: "hellothere123"});
+        await client.req("editUser", {id: fullUserInfo.id, action: "changePassword", password: "hellothere123"});
         await client.req("logout", {});
         let newFullUserInfo = TestUtil.getFullUser();
         const resp = await client.req("auth", {

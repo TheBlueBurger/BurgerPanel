@@ -150,6 +150,13 @@ ws.listenForEvent("loginFailed", (data: AuthS2C) => {
 ws.listenForEvent("yourUserEdited", newUser => {
   user.user = newUser.user;
 }, unmountAborter.signal);
+ws.listenForEvent("serverPermissionChange", data => {
+  if(data.type == "edit") servers.serverPerms.set(data.serverID, data.permissions);
+  else if(data.type == "remove") {
+    servers.serverPerms.delete(data.serverID);
+    servers.removeServerFromCache(data.serverID);
+  }
+}, unmountAborter.signal);
 let showLoginScreen = ref(false);
 function gotoSetup(_currentRoute?: RouteLocationNormalized) {
   let currentRoute = _currentRoute ?? router.currentRoute.value;

@@ -22,7 +22,7 @@ let props = defineProps({
 let servers = useServers();
 let query: string = "";
 let loading = ref(false);
-let server = ref(await servers.getServerByID(props.server));
+let server = ref(await servers.getServerByID(parseInt(props.server)));
 titleManager.setTitle("Download plugins in " + server.value.name);
 let hits: Ref<ModrinthPluginResult[] | undefined> = ref();
 async function search() {

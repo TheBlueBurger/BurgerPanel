@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { Ref, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { hasPermission, hasServerPermission } from '@share/Permission';
+import { hasPermission, hasServerPermission, ServerPermissions } from '@share/Permission';
 import { Server } from '@share/Server';
 import { User } from '@share/User';
 import events from '@util/event';
@@ -15,26 +15,35 @@ import Modal from '@components/Modal.vue';
 import { useUser } from '@stores/user';
 import { useServers } from '@stores/servers';
 import { useUsers } from '@stores/users';
+import { RequestResponses } from '@share/Requests';
 let server = ref<Server | null>(null);
+
 let props = defineProps<{
   server: string;
 }>();
 let router = useRouter();
 const user = useUser();
+const allUsers = ref<User[]>();
 let servers = useServers();
 let serverStatuses = servers.statuses;
 let thisServerStatus = computed(() => {
     return serverStatuses[props.server]?.status;
 });
 let isRunning = computed(() => thisServerStatus.value == "running" || thisServerStatus.value == "stopping");
-let users = useUsers();
-let allUsers: Ref<User[]> = ref([]);
+let serverAccess: Ref<{username: string, id: number, permissions: ServerPermissions[]}[]> = ref([]);
+async function getServerAccess() {
+    serverAccess.value = (await sendRequest("getServerAccess", {id: props.server})).users;
+}
 await Promise.all([
     (async() => {
         if(!user.hasPermission("users.view")) {
             events.emit("createNotification", "You do not have user view permissions. User management has been disabled.");
         } else {
-            allUsers.value = await users.getAllUsers();
+            await Promise.all([(async() => {
+                allUsers.value = await useUsers().getAllUsers();
+            })(), (async() => {
+                await getServerAccess();
+            })()])
         }
     })(),
     (async() => {
@@ -63,11 +72,9 @@ async function changeMemory(newMem: string) {
     }
 }
 async function changeJVMArgs(newJVMArgs: string) {
-    if(newJVMArgs) {
-        server.value = (await sendRequest("setServerOption", {id: props.server, jvmArgs: newJVMArgs})).server;
-        servers.updateServer(server.value);
-        events.emit("createNotification", `Server JVM arguments changed!`)
-    }
+    server.value = (await sendRequest("setServerOption", {id: props.server, jvmArgs: newJVMArgs})).server;
+    servers.updateServer(server.value);
+    events.emit("createNotification", `Server JVM arguments changed!`)
 }
 async function changeVersion(newVersion: string) {
     if(newVersion) {
@@ -90,25 +97,24 @@ async function changePort(newPort: string) {
         servers.updateServer(server.value);
     }
 }
-async function removeUser(user: string) {
-    if(server?.value?.allowedUsers?.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
-    if(!await confirmModal("Remove access?", `Are you sure you want to remove ${user} from the server?`)) return;
-    let resp = await sendRequest("setServerOption", {
+async function removeUser(user: {id: number, username: string}) {
+    if(serverAccess.value.length == 1) return events.emit("createNotification", "You cannot remove the last user from a server. Please add another user first.");
+    if(!await confirmModal("Remove access?", `Are you sure you want to remove ${user.username} from the server?`)) return;
+    await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
             action: "remove",
-            user: user
+            user: user.id
         }
     });
-    servers.updateServer(resp.server);
-    server.value = resp.server;
+    await getServerAccess();
 }
 let showAddUserModal = ref(false);
 async function addUser() {
     showAddUserModal.value = true;
 }
 
-async function addUserByID(id: string) {
+async function addUserByID(id: number) {
     let resp = await sendRequest("setServerOption", {
         id: props.server,
         allowedUsers: {
@@ -117,11 +123,12 @@ async function addUserByID(id: string) {
         }
     })
     server.value = resp.server;
-    servers.updateServer(resp.server);
+    await getServerAccess();
 }
 
 let notAddedUsers = computed(() => {
-    return allUsers.value.filter(u => !server.value?.allowedUsers.some(a => a.user == u._id));
+    if(!allUsers.value) return [];
+    return allUsers.value.filter(u => !serverAccess.value.some(a => a.id == u.id));
 })
 
 async function deleteServer() {
@@ -138,32 +145,24 @@ async function deleteServer() {
         });
         await showInfoBox(`Server '${server.value?.name}' deleted.`, "For security reasons, you will need to delete the server folder manually.\nThe folder is located at " + server.value?.path + ".");
         router.push("/manage");
-        if(server.value) servers.removeServerFromCache(server.value);
+        if(server.value) servers.removeServerFromCache(server.value.id);
     }
 }
 
 async function changeAutoStart() {
     server.value = (await sendRequest("setServerOption", {
         id: props.server,
-        autoStart: !server.value?.autoStart
+        autoStart: !server.value?.autostart
     })).server;
-    events.emit("createNotification", `Server auto start ${server.value.autoStart ? "enabled" : "disabled"}`);
+    events.emit("createNotification", `Server auto start ${server.value.autostart ? "enabled" : "disabled"}`);
     servers.updateServer(server.value);
 }
 async function changeAutoRestart() {
     server.value = (await sendRequest("setServerOption", {
         id: props.server,
-        autoRestart: !server.value?.autoRestart
+        autoRestart: !server.value?.autorestart
     })).server;
-    events.emit("createNotification", `Server auto restart ${server.value.autoRestart ? "enabled" : "disabled"}`);
-    servers.updateServer(server.value);
-}
-async function changeUseJVMArgs() {
-    server.value = (await sendRequest("setServerOption", {
-        id: props.server,
-        useCustomJVMArgs: !server.value?.useCustomJVMArgs
-    })).server;
-    events.emit("createNotification", `Server custom JVM args ${server.value.useCustomJVMArgs ? "enabled" : "disabled"}`);
+    events.emit("createNotification", `Server auto restart ${server.value.autorestart ? "enabled" : "disabled"}`);
     servers.updateServer(server.value);
 }
 </script>
@@ -183,13 +182,13 @@ async function changeUseJVMArgs() {
         params: {
             server: props.server
         }
-    }" v-if="hasServerPermission(user.user, server, 'oldlogs.read')"><button>View logs</button></RouterLink>
+    }" v-if="user.hasServerPermission(server, 'oldlogs.read')"><button>View logs</button></RouterLink>
     <RouterLink :to="{
         name: 'serverFiles',
         params: {
             server: props.server
         }
-    }" v-if="hasServerPermission(user.user, server, 'serverfiles.read')">
+    }" v-if="user.hasServerPermission(server, 'serverfiles.read')">
         <button>Edit Files</button>
     </RouterLink>
     <RouterLink :to="{
@@ -197,7 +196,7 @@ async function changeUseJVMArgs() {
         params: {
             server: props.server
         }
-    }" v-if="hasServerPermission(user.user, server, 'plugins.download')">
+    }" v-if="user.hasServerPermission(server, 'plugins.download')">
         <button>Download {{server.software == "fabric" ? "mods" : "plugins"}}</button>
     </RouterLink>
     <RouterLink :to="{
@@ -213,7 +212,7 @@ async function changeUseJVMArgs() {
     <br />
     Server path: {{ server.path }} (Read only)
     <br />
-    Memory (MB): <TextInput :default="server.mem.toString()" @set="changeMemory" :force-disabled="!user.hasServerPermission(server, 'set.mem')" />
+    Memory (MB): <TextInput :default="server.memory.toString()" @set="changeMemory" :force-disabled="!user.hasServerPermission(server, 'set.mem')" />
     <br />
     <div class="mempadder"></div>
     JVM Arguments: <TextField :default="server.jvmArgs" @set="changeJVMArgs" :force-disabled="!user.hasServerPermission(server, 'set.jvmArgs')" />
@@ -224,23 +223,22 @@ async function changeUseJVMArgs() {
     Port: <TextInput :default="server.port.toString()" @set="changePort" :force-disabled="!user.hasServerPermission(server, 'set.port') || isRunning" /><span class="red-text" v-if="isRunning">Server is running!</span>
     <br />
     <div class="auto">
-    Auto start: {{ server.autoStart ? "Yes" : "No" }} <button @click="changeAutoStart" :disabled="!user.hasServerPermission(server, 'set.autostart')">Change</button>
+    Auto start: {{ server.autostart ? "Yes" : "No" }} <button @click="changeAutoStart" :disabled="!user.hasServerPermission(server, 'set.autostart')">Change</button>
     <br />
-    Auto restart: {{ server.autoRestart ? "Yes" : "No" }} <button @click="changeAutoRestart" :disabled="!user.hasServerPermission(server, 'set.autorestart')">Change</button>
-    <br />
-    Use Custom JVM args: {{ server.useCustomJVMArgs ? "Yes" : "No" }} <button @click="changeUseJVMArgs" :disabled="!user.hasServerPermission(server, 'set.usejvmargs')">Change</button></div></div>
+    Auto restart: {{ server.autorestart ? "Yes" : "No" }} <button @click="changeAutoRestart" :disabled="!user.hasServerPermission(server, 'set.autorestart')">Change</button>
+    </div></div>
     <div v-if="user.hasPermission('users.view')">
         <hr />
         <h3>Allowed users</h3>
         <button @click="addUser" v-if="user.hasServerPermission(server, 'set.allowedUsers.add')">Add user</button>
-        <button v-if="!server.allowedUsers.find(u => u.user == user.user?._id) && user.hasPermission('server.all.set.allowedUsers.add')" @click="user.user?._id ? addUserByID(user.user._id) : 0">Add yourself</button>
+        <button v-if="!serverAccess.find(u => u.id == user.user?.id) && user.hasPermission('server.all.set.allowedUsers.add')" @click="user.user?.id ? addUserByID(user.user.id) : 0">Add yourself</button>
         <br/>
-        <div v-for="_user in server.allowedUsers" :key="_user.user">
-            {{ allUsers.find(a => a._id == _user.user)?.username || "<Unknown>" }} [{{ _user.permissions.join(", ") }}] <button @click="removeUser(_user.user)" v-if="user.hasServerPermission(server, 'set.allowedUsers.remove')">Remove</button> <RouterLink :to="{
+        <div v-for="_user in serverAccess" :key="_user.id">
+            {{ _user.username }} [{{ _user.permissions.join(", ") }}] <button @click="removeUser(_user)" v-if="user.hasServerPermission(server, 'set.allowedUsers.remove')">Remove</button> <RouterLink :to="{
                 name: 'editServerAccess',
                 params: {
                     server: props.server,
-                    user: _user.user
+                    user: _user.id
                 }
             }"><button>Edit</button></RouterLink>
         </div>
@@ -250,7 +248,7 @@ async function changeUseJVMArgs() {
             <p>Choose all users you want to add</p>
             <br/>
             <div v-for="user of notAddedUsers" v-if="notAddedUsers.length != 0">
-                <button :disabled="server.allowedUsers.some(a => a.user == user._id)" @click="addUserByID(user._id)">{{ user.username }}</button> <i v-if="hasPermission(user, 'servers.all.view')">(Can view all servers)</i>
+                <button :disabled="serverAccess.some(a => a.id == user.id)" @click="addUserByID(user.id)">{{ user.username }}</button> <i v-if="hasPermission(user, 'servers.all.view')">(Can view all servers)</i>
             </div>
             <div v-else>
                 There are no users without access

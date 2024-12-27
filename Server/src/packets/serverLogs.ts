@@ -1,6 +1,5 @@
 import { OurClient, Packet, ServerPacketResponse } from "../index.js";
-import { servers } from "../db.js";
-import { hasServerPermission } from "../../../Share/Permission.js";
+import { getServerByID } from "../db.js";
 import path from "node:path";
 import fs from "node:fs/promises";
 import zlib from "node:zlib";
@@ -8,13 +7,14 @@ import logger, { LogLevel } from "../logger.js";
 import { exists } from "../util/exists.js";
 import { Request } from "../../../Share/Requests.js";
 import {promisify} from "node:util";
+import { hasServerPermission } from "../util/permission.js";
 let ourGunzip = promisify(zlib.gunzip);
 export default class ServerLogs extends Packet {
     name: Request = "serverLogs";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"serverLogs"> {
-        let server = await servers.findById(data.id);
-        if (!server || !hasServerPermission(client.data.auth.user, server.toJSON(), "oldlogs.read")) return "No perm";
+        let server = getServerByID.get(data.id);
+        if (!server || !hasServerPermission(client.data.auth.user, server, "oldlogs.read")) return "No perm";
         if(!server.path) return; // ?!?!?!
         let logPath = path.join(server.path, "logs");
         if(data.list) {

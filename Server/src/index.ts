@@ -9,8 +9,8 @@ import url from "node:url";
 import { afterSet, getSetting, isValidKey, setSetting } from './config.js';
 import { once } from "node:events";
 import serverManager from './serverManager.js';
-import { makeToken, servers, users } from './db.js';
-import { Permission } from '../../Share/Permission.js';
+import db, { getServerByID, getServerByName, getUserByToken } from './db.js';
+import { Permission, PermissionString } from '../../Share/Permission.js';
 import { Request, RequestResponses } from '../../Share/Requests.js';
 import hasPermission from './util/permission.js';
 import logger, { LogLevel } from './logger.js';
@@ -18,6 +18,8 @@ import {buildInfo} from "../../Share/BuildInfo.js";
 import pluginHandler, {mixinHandler} from "./plugin.js";
 import { exists } from "./util/exists.js";
 import { OurClient, OurWebsocketClient, clients } from "./clients.js";
+import { makeToken } from "./util/token.js";
+import { Server } from "../../Share/Server.js";
 
 export const isProd = process.env.NODE_ENV == "production";
 
@@ -38,7 +40,7 @@ app.use(async (req, res, next) => {
     if(await mixinHandler.handle("httpRequest", {req, res})) return;
     next();
 });
-app.post("/api/request/:name", async (req, res, next) => {
+app.post("/api/request/:name", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     if(lockdownMode) return;
     if(!packetHandler.packets[req.params.name]) return next();
     if(req.headers["content-type"] != "application/json") return res.status(400).json({
@@ -48,7 +50,7 @@ app.post("/api/request/:name", async (req, res, next) => {
     if(!token) return res.status(400).json({
         error: "Missing token"
     });
-    let user = await users.findOne({token});
+    let user: User = await getUserByToken.get() as User;
     if(!user) return res.status(401).json({
         error: "Invalid token"
     });
@@ -71,7 +73,7 @@ app.post("/api/request/:name", async (req, res, next) => {
             auth: {
                 authenticated: true,
                 token,
-                user: user.toJSON()
+                user: user
             },
             clientID: genClientID()
         },
@@ -187,7 +189,7 @@ class PacketHandler {
             });
             return;
         }
-        if(lockdownMode && lockDownExcludedUser != client.data.auth.user?._id && packet.name != "auth") return;
+        if(lockdownMode && lockDownExcludedUser != client.data.auth.user?.id && packet.name != "auth") return;
         try {
             let packetResponse = await packet.handle(client, data.d);
             if(typeof packetResponse == "string") {
@@ -209,7 +211,7 @@ class PacketHandler {
                 e: isProd ? "Internal server error. Read the server logs for more details." : `${err}`,
                 n: data.n
             });
-            logger.log(`Packet errored. User is ${client.data.auth?.user?.username} (${client.data.auth?.user?._id}) ${data.n} ${err}`, "error", LogLevel.ERROR);
+            logger.log(`Packet errored. User is ${client.data.auth?.user?.username} (${client.data.auth?.user?.id}) ${data.n} ${err}`, "error", LogLevel.ERROR);
         }
     }
 }
@@ -233,7 +235,7 @@ export let packetHandler = new PacketHandler();
 let logging = false;
 let loggingIgnore: string[] = [];
 export let lockdownMode = false;
-export let lockDownExcludedUser = "";
+export let lockDownExcludedUser = -1;
 let clientID = 0;
 function genClientID() {
     return clientID++;
@@ -368,8 +370,30 @@ async function findLogPath() {
     }
     return filePath + ".log";
 }
+
+function createAdminUserIfNeeded() {
+    const hasFullPermission = db.prepare(`
+    SELECT 1 
+    FROM users 
+    WHERE EXISTS (
+    SELECT 1 
+        FROM json_each(users.permissions) 
+        WHERE json_each.value = 'full'
+    )
+    LIMIT 1
+    `).get();
+
+    if (hasFullPermission) return;
+    const newUserToken = makeToken();
+    db.prepare("INSERT INTO users (username, permissions, token) VALUES (?, ?, ?)").run("gen-admin-" + Date.now(), '["full"]', newUserToken);
+    logger.log("Created admin user with token " + newUserToken, "info", LogLevel.INFO);
+}
+
 packetHandler.init().then(async () => {
     logger.setupWriteStream(await findLogPath());
+    if(process.env.IS_DOCKER == "1" && await getSetting("serverPath") != "/servers/") {
+        await setSetting("serverPath", "/servers/");
+    }
     afterSet("logging_DisabledIDs", newVal => {
         logger.ignoredLogs = newVal;
     });
@@ -385,6 +409,10 @@ packetHandler.init().then(async () => {
         if(portEnv) {
             port = parseInt(portEnv);
             break portTry;
+        }
+        if(process.env.IS_DOCKER == "1") {
+            console.log("PORT env var has to be set in docker!");
+            process.exit(1);
         }
         console.log("Port not set. Please enter a port to listen on and press enter: ");
         while (!port) {
@@ -403,25 +431,25 @@ packetHandler.init().then(async () => {
         await pluginHandler.init();
         console.log("Type 'help' for help");
         serverManager.autoStartServers();
+        createAdminUserIfNeeded();
     });
     process.stdin.on("data", async (data) => {
         let dataStr = data.toString().trim();
         switch (dataStr) {
             case "users-table":
-                var userlist = await users.getAll();
-                console.table(userlist.map(u => u.toJSON()).map(u => ({
-                    _id: u._id.toString(),
-                    name: u.username,
-                    permissions: u.permissions
+                var userlist = db.prepare("SELECT id, username FROM users").all() as User[];
+                console.table(userlist.map(u => ({
+                    _id: u.id,
+                    name: u.username
                 })));
                 break;
             case "users":
             case "users-list":
-                var userlist = await users.getAll();
+                var userlist = db.prepare("SELECT * FROM users").all() as User[];
                 console.log("---------");
                 for (let user of userlist.values()) {
                     console.log("Username: " + user.username);
-                    console.log("ID: " + user._id);
+                    console.log("ID: " + user.id);
                     console.log("Token: " + user.token);
                     console.log("Permissions: " + user.permissions);
                     console.log("Created at: " + user.createdAt);
@@ -429,27 +457,24 @@ packetHandler.init().then(async () => {
                 }
                 break;
             case "gen-admin-user":
-                let adminUser = await users.create({
-                    permissions: ["full"],
-                    username: "gen-admin-" + Date.now(),
-                });
-                console.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token);
+                const newUserToken = makeToken();
+                db.prepare("INSERT INTO users (username, permissions, token) VALUES (?, ?, ?)").run("gen-admin-" + Date.now(), '["full"]', newUserToken);
+                console.log("Created admin user with token " + newUserToken);
                 break;
             case "servers":
                 console.log("---------");
-                for (let server of await (await servers.getAll()).values()) {
-                    console.log("Server ID: " + server._id);
+                const servers: Server[] = db.prepare("SELECT * FROM servers").all() as Server[];
+                for (let server of servers) {
+                    console.log("Server ID: " + server.id);
                     console.log("Server name: " + server.name);
                     console.log("Server port: " + server.port);
                     console.log("Server version: " + server.version);
-                    console.log("Server status: " + (await serverManager.servers[server._id.toString()]?.childProcess ? "Running" : "Stopped"));
+                    console.log("Server status: " + (serverManager.servers[server.id.toString()]?.childProcess ? "Running" : "Stopped"));
                     console.log("Server software" + server.software);
                     console.log("Server path: " + server.path);
-                    console.log("Server autostart: " + server.autoStart);
-                    console.log("Allowed users: " + (await Promise.all(server.allowedUsers.map(async u => {
-                        let userdata = await users.findById(u.user);
-                        return userdata?.username + " (" + u.permissions.join(", ") + ")";
-                    }))).join(", "));
+                    console.log("Server autostart: " + server.autostart);
+                    const allowedUsers = db.prepare(`SELECT users.id as uid, users.username as name, user_server_access.permissions FROM user_server_access INNER JOIN users ON user_server_access.user_id = users.id WHERE user_server_access.server_id = ?`).all(server.id) as {name: string, uid: number, permissions: string}[];
+                    console.log("Allowed users: " + (allowedUsers.map(allowedUser => `${allowedUser.name} (${allowedUser.uid}): ${JSON.parse(allowedUser.permissions).join(", ")}`)).join(", "));
                     console.log("---------");
                 }
                 break;
@@ -467,14 +492,6 @@ packetHandler.init().then(async () => {
                 if(lockdownMode) clients.forEach(c => c.close())
                 logger.log(`Lockdown mode is now ${lockdownMode ? "enabled. Use the same command to re-enable. You may use delete-user to delete a user, gen-admin-user to make a new one and 'lockdown-exclude <user>' to exclude a user." : "disabled."}`, "info", LogLevel.WARNING);
                 break;
-            case "lockdown-auto":
-                lockdownMode = true;
-                clients.forEach(c => c.close())
-                let lockdownUser = await users.create({username: "lockdown-" + Date.now(), setupPending: false, permissions: ["full"]});
-                await lockdownUser.save();
-                lockDownExcludedUser = lockdownUser._id.toString();
-                logger.log(`Lockdown mode has been enabled. Use this token to log in: "${lockdownUser.token}". Use a private/incognito tab if you get stuck on logging in. Use 'lockdown' to disable.`, "info", LogLevel.INFO, false);
-                break;
             case "help":
                 console.log("users: List all users");
                 console.log("gen-admin-user: Generate a admin user");
@@ -483,7 +500,6 @@ packetHandler.init().then(async () => {
                 console.log("set-opt <option> <value>: Sets a setting");
                 console.log("start <server>: Start a server");
                 console.log("stop <server>: Stop a server");
-                console.log("lockdown-auto: Enable lockdown mode and create a excluded user (recommended)");
                 console.log("lockdown: Enter lockdown mode. All logins will be disabled. Nothing will work. Use in case of a hacked account, etc");
                 console.log("lockdown-exclude <user id>: Exclude a user from lockdown.");
                 console.log("delete-user <user id>: Remove a user.");
@@ -498,49 +514,26 @@ packetHandler.init().then(async () => {
             await logger.log(`${option} is being changed to ${value} in the console`, "settings.change", LogLevel.INFO);
             await setSetting(option, value);
         } else if(dataStr.startsWith("start ")) {
-            let server = await servers.findOne({name: dataStr.split(" ")[1]});
-            try {
-                if(!server) server = await servers.findById(dataStr.split(" ")[1]);
-            } catch {}
+            let server = getServerByName.get(dataStr.split(" ")[1]);
+            if(!server) server = getServerByID.get(dataStr.split(" ")[1]);
             if(!server) return logger.log("Server not found. Searched both by name and ID. Use 'servers' for a server list", "error", LogLevel.ERROR, false);
-            serverManager.startServer(server?.toJSON());
+            serverManager.startServer(server);
         } else if(dataStr.startsWith("stop ")) {
-            let server = await servers.findOne({name: dataStr.split(" ")[1]});
-            try {
-                if(!server) server = await servers.findById(dataStr.split(" ")[1]);
-            } catch {}
+            let server = getServerByName.get(dataStr.split(" ")[1]);
+            if(!server) server = getServerByID.get(dataStr.split(" ")[1]);
             if(!server) return logger.log("Server not found. Searched both by name and ID. Use 'servers' for a server list", "error", LogLevel.ERROR, false);
-            serverManager.stopServer(server?.toJSON());
+            serverManager.stopServer(server);
         } else if(dataStr.startsWith("lockdown-exclude ")) {
-            lockDownExcludedUser = dataStr.split(" ")[1];
+            lockDownExcludedUser = parseInt(dataStr.split(" ")[1]);
             logger.log(`${lockDownExcludedUser} is now excluded.`, "info", LogLevel.WARNING);
         } else if(dataStr.startsWith("delete-user ")) {
             let deleteUserID = dataStr.split(" ")[1];
-            let deleteUser = await users.findById(deleteUserID);
-            if(!deleteUser) return logger.log(`${deleteUserID} cant be found.`, "error", LogLevel.ERROR);
-            await deleteUser?.delete();
-            logger.log(`${deleteUser?.username} is now removed.`, "info");
+            const deleteResult = db.prepare("DELETE FROM users WHERE id=?").run(deleteUserID);
+            if(deleteResult.changes == 0) return logger.log(`${deleteUserID} cant be found.`, "error", LogLevel.ERROR);
+            logger.log(`User has been removed.`, "info");
         }
     });
-    let adminUser: User | undefined;
-    if(users.isJSONCollection()) {
-        adminUser = (await users.getAll()).find(a => a.permissions.includes("full"))?.toJSON();
-    } else if(users.isMongoDBDatabaseProvider()) {
-        // @ts-ignore
-        adminUser = await users._getModel.findOne({
-            // @ts-ignore
-            permissions: "full"
-        });
-    }
-    if(!adminUser) {
-        await logger.log("Unable to find admin user, creating one...", "start", LogLevel.DEBUG);
-        let adminUser = await users.create({
-            permissions: ["full"],
-            username: "gen-admin-" + Date.now(),
-        });
-        adminUser.save();
-        await logger.log("Created admin user with ID " + adminUser._id + " and token " + adminUser.token, "start", LogLevel.INFO, false);
-    }
+    
 });
 if(isProd) {
     process.on("uncaughtException", errHandler);

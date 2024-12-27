@@ -4,7 +4,7 @@ import { useServers } from '../stores/servers';
 import { ServerStatus } from '@share/Server';
 let props = defineProps({
     server: {
-        type: String,
+        type: Number,
         required: true
     }
 });

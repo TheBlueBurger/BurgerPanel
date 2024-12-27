@@ -42,12 +42,13 @@ export type Permission = PermissionString | PermissionString[] | {
 export function hasPermission(user: User | undefined | null, permission: Permission): boolean {
     if(!user) return false;
     if(typeof permission == "string" && !isValidPermissionString(permission)) throw new Error("Invalid permission string: " + permission);
-    if(user.permissions.includes("full")) return true;
+    const userPermissions = JSON.parse(user.permissions);
+    if(userPermissions.includes("full")) return true;
     if(Array.isArray(permission) && !permission.some(p => typeof p == "string")) {
         // Check if one of the permissions match
         return permission.some(p => hasPermission(user, p));
     }
-    if(typeof permission == "string" && user.permissions.includes(permission)) return true;
+    if(typeof permission == "string" && userPermissions.includes(permission)) return true;
     // It has to be the object
     if(typeof permission == "object" && !Array.isArray(permission) && Array.isArray(permission.all)) { // Just in case
         if(permission.all.length == 0) return false;
@@ -61,14 +62,5 @@ export function isValidPermissionString(permissionString: string | PermissionStr
 }
 
 export function hasServerPermission(user: User | undefined | null, server: Server, permission: ServerPermissions) {
-    if(!user) return false;
-    if(!_ServerPermissions.includes(permission)) throw new Error("Server permission " + permission + " doesnt exist.");
-    let userEntry = server.allowedUsers.find(u => u.user == user._id.toString()); // toString just in case
-    if(userEntry && (userEntry.permissions.includes(permission) || userEntry.permissions.includes("full"))) return true;
-    return hasPermission(user, `server.all.${permission}`);
-}
-export function userHasAccessToServer(user: User | undefined, server: Server) {
-    if (!user) return false;
-    if(typeof user._id != "string") user._id = (user._id as string).toString(); // mongodb stupidness
-    return server.allowedUsers.some(au => au.user == user._id) || hasPermission(user, "servers.all.view");
+    throw new Error("hasServerPermission should not be ran from share");
 }

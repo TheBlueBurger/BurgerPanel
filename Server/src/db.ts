@@ -1,239 +1,45 @@
-import mongoose from 'mongoose';
-import nodeCrypto from 'node:crypto';
-import url from "node:url";
-import fs from "node:fs/promises";
-import path from "node:path";
-import { exists } from './util/exists.js';
-import DatabaseProvider, { DatabaseSchema, DatabaseType } from './db/databaseProvider.js';
-import JSONDatabaseProvider from './db/json.js';
-import { User } from '../../Share/User.js';
-import { Server } from '../../Share/Server.js';
-import MongoDatabaseProvider from './db/mongo.js';
-// use mongoose unless u want to pain urself
-mongoose.set("strictQuery", false);
-if(process.env.BURGERPANEL_MONGOOSE_DEBUG) mongoose.set("debug", true)
-let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
-let mongoURL = process.env.BURGERPANEL_MONGODB;
-if(!mongoURL) mongoURL = process.env.DB;
-// If not found it will search up to 5 folders for mongodb_url.txt
-if(!mongoURL) {
-    let searchingPath = __dirname;
-    for(let i = 0; i < 5; i++) {
-        let pathToSearch = path.join(searchingPath, "mongodb_url.txt")
-        if(await exists(pathToSearch)) {
-            mongoURL = (await fs.readFile(pathToSearch)).toString().trim(); // set the mongodb url to the file contents and trim it
-            break;
-        }
-        searchingPath = path.join(searchingPath, "..");
-    }
+import Sqlite from "better-sqlite3";
+import { migrations } from "./migrations.js";
+import fs from "node:fs";
+import logger, { LogLevel } from "./logger.js";
+import type { User } from "../../Share/User";
+import { Server } from "../../Share/Server";
+import { exists } from "./util/exists.js";
+if(process.env.IS_DOCKER == "1" && !await exists("/db/")) {
+    logger.log("/db/ isnt mounted in docker!", "error", LogLevel.ERROR);
+    process.exit(1);
 }
-if(!mongoURL) {
-    throw new Error("Unable to find mongodb url, searched for env vars BURGERPANEL_MONGODB and DB, and file mongodb_url.txt for 5 folders.\n" + 
-    "If you don't want to set up a mongo server you can set it to `json:path` to store it in JSON files (unrecommended for big servers)");
+const dbPath = process.env.IS_DOCKER == "1" ? "/db/burgerpanel.sqlite3" : "burgerpanel.sqlite3";
+const db = new Sqlite(dbPath, {
+    verbose: (data) => {
+        /*if(process.env.NODE_ENV != "production")*/ logger.log("SQL: " + data, "debug", LogLevel.DEBUG);
+    },
+    nativeBinding: process.env.IS_DOCKER == "1" ? "/panel/better_sqlite3.node" : undefined
+});
+db.pragma('journal_mode = WAL'); // speeeeed
+db.exec(`CREATE TABLE IF NOT EXISTS migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, version TEXT UNIQUE NOT NULL, applied_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+// Migrate!!!
+const unappliedMigrations: string[] = [];
+const checkAppliedMigration = db.prepare("SELECT applied_at FROM migrations WHERE version = ?");
+const insertMigration = db.prepare("INSERT INTO migrations (version) VALUES (?)");
+Object.keys(migrations).forEach(migration => {
+    if(!checkAppliedMigration.get(migration)) unappliedMigrations.push(migration);
+});
+if(unappliedMigrations.length != 0) {
+    logger.log(`Missing migrations: ${JSON.stringify(unappliedMigrations)}. Backing up database...`, "info");
+    await db.backup(dbPath + ".bak-" + Date.now());
+    logger.log("Backup complete", "info");
+    unappliedMigrations.forEach(migration => {
+        migrations[migration].forEach(migrationData => {
+            logger.log(`Applying migration ${migration}`, "debug", LogLevel.DEBUG);
+            db.exec(migrationData);
+        });
+        insertMigration.run(migration);
+    });
 }
-let databaseManager = new class DatabaseManager {
-    databaseProvider: DatabaseProvider;
-    constructor() {
-        if(mongoURL?.startsWith("json:")) this.databaseProvider = new JSONDatabaseProvider(mongoURL.replace("json:", ""));
-        else this.databaseProvider = new MongoDatabaseProvider(mongoURL as string);
-    }
-    async _init() {
-        await this.databaseProvider.init();
-    }
-    collection<T extends DatabaseType>(name: string, schema: DatabaseSchema<T>, mongooseSchema: mongoose.Schema) {
-        return this.databaseProvider.getCollection<T>(name, schema, mongooseSchema);
-    }
-}
-await databaseManager._init();
-
-export let makeToken = () => nodeCrypto.randomBytes(64).toString("base64url");
-export let users = databaseManager.collection<User>("User", {
-    _id: {type: "String"},
-    username: {type: "String"},
-    createdAt: {type: "Date", default: Date.now},
-    permissions: [{type: "String", default: []}],
-    setupPending: {type: "boolean", default: true},
-    token: {type: "String", default: makeToken},
-    devMode: {type: "boolean", default: false},
-    password: {type: "String"},
-    pins: [{type: "String", default: []}]
-}, new mongoose.Schema({
-    username: {
-        type: String,
-        unique: true,
-        maxlength: 24,
-        required: true
-    },
-    createdAt: { type: Date, default: Date.now },
-    token: {
-        type: String,
-        default: makeToken
-    },
-    permissions: {
-        type: [String],
-        default: []
-    },
-    password: {
-        type: String
-    },
-    setupPending: {
-        type: Boolean,
-        default: true
-    },
-    devMode: {
-        type: Boolean,
-        required: false,
-        default: false
-    },
-    pins: [{
-        type: String,
-        max: 3,
-        default: [],
-        validate: [(v: any) => v.length >= 10, "Too many pinned servers"]
-    }]
-}));
-
-export let servers = databaseManager.collection<Server>("Server", {
-    name: {
-        type: "String",
-        unique: true,
-        maxlength: 16,
-        required: true
-    },
-    path: {
-        type: "String",
-        unique: true,
-        maxlength: 255,
-        required: true
-    },
-    mem: {
-        type: "number",
-        min: 0,
-        max: 99999,
-        required: true
-    },
-    jvmArgs: {
-        type: "String",
-        maxlength: 99999,
-        required: false
-    },
-    allowedUsers: [{
-        user: {type: "String"},
-        permissions: [{type: "String"}],
-    }],
-    version: {
-        type: "String",
-        maxlength: 16,
-        required: true
-    },
-    software: {
-        type: "String",
-        maxlength: 7,
-        required: true
-    },
-    port: {
-        min: 1,
-        max: 65535,
-        type: "number",
-        unique: true,
-        required: true
-    },
-    autoStart: {
-        type: "boolean",
-        default: false
-    },
-    autoRestart: {
-        type: "boolean",
-        default: false
-    },
-    useCustomJVMArgs: {
-        type: "boolean",
-        default: false
-    },
-    _id: {
-        type: "String"
-    }
-}, new mongoose.Schema({
-    name: {
-        type: String,
-        unique: true,
-        maxlength: 16,
-        required: true
-    },
-    path: {
-        type: String,
-        unique: true,
-        maxlength: 255,
-        required: true
-    },
-    mem: {
-        type: Number,
-        min: 0,
-        max: 99999,
-        required: true
-    },
-    allowedUsers: [{
-        user: String,
-        permissions: [String],
-        /*roles: [mongoose.Types.ObjectId]*/
-    }],
-    version: {
-        type: String,
-        maxlength: 16,
-        required: true
-    },
-    software: {
-        type: String,
-        maxlength: 7,
-        required: true
-    },
-    port: {
-        min: 1,
-        max: 65535,
-        type: Number,
-        unique: true,
-        required: true
-    },
-    autoStart: {
-        type: Boolean,
-        default: false
-    },
-    autoRestart: {
-        type: Boolean,
-        default: false
-    },
-    jvmArgs: {
-        type: String,
-        default: "",
-        maxlength: 2000
-    },
-    useCustomJVMArgs: {
-        type: Boolean,
-        default: false
-    }
-}));
-
-export let settings = databaseManager.collection<{_id: string, key: string, value: string}>("Setting", {
-    key: {
-        type: "String",
-        unique: true,
-        maxlength: 255,
-    },
-    value: {
-        type: "String",
-        maxlength: 1000,
-    },
-    _id: {
-        type: "String"
-    }
-}, new mongoose.Schema({
-    key: {
-        type: String,
-        unique: true,
-        maxlength: 255,
-    },
-    value: {
-        type: String,
-        maxlength: 1000,
-    },
-}));
+export const getUserByToken: Sqlite.Statement<string[], User> = db.prepare(`SELECT * FROM users WHERE token=? LIMIT 1`);
+export const getUserByID: Sqlite.Statement<(number | string)[], User> = db.prepare(`SELECT * FROM users WHERE id=? LIMIT 1`);
+export const getServerByID: Sqlite.Statement<(number | string | bigint)[], Server> = db.prepare(`SELECT * FROM servers WHERE id=? LIMIT 1`);
+export const getServerByName: Sqlite.Statement<string[], Server> = db.prepare(`SELECT * FROM servers WHERE name=? LIMIT 1`);
+export const getServerPermissions_UID_SID = db.prepare<any[], {permissions:string}>("SELECT permissions FROM user_server_access WHERE user_id=? AND server_id=?");
+export default db;

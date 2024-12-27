@@ -1,21 +1,21 @@
 import { OurClient, Packet, ServerPacketResponse } from "../index.js";
-import { servers } from "../db.js";
-import serverManager, { userHasAccessToServer } from "../serverManager.js";
-import { hasPermission, hasServerPermission } from "../../../Share/Permission.js";
+import serverManager from "../serverManager.js";
 import { Request } from "../../../Share/Requests.js";
+import { hasServerPermission, userHasAccessToServer } from "../util/permission.js";
+import { getServerByID } from "../db.js";
 
 export default class GetServer extends Packet {
     name: Request = "getServer";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"getServer"> {
         if (!data.id) return;
-        let server = await servers.findById(data.id);
-        if (!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) {
+        let server = getServerByID.get(data.id);
+        if (!server || !userHasAccessToServer(client.data.auth.user, server)) {
             return "Server not found";
         }
-        let status = hasServerPermission(client.data.auth.user, server.toJSON(), "status") && serverManager.getStatus(server.toJSON());
+        let status = hasServerPermission(client.data.auth.user, server, "status") && serverManager.getStatus(server);
         return {
-            server: server.toJSON(),
+            server: server,
             status: status || undefined
         }
     }

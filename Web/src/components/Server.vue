@@ -13,10 +13,10 @@ import { useUser } from '../stores/user';
     let user = useUser();
     let servers = useServers();
     async function startServer(server: ServerType) {
-        sendRequest("startServer", {id: server._id});
+        sendRequest("startServer", {id: server.id});
     }
     async function stopServer(server: ServerType) {{
-        if(await confirmModal(`Stop server`, `Are you sure you want to stop ${server.name}?`, true, true, true)) sendRequest("stopServer", {id: server._id});
+        if(await confirmModal(`Stop server`, `Are you sure you want to stop ${server.name}?`, true, true, true)) sendRequest("stopServer", {id: server.id});
     }}
 </script>
 
@@ -25,34 +25,34 @@ import { useUser } from '../stores/user';
             <RouterLink :to="{
                 name: 'manageServer',
                 params: {
-                    server: server._id
+                    server: server.id
                 }
             }">
                 <div class="server-content">
                     <div class="servername">{{server.name}}</div>
-                    <div class="status"><ServerStatus :server="server._id" /></div>
+                    <div class="status"><ServerStatus :server="server.id" /></div>
                     {{ server.software.charAt(0).toUpperCase() + server.software.slice(1) }} {{ server.version }}<br/>
-                    Port {{server.port}} ({{ server.mem }}MB)<br/>
-                    <button :disabled="(['running', 'stopping', 'unknown'].includes(servers.statuses[server._id].status))" class="green" @click.prevent="startServer(server)">Start</button>
-                    <button :disabled="(['stopped', 'stopping', 'unknown'].includes(servers.statuses[server._id].status))" class="red" @click.prevent="stopServer(server)">Stop</button>
+                    Port {{server.port}} ({{ server.memory }}MB)<br/>
+                    <button :disabled="(['running', 'stopping', 'unknown'].includes(servers.statuses[server.id].status))" class="green" @click.prevent="startServer(server)">Start</button>
+                    <button :disabled="(['stopped', 'stopping', 'unknown'].includes(servers.statuses[server.id].status))" class="red" @click.prevent="stopServer(server)">Stop</button>
                     <RouterLink :to="{
                         name: 'editServer',
                         params: {
-                            server: server._id
+                            server: server.id
                         }
                     }"><button>Edit</button></RouterLink><br/>
                     <RouterLink :to="{
                         name: 'serverFiles',
                         params: {
-                            server: server._id
+                            server: server.id
                         }
-                    }" v-if="hasServerPermission(user.user, server, 'serverfiles.read')"><button>Files</button></RouterLink>
+                    }" v-if="user.hasServerPermission(server, 'serverfiles.read')"><button>Files</button></RouterLink>
                                         <RouterLink :to="{
                         name: 'viewLogs',
                         params: {
-                            server: server._id
+                            server: server.id
                         }
-                    }" v-if="hasServerPermission(user.user, server, 'serverfiles.read')"><button>Logs</button></RouterLink>
+                    }" v-if="user.hasServerPermission(server, 'serverfiles.read')"><button>Logs</button></RouterLink>
                 </div>
             </RouterLink>
             </div>

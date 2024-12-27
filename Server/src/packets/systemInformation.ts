@@ -6,7 +6,7 @@ import hasPermission from "../util/permission.js";
 import { User } from "../../../Share/User.js";
 import { Request } from "../../../Share/Requests.js";
 import os from "node:os";
-import { servers } from "../db.js";
+import db from "../db.js";
 
 export default class SystemInformation extends Packet {
     name: Request = "systemInformation";
@@ -29,8 +29,8 @@ export default class SystemInformation extends Packet {
     }
     private async getGeneralInformation(): Promise<GeneralInformation> {
         return {
-            serverAmount: await servers.countDocuments({}),
-            clients: clients.map(c => ({username: c.data.auth?.user?.username,_id: c.data.auth?.user?._id}))
+            serverAmount: db.prepare<unknown[], {count: number}>("SELECT COUNT(*) AS count FROM servers").get()!.count,
+            clients: clients.map(c => ({username: c.data.auth?.user?.username,id: c.data.auth?.user?.id}))
         }
     }
     private getPerformance(): ServerPerformance {

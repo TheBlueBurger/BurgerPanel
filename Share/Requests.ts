@@ -4,6 +4,7 @@ import { IntegratorServerInformation } from "./Integrator";
 import { Server, ServerStatus, ServerStatuses } from "./Server";
 import { ModrinthPluginResult, Plugin, Version } from "./Plugin";
 import { User } from "./User";
+import { ServerPermissions } from "./Permission";
 
 export type RequestResponses = {
     attachToServer: {
@@ -13,8 +14,9 @@ export type RequestResponses = {
     },
     auth: {
         user: User,
-        servers?: Server[],
-        statuses?: ServerStatuses
+        servers?: (Server & {permissions: string})[],
+        statuses?: ServerStatuses,
+        pins?: {name: string, id: number}[]
     },
     logout: undefined,
     createServer: {
@@ -28,7 +30,8 @@ export type RequestResponses = {
     detachFromServer: undefined,
     editUser: {
         user: User,
-        token?: string
+        token?: string,
+        pinStatus?: boolean
     },
     getAllServers: {
         servers: Server[],
@@ -132,6 +135,13 @@ export type RequestResponses = {
     } | {
         type: "isInstalled",
         installed: boolean
+    },
+    getServerAccess: {
+        users: {
+            username: string,
+            id: number,
+            permissions: ServerPermissions[]
+        }[]
     }
 }
 

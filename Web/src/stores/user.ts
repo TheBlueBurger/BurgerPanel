@@ -23,7 +23,11 @@ export const useUser = defineStore("user", () => {
         return _hasPermission(user.value, permission);
     }
     function hasServerPermission(server: Server, permission: ServerPermissions) {
-        return _hasServerPermission(user.value, server, permission);
+        if(hasPermission(`server.all.${permission}`)) return true;
+        const serverPerms = useServers().serverPerms.get(server.id);
+        if(!serverPerms) return false;
+        if(serverPerms.includes("full")) return true;
+        return serverPerms.includes(permission);
     }
     async function autoLogin() {
         let testToken = localStorage.getItem("token")
@@ -56,11 +60,15 @@ export const useUser = defineStore("user", () => {
         localStorage.setItem("token", packet.user.token);
         if(packet.servers) {
             let servers = useServers();
-            servers.addServers(packet.servers);
+            servers.addServersWithPerms(packet.servers);
         }
         if(packet.statuses) {
             let servers = useServers();
             servers.addStatuses(packet.statuses);
+        }
+        if(packet.pins) {
+            let servers = useServers();
+            servers.setPins(packet.pins);
         }
         user.value = packet.user;
     }

@@ -1,4 +1,3 @@
-const isProd = process.env.NODE_ENV == "production";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import net from "node:net";
@@ -14,7 +13,7 @@ if(process.env.NODE_ENV == "production") integratorJarPath = __dirname + "/Integ
 else integratorJarPath = __dirname + "/../../../../Integrator/build/libs/BurgerPanelIntegrator-1.0-SNAPSHOT.jar";
 interface OurIntegratorClient extends net.Socket {
     burgerpanelData: {
-        server?: string
+        server?: number
     }
 }
 export default new class ServerIntegrator {
@@ -53,7 +52,7 @@ export default new class ServerIntegrator {
         }
         let currentIntegratorFilename = files.find(f => f.startsWith("BurgerPanelIntegrator-") && f.endsWith(".jar"));
         if(!currentIntegratorFilename) return;
-        if(currentIntegratorFilename == `BurgerPanelIntegrator-${buildInfo.gitHash}.jar`) return;
+        if(currentIntegratorFilename == `BurgerPanelIntegrator-${buildInfo.gitHash}.jar` && process.env.NODE_ENV == "production") return;
         logger.log(`Autoupdating BurgerPanel integrator on server ${server.name}`, "server.integrator")
         await fs.unlink(server.path + "/plugins/" + currentIntegratorFilename);
         await fs.copyFile(integratorJarPath, server.path + "/plugins/" + `BurgerPanelIntegrator-${buildInfo.gitHash}.jar`);
@@ -93,16 +92,9 @@ export default new class ServerIntegrator {
                 switch(json.type) {
                     case "setID":
                         if(!this.servers[json.id]) return;
-                        c.burgerpanelData.server = json.id;
+                        c.burgerpanelData.server = parseInt(json.id);
                         this.servers[json.id].client = c;
                         logger.log(`Server ${json.id} connected`, "server.integrator");
-                        c.write(JSON.stringify({
-                            id: "among",
-                            packet: "status",
-                            data: {
-
-                            }
-                        }));
                         break;
                 }
             });
@@ -111,26 +103,26 @@ export default new class ServerIntegrator {
         server.listen(this.path);
     }
     prepareServer(server: Server) {
-        this.servers[server._id] = {
+        this.servers[server.id] = {
             server,
             cachedResponses: {}
         };
-        this.requestCallbacks[server._id] = {};
+        this.requestCallbacks[server.id] = {};
     }
     findUnusedID(server: Server): string {
         for(let i = 0; i < 100; i++) {
             let str = nodeCrypto.randomBytes(30).toString("base64url");
-            if(this.requestCallbacks[server._id][str]) continue;
+            if(this.requestCallbacks[server.id][str]) continue;
             return str;
         }
         throw new Error("somehow didnt find a id in 100 tries... MILLIONS TO ONE");
     }
     request(server: Server, packet: string, data: any = {}, useCache: boolean = false): Promise<any> {
         if(!this.isReadyForRequests(server)) throw new Error("Server isn't ready for requests!");
-        const client = this.servers[server._id].client;
+        const client = this.servers[server.id].client;
         if(!client) throw new Error("bad");
         if(useCache) {
-            const cachedResponses = this.servers[server._id]?.cachedResponses;
+            const cachedResponses = this.servers[server.id]?.cachedResponses;
             if(cachedResponses && cachedResponses[packet] && Date.now() < cachedResponses[packet].expiresAt) return Promise.resolve(cachedResponses[packet].data);
         }
         let id = this.findUnusedID(server);
@@ -142,13 +134,13 @@ export default new class ServerIntegrator {
         client.write(toSend);
         return new Promise((res, rej) => {
             let timeout = setTimeout(() => {
-                delete this.requestCallbacks[server._id][id];
+                delete this.requestCallbacks[server.id][id];
                 rej("Request timed out");
             }, 30_000);
-            this.requestCallbacks[server._id][id] = (d) => {
-                delete this.requestCallbacks[server._id][id];
+            this.requestCallbacks[server.id][id] = (d) => {
+                delete this.requestCallbacks[server.id][id];
                 clearTimeout(timeout);
-                if(useCache) this.servers[server._id].cachedResponses[packet] = {
+                if(useCache) this.servers[server.id].cachedResponses[packet] = {
                     expiresAt: Date.now() + 5000,
                     data: d
                 }
@@ -157,7 +149,7 @@ export default new class ServerIntegrator {
         });
     }
     isReadyForRequests(server: Server) {
-        const client = this.servers[server._id]?.client;
+        const client = this.servers[server.id]?.client;
         if(!client) return false;
         return true;
     }

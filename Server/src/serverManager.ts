@@ -4,10 +4,9 @@ import { ChildProcess, spawn } from "node:child_process"
 import { User } from "../../Share/User.js";
 import fs from "node:fs/promises";
 import { getSetting } from "./config.js";
-import { servers } from "./db.js";
+import db, { getServerByID } from "./db.js";
 import { exists } from "./util/exists.js";
 import { hasServerPermission } from "./util/permission.js";
-import { userHasAccessToServer as _userHasAccessToServer } from "../../Share/Permission.js";
 import logger, { LogLevel } from "./logger.js";
 import isValidMCVersion from "./util/isValidMCVersion.js";
 import { promiseSleep } from "blueutilities";
@@ -24,6 +23,7 @@ export default new class ServerManager {
         }
     } = {};
     disableServerStart: boolean = false;
+    preventAutorestart: {[serverid: string]: boolean} = {};
     constructor() {
 
     }
@@ -76,7 +76,7 @@ enforce-secure-profile=false
 `);
     }
     createServerEntry(server: Server) {
-        this.servers[server._id] = {
+        this.servers[server.id] = {
             server,
             clientsAttached: [],
             lastLogs: [],
@@ -84,30 +84,30 @@ enforce-secure-profile=false
         }
     }
     createEntryIfNeeded(server: Server, update: boolean = true) {
-        if(!this.servers[server._id]) this.createServerEntry(server);
-        else if(update) this.servers[server._id].server = server;
+        if(!this.servers[server.id]) this.createServerEntry(server);
+        else if(update) this.servers[server.id].server = server;
     }
     isAttachedToServer(client: OurClient, server: Server) {
-        return this.servers[server._id] && this.servers[server._id].clientsAttached.some(c => c.data.clientID == client.data.clientID);
+        return this.servers[server.id] && this.servers[server.id].clientsAttached.some(c => c.data.clientID == client.data.clientID);
     }
     attachClientToServer(client: OurClient, server: Server) {
         if(client.type != "Websocket") throw new Error("This isnt a real client!");
         this.createEntryIfNeeded(server);
-        if(!this.isAttachedToServer(client, server)) this.servers[server._id].clientsAttached.push(client);
+        if(!this.isAttachedToServer(client, server)) this.servers[server.id].clientsAttached.push(client);
         return {
-            lastLogs: this.servers[server._id].lastLogs,
+            lastLogs: this.servers[server.id].lastLogs,
         }
     }
     handleServerLog(server: Server, data: string) {
-        this.servers[server._id].clientsAttached.forEach(c => {
+        this.servers[server.id].clientsAttached.forEach(c => {
             c.json({
                 type: "serverOutput",
-                emits: ["serverOutput-" + server._id],
-                server: server._id,
+                emits: ["serverOutput-" + server.id],
+                server: server.id,
                 data: data.toString()
             });
         });
-        let serverEntry = this.servers[server._id];
+        let serverEntry = this.servers[server.id];
         serverEntry.lastLogs.push(data.toString());
         while (serverEntry.lastLogs.length > 100) serverEntry.lastLogs.shift();
     }
@@ -115,12 +115,12 @@ enforce-secure-profile=false
         if(this.disableServerStart) return;
         this.createEntryIfNeeded(server);
         await this.setupServer(server);
-        let serverEntry = this.servers[server._id];
-        if (serverEntry.childProcess) throw new Error("Server is already running: " + server._id);
-        let args = ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", "-jar", "server.jar", "--nogui"];
-        if(server.useCustomJVMArgs && server.jvmArgs) {
+        let serverEntry = this.servers[server.id];
+        if (serverEntry.childProcess) throw new Error("Server is already running: " + server.id);
+        let args = ["-Dnojline=true", "-Xms" + server.memory + "M", "-Xmx" + server.memory + "M", "-jar", "server.jar", "--nogui"];
+        if(server.jvmArgs != "") {
             let jvmArgs = server.jvmArgs.split(" ");
-            args = ["-Dnojline=true", "-Xms" + server.mem + "M", "-Xmx" + server.mem + "M", ...jvmArgs];
+            args = ["-Dnojline=true", "-Xms" + server.memory + "M", "-Xmx" + server.memory + "M", ...jvmArgs];
         }
         serverIntegrator.prepareServer(server);
         await serverIntegrator.updateIntegratorIfNeeded(server);
@@ -129,20 +129,20 @@ enforce-secure-profile=false
             stdio: "pipe",
             env: {
                 BURGERPANEL_INTEGRATOR_PATH: serverIntegrator.path,
-                BURGERPANEL_INTEGRATOR_SERVER_ID: server._id
+                BURGERPANEL_INTEGRATOR_SERVER_ID: server.id.toString()
             }
         });
         serverEntry.childProcess = childProcess;
         childProcess.stdout.on("data", d => this.handleServerLog(server, d.toString()));
         childProcess.stderr.on("data", d => this.handleServerLog(server, d.toString()));
         childProcess.on("error", err => {
-            logger.log("Server " + server._id + " had a error: " + err, "error", LogLevel.ERROR);
+            logger.log("Server " + server.id + " had an error: " + err, "error", LogLevel.ERROR);
             serverEntry.childProcess = undefined;
             serverEntry.clientsAttached.forEach(client => {
                 client.json({
                     type: "serverErrored",
-                    emits: ["serverErrored-" + server._id],
-                    server: server._id,
+                    emits: ["serverErrored-" + server.id],
+                    server: server.id,
                     error: err?.message || "Unknown message?!?!?",
                 });
                 serverEntry.childProcess = undefined;
@@ -157,8 +157,8 @@ enforce-secure-profile=false
             serverEntry.clientsAttached.forEach(client => {
                 client.json({
                     type: "serverExited",
-                    emits: ["serverExited-" + server._id],
-                    server: server._id,
+                    emits: ["serverExited-" + server.id],
+                    server: server.id,
                     code: c,
                 })
             });
@@ -170,29 +170,31 @@ enforce-secure-profile=false
     }
     async handleAutorestart(server: Server, timeout?: number) {
         // lets check if it has been updated
-        let newServer = await servers.findById(server._id);
-        if(!newServer) return logger.log(`Couldn't find the server in the database while handling auto restart. Did the server get deleted? ${server._id} ${server.name}`, "server.autorestart", LogLevel.ERROR);
-        if(!newServer.autoRestart) return;
+        let newServer = getServerByID.get(server.id);
+        if(this.preventAutorestart[server.id]) return;
+        if(!newServer) return logger.log(`Couldn't find the server in the database while handling auto restart. Did the server get deleted? ${server.id} ${server.name}`, "server.autorestart", LogLevel.ERROR);
+        if(!newServer.autorestart) return;
         if(timeout) await promiseSleep(timeout);
         logger.log("Restarting stopped server: " + server.name, "server.autorestart");
-        await this.startServer(newServer.toJSON());
+        await this.startServer(newServer);
     }
-    stopServer(server: Server) {
+    stopServer(server: Server, noAutorestart: boolean = false) {
         return new Promise<void>(async resolve => {
             let startTimestamp = Date.now();
-            let serverEntry = this.servers[server._id];
+            let serverEntry = this.servers[server.id];
             if (!serverEntry.childProcess) return resolve();
             serverEntry.stopping = true;
+            if(noAutorestart) this.preventAutorestart[server.id] = true;
             this.updateStatus(server);
             let timeToWait = await getSetting("stopServerTimeout");
             let timeout = setTimeout(() => {
-                logger.log("Server " + server._id + " did not stop in time. Killing...", "server.stop", LogLevel.DEBUG);
+                logger.log("Server " + server.id + " did not stop in time. Killing...", "server.stop", LogLevel.DEBUG);
                 this.killServer(server);
                 resolve();
             }, timeToWait as number);
             serverEntry.childProcess.once("exit", () => {
                 clearTimeout(timeout);
-                logger.log(`Server ${server._id} stopped in ${Date.now() - startTimestamp}ms`, "server.stop", LogLevel.DEBUG);
+                logger.log(`Server ${server.id} stopped in ${Date.now() - startTimestamp}ms`, "server.stop", LogLevel.DEBUG);
                 serverEntry.childProcess = undefined;
                 serverEntry.stopping = false;
                 this.updateStatus(server);
@@ -200,12 +202,12 @@ enforce-secure-profile=false
             });
             if (process.platform != "win32") serverEntry.childProcess.kill("SIGTERM"); // windows doesnt have SIGTERM so we need this
             else serverEntry.childProcess.stdin?.write("stop\nend\n");
-            logger.log(`Waiting for ${server.name} (${server._id}) to stop...`, "server.stop", LogLevel.DEBUG, false);
-        })
+            logger.log(`Waiting for ${server.name} (${server.id}) to stop...`, "server.stop", LogLevel.DEBUG, false);
+        });
     }
     killServer(server: Server) {
-        let serverEntry = this.servers[server._id];
-        if (!serverEntry.childProcess) throw new Error("Server is not running: " + server._id);
+        let serverEntry = this.servers[server.id];
+        if (!serverEntry.childProcess) throw new Error("Server is not running: " + server.id);
         serverEntry.childProcess.kill("SIGKILL");
         serverEntry.stopping = false;
         serverEntry.childProcess = undefined;
@@ -223,14 +225,14 @@ enforce-secure-profile=false
     }
     writeToConsole(server: Server, command: string, user: User | undefined) {
         if(typeof command != "string") throw new Error("Cannot write to server because it's not a string!");
-        let serverEntry = this.servers[server._id];
-        if (!serverEntry.childProcess) throw new Error("Server is not running: " + server._id);
-        if (!serverEntry.childProcess.stdin) throw new Error("Stdin doesnt exist? This should NEVER HAPPEN: " + server._id);
+        let serverEntry = this.servers[server.id];
+        if (!serverEntry.childProcess) throw new Error("Server is not running: " + server.id);
+        if (!serverEntry.childProcess.stdin) throw new Error("Stdin doesnt exist? This should NEVER HAPPEN: " + server.id);
         serverEntry.childProcess.stdin.write(command + "\n");
-        this.handleServerLog(server, `${user?.username ? user.username + " [" + user._id + "] " : ""}> ${command}\n`);
+        this.handleServerLog(server, `${user?.username ? user.username + " [" + user.id + "] " : ""}> ${command}\n`);
     }
     async changePort(server: Server, port: number) {
-        let serverEntry = this.servers[server._id];
+        let serverEntry = this.servers[server.id];
         if (serverEntry && serverEntry.childProcess) throw new Error("Server is running. Please stop it before changing the port.");
         // Ensure it is a valid port
         if (typeof port == "string") port = parseInt(port);
@@ -244,26 +246,24 @@ enforce-secure-profile=false
     }
     async editVersion(server: Server, version: string) {
         if(!await isValidMCVersion(version)) throw new Error("Invalid version!");
-        let serverEntry = this.servers[server._id];
+        let serverEntry = this.servers[server.id];
         if (serverEntry?.childProcess) throw new Error("Server is running. Please stop it before changing the version.");
         await fs.rm(server.path + "/server.jar", { force: true });
-        await servers.findByIdAndUpdate(server._id, { version });
     }
     async editSoftware(server: Server, software: AllowedSoftware) {
         if (!allowedSoftwares.includes(software)) throw new Error("Invalid software: " + software);
-        let serverEntry = this.servers[server._id];
+        let serverEntry = this.servers[server.id];
         if (serverEntry?.childProcess) throw new Error("Server is running. Please stop it before changing the software.");
         await fs.rm(server.path + "/server.jar", { force: true });
-        await servers.findByIdAndUpdate(server._id, { software });
     }
     deleteServerFromCache(server: Server) {
-        if (this.servers[server._id]) delete this.servers[server._id];
+        if (this.servers[server.id]) delete this.servers[server.id];
     }
     async autoStartServers() {
         logger.log("Autostarting servers...", "server.autostart", LogLevel.DEBUG);
-        let serversToStart = await servers.find({ autoStart: true });
+        let serversToStart = db.prepare<unknown[], Server>("SELECT * FROM servers WHERE autostart=1").all();
         await Promise.all(serversToStart.map(async s => {
-            this.startServer(s.toJSON())
+            this.startServer(s)
         }));
     }
     updateStatus(server: Server) {
@@ -271,23 +271,22 @@ enforce-secure-profile=false
         clients.filter(c => hasServerPermission(c.data.auth?.user, server, "status")).forEach(c => c.json({
             n: "serverStatusUpdate",
             status,
-            server: server._id
+            server: server.id
         }));
     }
-    getStatus(server: Server): ServerStatus {
-        if(this.servers[server._id.toString()]?.childProcess) return this.servers[server._id.toString()].stopping ? "stopping" : "running";
+    getStatus(server: Server | number): ServerStatus {
+        const serverID = typeof server == "number" ? server : server.id;
+        if(this.servers[serverID.toString()]?.childProcess) return this.servers[serverID.toString()].stopping ? "stopping" : "running";
         return "stopped";
     }
-    serverIsRunning(server: Server) {
-        return !!this.servers[server._id.toString()]?.childProcess
+    serverIsRunning(server: Server | number) {
+        const serverID = typeof server == "number" ? server : server.id;
+        return !!this.servers[serverID.toString()]?.childProcess
     }
     handleDisconnect(client: OurClient) {
         this.detachFromAll(client);
     }
     detachFromAll(client: OurClient) {
-        Object.values(this.servers).filter(s => this.isAttachedToServer(client, s.server)).forEach(s => this.detachFromServer(client, s.server._id.toString()));
+        Object.values(this.servers).filter(s => this.isAttachedToServer(client, s.server)).forEach(s => this.detachFromServer(client, s.server.id.toString()));
     }
-}
-export function userHasAccessToServer(user: User | undefined, server: Server) {
-    return _userHasAccessToServer(user, server);
 }

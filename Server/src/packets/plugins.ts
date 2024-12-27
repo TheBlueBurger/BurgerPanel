@@ -1,20 +1,20 @@
-import { hasServerPermission, userHasAccessToServer } from "../../../Share/Permission.js";
 import { ModrinthPluginResult } from "../../../Share/Plugin.js";
 import { Request } from "../../../Share/Requests.js";
-import { servers } from "../db.js";
+import { getServerByID } from "../db.js";
 import { OurClient, Packet, ServerPacketResponse } from "../index.js";
 import logger, { LogLevel } from "../logger.js";
 import { exists } from "../util/exists.js";
 import { getFile, getPluginDetails, getVersions, mrHeaders, search } from "../util/modrinth.js";
 import fs from "node:fs/promises";
+import { hasServerPermission, userHasAccessToServer } from "../util/permission.js";
 
 export default class Plugins extends Packet {
     name: Request = "plugins";
     requiresAuth: boolean = true;
     async handle(client: OurClient, data: any): ServerPacketResponse<"plugins"> {
-        let server = await servers.findById(data.server);
-        if(!server || !userHasAccessToServer(client.data.auth.user, server.toJSON())) return "Server not found";
-        if(!hasServerPermission(client.data.auth.user, server?.toJSON(), "plugins.download")) return "no permission";
+        let server = getServerByID.get(data.server);
+        if(!server || !userHasAccessToServer(client.data.auth.user, server)) return "Server not found";
+        if(!hasServerPermission(client.data.auth.user, server, "plugins.download")) return "no permission";
         switch(data.type) {
             case "search":
                 if(typeof data.query != "string") return "No query";

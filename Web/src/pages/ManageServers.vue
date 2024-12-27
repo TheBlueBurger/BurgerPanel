@@ -57,10 +57,10 @@ async function createServer() {
     });
     if(resp?.server) {
         servers.updateServer(resp.server);
-        manageServer(resp.server._id);
+        manageServer(resp.server.id);
     }
 }
-function manageServer(id: string) {
+function manageServer(id: number) {
     router.push({
         name: "manageServer",
         params: {

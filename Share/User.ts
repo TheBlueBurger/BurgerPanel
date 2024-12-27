@@ -1,13 +1,10 @@
-import { PermissionString } from "./Permission";
-
 export interface User {
-    _id: string;
+    id: number;
     username: string;
     createdAt: Date;
     token: string;
-    permissions: PermissionString[];
+    permissions: string;
     password?: string;
     setupPending: boolean;
-    devMode?: boolean;
-    pins?: string[];
+    devMode: boolean;
 }

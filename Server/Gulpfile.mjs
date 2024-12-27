@@ -6,6 +6,8 @@ import esbuild from "esbuild";
 import packageJSON from "./package.json" with {type: "json"}
 import path from "path";
 
+const isDocker = process.env.BURGERPANEL_DOCKER == "1";
+
 async function installWebIfForgotten() {
     if(!existsSync("../Web/node_modules")) {
         console.log("Installing web packages...");
@@ -55,10 +57,11 @@ async function runESBuild() {
         format: "esm",
         target: "es2022",
         banner: {
-            js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" // read comments in /src/clients.ts to see explanation for this
+            js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);import * as url from 'url';const __filename = url.fileURLToPath(import.meta.url);" // read comments in /src/clients.ts to see explanation for this
         },
         define: {
-            "process.env.NODE_ENV": "\"production\""
+            "process.env.NODE_ENV": "\"production\"",
+            "process.env.IS_DOCKER": isDocker ? "1" : "0"
         },
         outfile: "_build/burgerpanel.mjs",
     });
@@ -105,7 +108,7 @@ async function copyFiles() {
     fs.copyFileSync("../LICENSE", "_build/LICENSE.txt");
     fs.copyFileSync("../README.md", "_build/README.txt");
     if(!process.env.SKIP_WEB) fs.cpSync("../Web/dist/", "_build/Web", {recursive: true});
-    fs.writeFileSync("_build/mongodb_url.txt", "json:data.json");
+    fs.writeFileSync("_build/package.json", "{}");
 }
 
 async function serverSeries() {
