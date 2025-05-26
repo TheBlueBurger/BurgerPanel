@@ -37,6 +37,7 @@ if(!isProd) app.use((req, res, next) => {
 });
 app.use(express.json());
 app.use(async (req, res, next) => {
+    res.header("Cache-Control", "no-cache");
     if(await mixinHandler.handle("httpRequest", {req, res})) return;
     next();
 });

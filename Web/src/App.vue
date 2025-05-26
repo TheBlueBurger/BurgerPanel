@@ -20,6 +20,7 @@ import event from "@util/event";
 import { useServers } from "@stores/servers";
 import { useUser } from "@stores/user";
 import { useWS } from "@stores/ws";
+import { buildInfo } from "@share/BuildInfo";
 
 const ws = useWS();
 let router = useRouter();
@@ -157,6 +158,27 @@ ws.listenForEvent("serverPermissionChange", data => {
     servers.removeServerFromCache(data.serverID);
   }
 }, unmountAborter.signal);
+ws.listenForEvent("serverInfo", data => { // this code is so cursed
+  if(import.meta.env.DEV) return;
+  if(data.builtAt == buildInfo.date && data.hash == buildInfo.gitHash && data.version == buildInfo.version) return;
+  const dataWithoutN = {...data, n: undefined};
+  const oldLocalStorageLastServerVersionUpdate = localStorage.getItem("lastServerVersionUpdate");
+  let parsedOldLocalStorageLastServerVersionUpdate = undefined as any;
+  try {
+    parsedOldLocalStorageLastServerVersionUpdate = JSON.parse(oldLocalStorageLastServerVersionUpdate as string);
+    if(parsedOldLocalStorageLastServerVersionUpdate == null) throw '';
+  } catch {
+    localStorage.setItem("lastServerVersionUpdate", JSON.stringify(dataWithoutN));
+    location.reload();
+    return;
+  }
+  if(data.builtAt == parsedOldLocalStorageLastServerVersionUpdate.builtAt && data.hash == parsedOldLocalStorageLastServerVersionUpdate.hash && data.version == parsedOldLocalStorageLastServerVersionUpdate.version) {
+    alert("An infinite loop was just prevented. It would seem like the webserver and backend version is out of sync\nThis is usually caused by replacing the Burgerpanel files without restarting the server\n\nThis can usually be fixed by restarting the backend.");
+    return;
+  }
+  localStorage.setItem("lastServerVersionUpdate", JSON.stringify(dataWithoutN));
+  location.reload();
+});
 let showLoginScreen = ref(false);
 function gotoSetup(_currentRoute?: RouteLocationNormalized) {
   let currentRoute = _currentRoute ?? router.currentRoute.value;

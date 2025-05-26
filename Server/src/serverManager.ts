@@ -44,7 +44,7 @@ export default new class ServerManager {
                 if (!builds) throw new Error("Invalid response from papermc.io. Missing '.builds'.");
                 let latestBuild = builds[builds.length - 1];
                 if (!latestBuild?.downloads?.application?.name) throw new Error("Invalid response from papermc.io. Missing '.downloads.application.name'.");
-                downloadURL = `https://papermc.io/api/v2/projects/paper/versions/${server.version}/builds/${latestBuild.build}/downloads/${latestBuild.downloads.application.name}`;
+                downloadURL = `https://api.papermc.io/v2/projects/paper/versions/${server.version}/builds/${latestBuild.build}/downloads/${latestBuild.downloads.application.name}`;
                 break;
             case "purpur":
                 downloadURL = `https://api.purpurmc.org/v2/purpur/${server.version}/latest/download`;

@@ -2,7 +2,7 @@ import { clients, OurClient, Packet, ServerPacketResponse } from "../index.js";
 import db, { getServerByID, getUserByID } from "../db.js";
 import serverManager from "../serverManager.js";
 import { getServerPermissions, hasServerPermission, userHasAccessToServer } from "../util/permission.js";
-import { ServerPermissions, DefaultServerProfiles, _ServerPermissions } from "../../../Share/Permission.js";
+import { ServerPermissions, DefaultServerProfiles, _ServerPermissions, hasPermission } from "../../../Share/Permission.js";
 import logger, { LogLevel } from "../logger.js";
 import { Request } from "../../../Share/Requests.js";
 import isValidMCVersion from "../util/isValidMCVersion.js";
@@ -14,7 +14,7 @@ export default class SetServerOption extends Packet {
         if (!data.id) return;
         let server = getServerByID.get(data.id);
         const userPermissions = getServerPermissions(client.data.auth.user, server);
-        if (!server || !userPermissions) {
+        if (!server || !(userPermissions || hasPermission(client.data.auth.user, "servers.all.view"))) {
             return "Server not found";
         }
         if (data.name && typeof data.name == "string" && data.name.length < 25 && data.name.length > 0) {

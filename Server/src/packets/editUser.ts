@@ -78,7 +78,7 @@ export default class EditUser extends Packet {
                     
                     logger.log(`${client.data.auth.user?.username} is changing the username of ${user.username} to ${data.username}!`, "user.username.changed", LogLevel.INFO);
                     
-                    db.prepare("UPDATE users SET password=? WHERE id=?").run(data.username, user.id);
+                    db.prepare("UPDATE users SET username=? WHERE id=?").run(data.username, user.id);
                     this.sendUserUpdated(user);
                 break;
             case "finishSetup":

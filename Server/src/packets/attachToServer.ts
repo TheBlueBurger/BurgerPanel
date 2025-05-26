@@ -3,6 +3,7 @@ import { getServerByID } from "../db.js";
 import serverManager from "../serverManager.js";
 import { getServerPermissions, hasServerPermission, userHasAccessToServer } from "../util/permission.js";
 import { Request } from "../../../Share/Requests.js";
+import { hasPermission } from "../../../Share/Permission.js";
 
 export default class AttachToServer extends Packet {
     name: Request = "attachToServer";
@@ -10,7 +11,7 @@ export default class AttachToServer extends Packet {
     async handle(client: OurClient, data: any): ServerPacketResponse<"attachToServer"> {
         let server = getServerByID.get(data.id);
         const userPermissions = getServerPermissions(client.data.auth.user, server);
-        if (!server || !userPermissions) {
+        if (!server || !(userPermissions || hasPermission(client.data.auth.user, "servers.all.view"))) {
             return "Server not found";
         }
         let status = hasServerPermission(client.data.auth.user, server, "status", userPermissions) ? serverManager.getStatus(server) : "unknown";

@@ -117,7 +117,7 @@ export default new class ServerIntegrator {
         }
         throw new Error("somehow didnt find a id in 100 tries... MILLIONS TO ONE");
     }
-    request(server: Server, packet: string, data: any = {}, useCache: boolean = false): Promise<any> {
+    request(server: Server, packet: string, data: any = {}, useCache: boolean = false, requestTimeoutTime: number = 30_000): Promise<any> {
         if(!this.isReadyForRequests(server)) throw new Error("Server isn't ready for requests!");
         const client = this.servers[server.id].client;
         if(!client) throw new Error("bad");
@@ -136,7 +136,7 @@ export default new class ServerIntegrator {
             let timeout = setTimeout(() => {
                 delete this.requestCallbacks[server.id][id];
                 rej("Request timed out");
-            }, 30_000);
+            }, requestTimeoutTime);
             this.requestCallbacks[server.id][id] = (d) => {
                 delete this.requestCallbacks[server.id][id];
                 clearTimeout(timeout);
