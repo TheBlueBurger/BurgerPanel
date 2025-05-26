@@ -1,5 +1,5 @@
 # BurgerPanel
-
+# Archived! Won't get updated
 BurgerPanel is a free, open-source Minecraft hosting panel that lets you easily manage your Minecraft servers.
 
 The software is licensed under AGPLv3.
